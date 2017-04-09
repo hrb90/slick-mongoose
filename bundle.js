@@ -76,8 +76,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var GraphDrawingWrapper = (function () {
     function GraphDrawingWrapper(canvasId) {
         this.canvasEl = document.getElementById(canvasId);
-        this.canvasEl.addEventListener("click", console.log);
+        this.drawCircle = this.drawCircle.bind(this);
+        this.canvasEl.addEventListener("click", this.drawCircle);
     }
+    GraphDrawingWrapper.prototype.drawCircle = function (e) {
+        var context = this.canvasEl.getContext('2d');
+        context.beginPath();
+        context.arc(e.x, e.y, 20, 0, 2 * Math.PI);
+        context.stroke();
+    };
     return GraphDrawingWrapper;
 }());
 exports.GraphDrawingWrapper = GraphDrawingWrapper;
