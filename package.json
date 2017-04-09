@@ -1,0 +1,23 @@
+{
+  "name": "thomassen",
+  "version": "0.0.1",
+  "description": "it's a secret... for now",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hrb90/slick-mongoose.git"
+  },
+  "author": "Harrison Brown",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hrb90/slick-mongoose/issues"
+  },
+  "homepage": "https://github.com/hrb90/slick-mongoose#readme",
+  "dependencies": {
+    "ts-loader": "^2.0.3",
+    "typescript": "^2.2.2"
+  }
+}
