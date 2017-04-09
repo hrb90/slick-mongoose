@@ -25,6 +25,7 @@ const distance = (v1: Vertex, v2: Vertex) => {
 export class GraphDrawingWrapper {
   canvasEl: HTMLCanvasElement;
   vertices: Array<Vertex>;
+  highlightedVertex: Vertex | null;
 
   constructor(canvasId : string) {
     this.canvasEl = (<HTMLCanvasElement>document.getElementById(canvasId));
@@ -32,17 +33,28 @@ export class GraphDrawingWrapper {
     this.handleClick = this.handleClick.bind(this);
     this.canvasEl.addEventListener("click", this.handleClick);
     this.vertices = [];
+    this.highlightedVertex = null;
   }
 
   clickVertex(v: Vertex) {
-    console.log(v);
+    if (this.highlightedVertex) {
+      console.log(v);
+      this.drawCircle(this.highlightedVertex);
+      this.highlightedVertex = null;
+    } else {
+      this.highlightedVertex = v;
+      this.drawCircle(v, "red");
+    }
   }
 
-  drawCircle(v: Vertex) {
+  drawCircle(v: Vertex, strokeColor: string = "black", fillColor: string | null = null) {
     let context = this.canvasEl.getContext('2d');
+    context.strokeStyle = strokeColor;
+    context.fillStyle = fillColor || "none";
     context.beginPath();
     context.arc(v.x, v.y, 20, 0, 2 * Math.PI);
     context.stroke();
+    if (fillColor) context.fill();
     this.vertices.push(v);
   }
 

@@ -84,15 +84,30 @@ var GraphDrawingWrapper = (function () {
         this.handleClick = this.handleClick.bind(this);
         this.canvasEl.addEventListener("click", this.handleClick);
         this.vertices = [];
+        this.highlightedVertex = null;
     }
     GraphDrawingWrapper.prototype.clickVertex = function (v) {
-        console.log(v);
+        if (this.highlightedVertex) {
+            console.log(v);
+            this.drawCircle(this.highlightedVertex);
+            this.highlightedVertex = null;
+        }
+        else {
+            this.highlightedVertex = v;
+            this.drawCircle(v, "red");
+        }
     };
-    GraphDrawingWrapper.prototype.drawCircle = function (v) {
+    GraphDrawingWrapper.prototype.drawCircle = function (v, strokeColor, fillColor) {
+        if (strokeColor === void 0) { strokeColor = "black"; }
+        if (fillColor === void 0) { fillColor = null; }
         var context = this.canvasEl.getContext('2d');
+        context.strokeStyle = strokeColor;
+        context.fillStyle = fillColor || "none";
         context.beginPath();
         context.arc(v.x, v.y, 20, 0, 2 * Math.PI);
         context.stroke();
+        if (fillColor)
+            context.fill();
         this.vertices.push(v);
     };
     GraphDrawingWrapper.prototype.handleClick = function (e) {
