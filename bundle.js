@@ -77,8 +77,14 @@ var distance = function (v1, v2) {
     var s = function (x) { return x * x; };
     return Math.sqrt(s(v1.x - v2.x) + s(v1.y - v2.y));
 };
+var unitVector = function (v1, v2) {
+    var d = distance(v1, v2);
+    return { x: (v1.x - v2.x) / d, y: (v1.y - v2.y) / d };
+};
 var GraphDrawingWrapper = (function () {
-    function GraphDrawingWrapper(canvasId) {
+    function GraphDrawingWrapper(canvasId, radius) {
+        if (radius === void 0) { radius = 20; }
+        this.radius = radius;
         this.canvasEl = document.getElementById(canvasId);
         this.drawCircle = this.drawCircle.bind(this);
         this.handleClick = this.handleClick.bind(this);
@@ -88,7 +94,7 @@ var GraphDrawingWrapper = (function () {
     }
     GraphDrawingWrapper.prototype.clickVertex = function (v) {
         if (this.highlightedVertex) {
-            console.log(v);
+            this.drawEdge(v, this.highlightedVertex);
             this.drawCircle(this.highlightedVertex);
             this.highlightedVertex = null;
         }
@@ -104,21 +110,32 @@ var GraphDrawingWrapper = (function () {
         context.strokeStyle = strokeColor;
         context.fillStyle = fillColor || "none";
         context.beginPath();
-        context.arc(v.x, v.y, 20, 0, 2 * Math.PI);
+        context.arc(v.x, v.y, this.radius, 0, 2 * Math.PI);
         context.stroke();
         if (fillColor)
             context.fill();
         this.vertices.push(v);
     };
+    GraphDrawingWrapper.prototype.drawEdge = function (v1, v2, strokeColor) {
+        if (strokeColor === void 0) { strokeColor = "black"; }
+        var context = this.canvasEl.getContext('2d');
+        var unit = unitVector(v1, v2);
+        context.strokeStyle = strokeColor;
+        context.beginPath();
+        context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
+        context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
+        context.stroke();
+    };
     GraphDrawingWrapper.prototype.handleClick = function (e) {
+        var _this = this;
         var newVertex = { x: e.x, y: e.y, colors: [] };
         var clickedVertex;
         var overlappingVertex;
         this.vertices.forEach(function (v) {
             var dist = distance(v, newVertex);
-            if (dist < 20)
+            if (dist <= _this.radius)
                 clickedVertex = v;
-            if (dist < 40)
+            if (dist <= 2 * _this.radius)
                 overlappingVertex = v;
         });
         if (clickedVertex) {

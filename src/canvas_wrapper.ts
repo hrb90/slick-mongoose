@@ -13,8 +13,8 @@ interface HalfEdge {
 interface Vertex {
   x: number,
   y: number,
-  colors: Array<string>,
-  incidentEdge: HalfEdge | undefined;
+  colors?: Array<string>,
+  incidentEdge?: HalfEdge;
 }
 
 const distance = (v1: Vertex, v2: Vertex) => {
@@ -22,12 +22,19 @@ const distance = (v1: Vertex, v2: Vertex) => {
   return Math.sqrt(s(v1.x - v2.x) + s(v1.y - v2.y));
 };
 
+const unitVector = (v1: Vertex, v2: Vertex) => {
+  const d = distance(v1, v2);
+  return <Vertex>{ x: (v1.x - v2.x) / d, y: (v1.y - v2.y) / d };
+};
+
 export class GraphDrawingWrapper {
   canvasEl: HTMLCanvasElement;
   vertices: Array<Vertex>;
   highlightedVertex: Vertex | null;
+  radius: number;
 
-  constructor(canvasId : string) {
+  constructor(canvasId : string, radius: number = 20) {
+    this.radius = radius;
     this.canvasEl = (<HTMLCanvasElement>document.getElementById(canvasId));
     this.drawCircle = this.drawCircle.bind(this);
     this.handleClick = this.handleClick.bind(this);
@@ -38,7 +45,7 @@ export class GraphDrawingWrapper {
 
   clickVertex(v: Vertex) {
     if (this.highlightedVertex) {
-      console.log(v);
+      this.drawEdge(v, this.highlightedVertex);
       this.drawCircle(this.highlightedVertex);
       this.highlightedVertex = null;
     } else {
@@ -52,10 +59,20 @@ export class GraphDrawingWrapper {
     context.strokeStyle = strokeColor;
     context.fillStyle = fillColor || "none";
     context.beginPath();
-    context.arc(v.x, v.y, 20, 0, 2 * Math.PI);
+    context.arc(v.x, v.y, this.radius, 0, 2 * Math.PI);
     context.stroke();
     if (fillColor) context.fill();
     this.vertices.push(v);
+  }
+
+  drawEdge(v1: Vertex, v2: Vertex, strokeColor: string = "black") {
+    let context = this.canvasEl.getContext('2d');
+    let unit = unitVector(v1, v2);
+    context.strokeStyle = strokeColor;
+    context.beginPath();
+    context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
+    context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
+    context.stroke();
   }
 
   handleClick(e : MouseEvent) {
@@ -64,8 +81,8 @@ export class GraphDrawingWrapper {
     let overlappingVertex: Vertex | undefined;
     this.vertices.forEach((v : Vertex) => {
       let dist = distance(v, newVertex);
-      if (dist < 20) clickedVertex = v;
-      if (dist < 40) overlappingVertex = v;
+      if (dist <= this.radius) clickedVertex = v;
+      if (dist <= 2 * this.radius) overlappingVertex = v;
     });
     if (clickedVertex) {
       this.clickVertex(clickedVertex);
