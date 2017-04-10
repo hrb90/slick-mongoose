@@ -25,15 +25,21 @@ const intersect = (v1: Vertex, v2: Vertex, v3: Vertex, v4: Vertex) => {
   return true;
 }
 
+const inInterior = (polygon: Array<Vertex>, v: Vertex) => {
+  return true;
+}
+
 export class PlanarGraph {
   vertices: Array<Vertex>;
   edges: Array<HalfEdge>;
+  infiniteFace: Face;
   faces: Array<Face>;
 
   constructor () {
     this.vertices = [];
     this.edges = [];
-    this.faces = [{infinite: true}];
+    this.infiniteFace = { infinite: true };
+    this.faces = [this.infiniteFace];
   }
 
   addVertex (v: Vertex) {
@@ -69,7 +75,15 @@ export class PlanarGraph {
         currentEdge = currentEdge.twin.next;
       }
     } else {
-      //...
+      let boundingFace: Face | undefined;
+      this.faces.forEach((f: Face) => {
+        if (!f.infinite &&
+          inInterior(this.getBoundaryEdges(f).map(e => e.origin), v)) {
+            boundingFace = f;
+          }
+      });
+      boundingFace = boundingFace || this.infiniteFace;
+      incidentFaces.push(boundingFace);
     }
     return incidentFaces;
   }
