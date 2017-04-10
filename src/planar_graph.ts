@@ -88,8 +88,8 @@ export class PlanarGraph {
     return true;
   }
 
-  checkEdge(v1: Vertex, v2: Vertex) {
-
+  commonFaces(v1: Vertex, v2: Vertex) {
+    return this.getIncidentFaces(v1)
   }
 
   getBoundaryEdges(f: Face) {
@@ -113,14 +113,13 @@ export class PlanarGraph {
         currentEdge = currentEdge.twin.next;
       }
     } else {
-      let boundingFace: Face | undefined;
+      let boundingFace = this.infiniteFace;
       this.faces.forEach((f: Face) => {
         if (!f.infinite &&
           inInterior(this.getBoundaryEdges(f).map(e => e.origin), v)) {
             boundingFace = f;
           }
       });
-      boundingFace = boundingFace || this.infiniteFace;
       incidentFaces.push(boundingFace);
     }
     return incidentFaces;

@@ -219,7 +219,8 @@ var PlanarGraph = (function () {
     PlanarGraph.prototype.addEdge = function (v1, v2) {
         return true;
     };
-    PlanarGraph.prototype.checkEdge = function (v1, v2) {
+    PlanarGraph.prototype.commonFaces = function (v1, v2) {
+        return this.getIncidentFaces(v1);
     };
     PlanarGraph.prototype.getBoundaryEdges = function (f) {
         var boundaryEdges = [];
@@ -243,14 +244,13 @@ var PlanarGraph = (function () {
             }
         }
         else {
-            var boundingFace_1;
+            var boundingFace_1 = this.infiniteFace;
             this.faces.forEach(function (f) {
                 if (!f.infinite &&
                     exports.inInterior(_this.getBoundaryEdges(f).map(function (e) { return e.origin; }), v)) {
                     boundingFace_1 = f;
                 }
             });
-            boundingFace_1 = boundingFace_1 || this.infiniteFace;
             incidentFaces.push(boundingFace_1);
         }
         return incidentFaces;
