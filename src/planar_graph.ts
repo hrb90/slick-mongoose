@@ -1,9 +1,9 @@
-interface Face {
+export interface Face {
   infinite: boolean;
   incidentEdge?: HalfEdge;
 }
 
-interface HalfEdge {
+export interface HalfEdge {
   origin: Vertex;
   twin?: HalfEdge;
   // next is the next half edge traveling along the face
@@ -20,13 +20,50 @@ export interface Vertex {
   incidentEdge?: HalfEdge;
 }
 
+// coordinate equality
+let eq = (a: Vertex, b: Vertex) => (a.x === b.x && a.y === b.y);
+
+// 2-dimensional cross product
+const xProd = (v1: Vertex, v2: Vertex) => (v1.x * v2.y - v1.y * v2.x);
+
+// dot product
+const dot = (v1: Vertex, v2: Vertex) => (v1.x * v2.x + v1.y + v2.y);
+
 // Do the line segments from v1-v2 and v3-v4 intersect?
-const intersect = (v1: Vertex, v2: Vertex, v3: Vertex, v4: Vertex) => {
-  return true;
+export const intersect = (v1: Vertex, v2: Vertex, v3: Vertex, v4: Vertex) => {
+  let r = { x: v2.x - v1.x, y: v2.y - v1.y };
+  let s = { x: v4.x - v3.x, y: v4.y - v3.y };
+  let diff = { x: v3.x - v1.x, y: v3.y - v1.y };
+  let det = xProd(r, s);
+  if (det !== 0) {
+    let t = xProd(diff, r)/det;
+    let u = xProd(diff, s)/det;
+    let interior = (x: number) => (0 < x && x < 1);
+    let boundary = (x: number) => (x === 0 || x === 1);
+    if (interior(t) && interior(u)) {
+      // the segments intersect
+      return true;
+    } else if (boundary(t) || boundary(u)) {
+      // three points are collinear
+      return (interior(t) || interior(u));
+    } else {
+      return false;
+    }
+  } else {
+    if (xProd(diff, r) !== 0) {
+      // parallel, non-collinear
+      return false;
+    } else {
+      // all 4 points collinear
+      let t0 = dot(diff, r)/dot(r, r);
+      let t1 = t0 + dot(s, r)/dot(r, r);
+      return (Math.max(t0, t1) > 0 && Math.min(t0, t1) < 1);
+    }
+  }
 }
 
 // Is v in the interior of polygon?
-const inInterior = (polygon: Array<Vertex>, v: Vertex) => {
+export const inInterior = (polygon: Array<Vertex>, v: Vertex) => {
   return true;
 }
 

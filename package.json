@@ -1,5 +1,5 @@
 {
-  "name": "thomassen",
+  "name": "fuenf-farben-satz",
   "version": "0.0.1",
   "description": "it's a secret... for now",
   "main": "index.js",
@@ -16,8 +16,30 @@
     "url": "https://github.com/hrb90/slick-mongoose/issues"
   },
   "homepage": "https://github.com/hrb90/slick-mongoose#readme",
+  "jest": {
+    "transform": {
+      ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "testRegex": "/test/.*\\.(test)\\.(ts|js)$",
+    "coverageReporters": [
+      "text"
+    ],
+    "coverageDirectory": "test_coverage_dir",
+    "collectCoverageFrom": [
+      "src/**/*.tsx",
+      "src/**/*.ts"
+    ],
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ]
+  },
   "dependencies": {
     "ts-loader": "^2.0.3",
     "typescript": "^2.2.2"
+  },
+  "devDependencies": {
+    "jest": "^19.0.2",
+    "ts-jest": "^19.0.8"
   }
 }
