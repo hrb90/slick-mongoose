@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 1);
+/******/ 	return __webpack_require__(__webpack_require__.s = 2);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -73,6 +73,7 @@
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+var planar_graph_1 = __webpack_require__(1);
 var distance = function (v1, v2) {
     var s = function (x) { return x * x; };
     return Math.sqrt(s(v1.x - v2.x) + s(v1.y - v2.y));
@@ -83,13 +84,13 @@ var unitVector = function (v1, v2) {
 };
 var GraphDrawingWrapper = (function () {
     function GraphDrawingWrapper(canvasId, radius) {
-        if (radius === void 0) { radius = 20; }
+        if (radius === void 0) { radius = 10; }
         this.radius = radius;
         this.canvasEl = document.getElementById(canvasId);
         this.drawCircle = this.drawCircle.bind(this);
         this.handleClick = this.handleClick.bind(this);
         this.canvasEl.addEventListener("click", this.handleClick);
-        this.vertices = [];
+        this.graph = new planar_graph_1.PlanarGraph();
         this.highlightedVertex = null;
     }
     GraphDrawingWrapper.prototype.clickVertex = function (v) {
@@ -106,6 +107,7 @@ var GraphDrawingWrapper = (function () {
     GraphDrawingWrapper.prototype.drawCircle = function (v, strokeColor, fillColor) {
         if (strokeColor === void 0) { strokeColor = "black"; }
         if (fillColor === void 0) { fillColor = null; }
+        this.graph.addVertex(v);
         var context = this.canvasEl.getContext('2d');
         context.strokeStyle = strokeColor;
         context.fillStyle = fillColor || "none";
@@ -114,24 +116,25 @@ var GraphDrawingWrapper = (function () {
         context.stroke();
         if (fillColor)
             context.fill();
-        this.vertices.push(v);
     };
     GraphDrawingWrapper.prototype.drawEdge = function (v1, v2, strokeColor) {
         if (strokeColor === void 0) { strokeColor = "black"; }
-        var context = this.canvasEl.getContext('2d');
-        var unit = unitVector(v1, v2);
-        context.strokeStyle = strokeColor;
-        context.beginPath();
-        context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
-        context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
-        context.stroke();
+        if (this.graph.addEdge(v1, v2)) {
+            var context = this.canvasEl.getContext('2d');
+            var unit = unitVector(v1, v2);
+            context.strokeStyle = strokeColor;
+            context.beginPath();
+            context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
+            context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
+            context.stroke();
+        }
     };
     GraphDrawingWrapper.prototype.handleClick = function (e) {
         var _this = this;
         var newVertex = { x: e.x, y: e.y, colors: [] };
         var clickedVertex;
         var overlappingVertex;
-        this.vertices.forEach(function (v) {
+        this.graph.vertices.forEach(function (v) {
             var dist = distance(v, newVertex);
             if (dist <= _this.radius)
                 clickedVertex = v;
@@ -152,6 +155,30 @@ exports.GraphDrawingWrapper = GraphDrawingWrapper;
 
 /***/ }),
 /* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var PlanarGraph = (function () {
+    function PlanarGraph() {
+        this.vertices = [];
+        this.edges = [];
+        this.faces = [];
+    }
+    PlanarGraph.prototype.addVertex = function (v) {
+        this.vertices.push(v);
+    };
+    PlanarGraph.prototype.addEdge = function (v1, v2) {
+        return true;
+    };
+    return PlanarGraph;
+}());
+exports.PlanarGraph = PlanarGraph;
+
+
+/***/ }),
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";

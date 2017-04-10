@@ -1,21 +1,4 @@
-interface Face {
-  incidentEdge: HalfEdge;
-}
-
-interface HalfEdge {
-  origin: Vertex;
-  twin: HalfEdge | undefined;
-  next: HalfEdge | undefined;
-  prev: HalfEdge | undefined;
-  incidentFace: Face | undefined;
-}
-
-interface Vertex {
-  x: number,
-  y: number,
-  colors?: Array<string>,
-  incidentEdge?: HalfEdge;
-}
+import { Vertex, PlanarGraph } from './planar_graph';
 
 const distance = (v1: Vertex, v2: Vertex) => {
   const s = (x : number) => x * x;
@@ -29,17 +12,17 @@ const unitVector = (v1: Vertex, v2: Vertex) => {
 
 export class GraphDrawingWrapper {
   canvasEl: HTMLCanvasElement;
-  vertices: Array<Vertex>;
+  graph: PlanarGraph;
   highlightedVertex: Vertex | null;
   radius: number;
 
-  constructor(canvasId : string, radius: number = 20) {
+  constructor(canvasId : string, radius: number = 10) {
     this.radius = radius;
     this.canvasEl = (<HTMLCanvasElement>document.getElementById(canvasId));
     this.drawCircle = this.drawCircle.bind(this);
     this.handleClick = this.handleClick.bind(this);
     this.canvasEl.addEventListener("click", this.handleClick);
-    this.vertices = [];
+    this.graph = new PlanarGraph();
     this.highlightedVertex = null;
   }
 
@@ -55,6 +38,7 @@ export class GraphDrawingWrapper {
   }
 
   drawCircle(v: Vertex, strokeColor: string = "black", fillColor: string | null = null) {
+    this.graph.addVertex(v);
     let context = this.canvasEl.getContext('2d');
     context.strokeStyle = strokeColor;
     context.fillStyle = fillColor || "none";
@@ -62,24 +46,25 @@ export class GraphDrawingWrapper {
     context.arc(v.x, v.y, this.radius, 0, 2 * Math.PI);
     context.stroke();
     if (fillColor) context.fill();
-    this.vertices.push(v);
   }
 
   drawEdge(v1: Vertex, v2: Vertex, strokeColor: string = "black") {
-    let context = this.canvasEl.getContext('2d');
-    let unit = unitVector(v1, v2);
-    context.strokeStyle = strokeColor;
-    context.beginPath();
-    context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
-    context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
-    context.stroke();
+    if (this.graph.addEdge(v1, v2)) {      
+      let context = this.canvasEl.getContext('2d');
+      let unit = unitVector(v1, v2);
+      context.strokeStyle = strokeColor;
+      context.beginPath();
+      context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
+      context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
+      context.stroke();
+    }
   }
 
   handleClick(e : MouseEvent) {
     let newVertex = <Vertex>{ x : e.x, y : e.y, colors: [] }
     let clickedVertex: Vertex | undefined;
     let overlappingVertex: Vertex | undefined;
-    this.vertices.forEach((v : Vertex) => {
+    this.graph.vertices.forEach((v : Vertex) => {
       let dist = distance(v, newVertex);
       if (dist <= this.radius) clickedVertex = v;
       if (dist <= 2 * this.radius) overlappingVertex = v;
