@@ -25,6 +25,7 @@ const intersect = (v1: Vertex, v2: Vertex, v3: Vertex, v4: Vertex) => {
   return true;
 }
 
+// Is v in the interior of polygon?
 const inInterior = (polygon: Array<Vertex>, v: Vertex) => {
   return true;
 }

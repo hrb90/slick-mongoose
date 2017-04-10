@@ -160,17 +160,62 @@ exports.GraphDrawingWrapper = GraphDrawingWrapper;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+// Do the line segments from v1-v2 and v3-v4 intersect?
+var intersect = function (v1, v2, v3, v4) {
+    return true;
+};
+// Is v in the interior of polygon?
+var inInterior = function (polygon, v) {
+    return true;
+};
 var PlanarGraph = (function () {
     function PlanarGraph() {
         this.vertices = [];
         this.edges = [];
-        this.faces = [];
+        this.infiniteFace = { infinite: true };
+        this.faces = [this.infiniteFace];
     }
     PlanarGraph.prototype.addVertex = function (v) {
         this.vertices.push(v);
     };
     PlanarGraph.prototype.addEdge = function (v1, v2) {
         return true;
+    };
+    PlanarGraph.prototype.checkEdge = function (v1, v2) {
+    };
+    PlanarGraph.prototype.getBoundaryEdges = function (f) {
+        var boundaryEdges = [];
+        if (f.incidentEdge) {
+            var currentEdge = f.incidentEdge;
+            while (!boundaryEdges.indexOf(currentEdge)) {
+                boundaryEdges.push(currentEdge);
+                currentEdge = currentEdge.next;
+            }
+        }
+        return boundaryEdges;
+    };
+    PlanarGraph.prototype.getIncidentFaces = function (v) {
+        var _this = this;
+        var incidentFaces = [];
+        if (v.incidentEdge) {
+            var currentEdge = v.incidentEdge;
+            while (!incidentFaces.indexOf(currentEdge.incidentFace)) {
+                incidentFaces.push(currentEdge.incidentFace);
+                currentEdge = currentEdge.twin.next;
+            }
+        }
+        else {
+            var boundingFace_1;
+            this.faces.forEach(function (f) {
+                if (!f.infinite &&
+                    inInterior(_this.getBoundaryEdges(f).map(function (e) { return e.origin; }), v)) {
+                    boundingFace_1 = f;
+                }
+            });
+            boundingFace_1 = boundingFace_1 || this.infiniteFace;
+            incidentFaces.push(boundingFace_1);
+        }
+        return incidentFaces;
     };
     return PlanarGraph;
 }());

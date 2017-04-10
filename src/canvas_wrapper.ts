@@ -49,7 +49,7 @@ export class GraphDrawingWrapper {
   }
 
   drawEdge(v1: Vertex, v2: Vertex, strokeColor: string = "black") {
-    if (this.graph.addEdge(v1, v2)) {      
+    if (this.graph.addEdge(v1, v2)) {
       let context = this.canvasEl.getContext('2d');
       let unit = unitVector(v1, v2);
       context.strokeStyle = strokeColor;
