@@ -160,12 +160,50 @@ exports.GraphDrawingWrapper = GraphDrawingWrapper;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+// coordinate equality
+var eq = function (a, b) { return (a.x === b.x && a.y === b.y); };
+// 2-dimensional cross product
+var xProd = function (v1, v2) { return (v1.x * v2.y - v1.y * v2.x); };
+// dot product
+var dot = function (v1, v2) { return (v1.x * v2.x + v1.y + v2.y); };
 // Do the line segments from v1-v2 and v3-v4 intersect?
-var intersect = function (v1, v2, v3, v4) {
-    return true;
+exports.intersect = function (v1, v2, v3, v4) {
+    var r = { x: v2.x - v1.x, y: v2.y - v1.y };
+    var s = { x: v4.x - v3.x, y: v4.y - v3.y };
+    var diff = { x: v3.x - v1.x, y: v3.y - v1.y };
+    var det = xProd(r, s);
+    if (det !== 0) {
+        var t = xProd(diff, r) / det;
+        var u = xProd(diff, s) / det;
+        var interior = function (x) { return (0 < x && x < 1); };
+        var boundary = function (x) { return (x === 0 || x === 1); };
+        if (interior(t) && interior(u)) {
+            // the segments intersect
+            return true;
+        }
+        else if (boundary(t) || boundary(u)) {
+            // three points are collinear
+            return (interior(t) || interior(u));
+        }
+        else {
+            return false;
+        }
+    }
+    else {
+        if (xProd(diff, r) !== 0) {
+            // parallel, non-collinear
+            return false;
+        }
+        else {
+            // all 4 points collinear
+            var t0 = dot(diff, r) / dot(r, r);
+            var t1 = t0 + dot(s, r) / dot(r, r);
+            return (Math.max(t0, t1) > 0 && Math.min(t0, t1) < 1);
+        }
+    }
 };
 // Is v in the interior of polygon?
-var inInterior = function (polygon, v) {
+exports.inInterior = function (polygon, v) {
     return true;
 };
 var PlanarGraph = (function () {
@@ -208,7 +246,7 @@ var PlanarGraph = (function () {
             var boundingFace_1;
             this.faces.forEach(function (f) {
                 if (!f.infinite &&
-                    inInterior(_this.getBoundaryEdges(f).map(function (e) { return e.origin; }), v)) {
+                    exports.inInterior(_this.getBoundaryEdges(f).map(function (e) { return e.origin; }), v)) {
                     boundingFace_1 = f;
                 }
             });
