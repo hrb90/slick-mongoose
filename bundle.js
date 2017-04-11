@@ -148,7 +148,6 @@ var GraphDrawingWrapper = (function () {
         else if (!overlappingVertex) {
             this.drawCircle(newVertex);
         }
-        console.log(this.graph);
     };
     return GraphDrawingWrapper;
 }());

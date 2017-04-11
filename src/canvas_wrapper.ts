@@ -76,6 +76,5 @@ export class GraphDrawingWrapper {
     } else if (!overlappingVertex) {
       this.drawCircle(newVertex);
     }
-    console.log(this.graph);
   }
 }
