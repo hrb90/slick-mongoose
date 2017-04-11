@@ -159,47 +159,54 @@ export class PlanarGraph {
     let boundingFace: Face | null = this.getEdgeFace(v1, v2);
     if (boundingFace) {
       // 1. Fix the edge pointers to other edges
-      let e1 = this.getBoundaryEdges(boundingFace).filter(e => e.origin === v1)[0];
-      let e2 = this.getBoundaryEdges(boundingFace).filter(e => e.origin === v2)[0];
-      let v1v2: HalfEdge = { origin: v1, next: e2, prev: e1.prev };
-      let v2v1: HalfEdge = { origin: v2, next: e1, prev: e2.prev, twin: v1v2};
-      v1v2.twin = v2v1;
-      e1.prev.next = v1v2;
-      e1.prev = v2v1;
-      e2.prev.next = v2v1;
-      e2.prev = v1v2;
-      this.edges.push(v1v2);
-      this.edges.push(v2v1);
+      let newEdge = this.cv_edgePointers(v1, v2, boundingFace);
       // 2. Split the face
-      let newFaceEdge: HalfEdge = v2v1;
-      let oldFaceEdge: HalfEdge = v1v2;
-      if (boundingFace.infinite) {
-        let vertices = [v1v2.origin];
-        let currentEdge = v1v2.next;
-        while (currentEdge !== v1v2) {
-          vertices.push(currentEdge.origin);
-          currentEdge = currentEdge.next;
-        }
-        if (!isClockwise(vertices)) {
-          oldFaceEdge = v2v1;
-          newFaceEdge = v1v2;
-        }
-      }
-      boundingFace.incidentEdge = oldFaceEdge;
-      let newFace: Face = { infinite: false, incidentEdge: newFaceEdge };
-      this.faces.push(newFace);
-      // 3. Fix incidentFace pointers
-      oldFaceEdge.incidentFace = boundingFace;
-      newFaceEdge.incidentFace = newFace;
-      let currentEdge = newFaceEdge.next;
-      while (currentEdge !== newFaceEdge) {
-        currentEdge.incidentFace = newFace;
-        currentEdge = currentEdge.next;
-      }
+      this.cv_makeNewFace(newEdge, boundingFace);
       return true;
     } else {
       return false;
     }
+  }
+
+  cv_makeNewFace(e: HalfEdge, f: Face) {
+    let newFaceEdge: HalfEdge = e;
+    if (f.infinite) {
+      let vertices = [e.twin.origin];
+      let currentEdge = e.twin.next;
+      while (currentEdge !== e.twin) {
+        vertices.push(currentEdge.origin);
+        currentEdge = currentEdge.next;
+      }
+      if (!isClockwise(vertices)) {
+        newFaceEdge = e.twin;
+      }
+    }
+    f.incidentEdge = newFaceEdge.twin;
+    let newFace: Face = { infinite: false, incidentEdge: newFaceEdge };
+    this.faces.push(newFace);
+    // Fix incidentFace pointers
+    newFaceEdge.twin.incidentFace = f;
+    newFaceEdge.incidentFace = newFace;
+    let currentEdge = newFaceEdge.next;
+    while (currentEdge !== newFaceEdge) {
+      currentEdge.incidentFace = newFace;
+      currentEdge = currentEdge.next;
+    }
+  }
+
+  cv_edgePointers(v1: Vertex, v2: Vertex, boundingFace: Face) {
+    let e1 = this.getBoundaryEdges(boundingFace).filter(e => e.origin === v1)[0];
+    let e2 = this.getBoundaryEdges(boundingFace).filter(e => e.origin === v2)[0];
+    let v1v2: HalfEdge = { origin: v1, next: e2, prev: e1.prev };
+    let v2v1: HalfEdge = { origin: v2, next: e1, prev: e2.prev, twin: v1v2};
+    v1v2.twin = v2v1;
+    e1.prev.next = v1v2;
+    e1.prev = v2v1;
+    e2.prev.next = v2v1;
+    e2.prev = v1v2;
+    this.edges.push(v1v2);
+    this.edges.push(v2v1);
+    return v1v2;
   }
 
   getEdgeFace(v1: Vertex, v2: Vertex) {
@@ -262,4 +269,5 @@ export class PlanarGraph {
     }
     return incidentEdges;
   }
+
 }
