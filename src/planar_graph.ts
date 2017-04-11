@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { intersection } from 'lodash';
 
 export interface Face {
   infinite: boolean;
@@ -32,7 +32,7 @@ const xProd = (v1: Vertex, v2: Vertex) => (v1.x * v2.y - v1.y * v2.x);
 const dot = (v1: Vertex, v2: Vertex) => (v1.x * v2.x + v1.y + v2.y);
 
 // Do the line segments from v1-v2 and v3-v4 intersect?
-export const intersect = (v1: Vertex, v2: Vertex, v3: Vertex, v4: Vertex) => {
+export const intersect = (v1: Vertex, v2: Vertex, v3: Vertex, v4: Vertex, halfOpen: boolean = false) => {
   let r = { x: v2.x - v1.x, y: v2.y - v1.y };
   let s = { x: v4.x - v3.x, y: v4.y - v3.y };
   let diff = { x: v3.x - v1.x, y: v3.y - v1.y };
@@ -47,7 +47,7 @@ export const intersect = (v1: Vertex, v2: Vertex, v3: Vertex, v4: Vertex) => {
       return true;
     } else if (boundary(t) || boundary(u)) {
       // three points are collinear
-      return (interior(t) || interior(u));
+      return (interior(t) || interior(u)) && (!halfOpen || t === 0 || u === 0);
     } else {
       return false;
     }
@@ -66,7 +66,15 @@ export const intersect = (v1: Vertex, v2: Vertex, v3: Vertex, v4: Vertex) => {
 
 // Is v in the interior of polygon?
 export const inInterior = (polygon: Array<Vertex>, v: Vertex) => {
-  return true;
+  if (polygon.length < 3) return false;
+  let maxX = Math.max(...polygon.map(v => v.x));
+  let maxY = Math.max(...polygon.map(v => v.y));
+  let outerVertex = { x: maxX + 1, y: maxY + 1 };
+  let crossingNum = 0;
+  polygon.map((v, i, p) => ([v, p[(i+1)%p.length]])).forEach(pair => {
+    if (intersect(v, outerVertex, pair[0], pair[1], true)) crossingNum += 1;
+  })
+  return crossingNum % 2 === 1;
 }
 
 export class PlanarGraph {
@@ -92,6 +100,7 @@ export class PlanarGraph {
 
   addVertex (v: Vertex) {
     this.vertices.push(v);
+    return true;
   }
 
   addEdge(v1: Vertex, v2: Vertex) {
@@ -99,7 +108,7 @@ export class PlanarGraph {
   }
 
   commonFaces(v1: Vertex, v2: Vertex) {
-    return <Array<Face>>_.intersection([v1, v2].map(this.getIncidentFaces));
+    return intersection(...[v1, v2].map(this.getIncidentFaces));
   }
 
   getBoundaryEdges(f: Face) {
@@ -127,8 +136,8 @@ export class PlanarGraph {
 
   getIncidentFaces(v: Vertex) {
     return v.incidentEdge ?
-    this.getOutgoingEdges(v).map((e: HalfEdge) => e.incidentFace) :
-    [this.getBoundingFace(v)];
+      this.getOutgoingEdges(v).map((e: HalfEdge) => e.incidentFace) :
+      [this.getBoundingFace(v)];
   }
 
   getOutgoingEdges(v: Vertex) {
