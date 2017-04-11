@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 export interface Face {
   infinite: boolean;
   incidentEdge?: HalfEdge;
@@ -78,6 +80,14 @@ export class PlanarGraph {
     this.edges = [];
     this.infiniteFace = { infinite: true };
     this.faces = [this.infiniteFace];
+    // bind methods
+    this.addEdge = this.addEdge.bind(this);
+    this.addVertex = this.addVertex.bind(this);
+    this.commonFaces = this.commonFaces.bind(this);
+    this.getBoundaryEdges = this.getBoundaryEdges.bind(this);
+    this.getBoundingFace = this.getBoundingFace.bind(this);
+    this.getIncidentFaces = this.getIncidentFaces.bind(this);
+    this.getOutgoingEdges = this.getOutgoingEdges.bind(this);
   }
 
   addVertex (v: Vertex) {
@@ -89,7 +99,7 @@ export class PlanarGraph {
   }
 
   commonFaces(v1: Vertex, v2: Vertex) {
-    return this.getIncidentFaces(v1)
+    return <Array<Face>>_.intersection([v1, v2].map(this.getIncidentFaces));
   }
 
   getBoundaryEdges(f: Face) {
@@ -104,24 +114,33 @@ export class PlanarGraph {
     return boundaryEdges;
   }
 
+  getBoundingFace(v: Vertex) {
+    let boundingFace = this.infiniteFace;
+    this.faces.forEach((f: Face) => {
+      if (!f.infinite &&
+        inInterior(this.getBoundaryEdges(f).map(e => e.origin), v)) {
+          boundingFace = f;
+        }
+      });
+    return boundingFace;
+  }
+
   getIncidentFaces(v: Vertex) {
-    let incidentFaces = <Array<Face>>[];
+    return v.incidentEdge ?
+    this.getOutgoingEdges(v).map((e: HalfEdge) => e.incidentFace) :
+    [this.getBoundingFace(v)];
+  }
+
+  getOutgoingEdges(v: Vertex) {
+    let incidentEdges = <Array<HalfEdge>>[];
     if (v.incidentEdge) {
       let currentEdge = v.incidentEdge;
-      while (!incidentFaces.indexOf(currentEdge.incidentFace)) {
-        incidentFaces.push(currentEdge.incidentFace);
+      while (!incidentEdges.indexOf(currentEdge)) {
+        incidentEdges.push(currentEdge);
         currentEdge = currentEdge.twin.next;
       }
-    } else {
-      let boundingFace = this.infiniteFace;
-      this.faces.forEach((f: Face) => {
-        if (!f.infinite &&
-          inInterior(this.getBoundaryEdges(f).map(e => e.origin), v)) {
-            boundingFace = f;
-          }
-      });
-      incidentFaces.push(boundingFace);
     }
-    return incidentFaces;
+    return incidentEdges;
   }
+
 }
