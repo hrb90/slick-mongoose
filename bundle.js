@@ -86,6 +86,7 @@ var GraphDrawingWrapper = (function () {
     function GraphDrawingWrapper(canvasId, radius) {
         if (radius === void 0) { radius = 10; }
         this.radius = radius;
+        this.vertices = [];
         this.canvasEl = document.getElementById(canvasId);
         this.drawCircle = this.drawCircle.bind(this);
         this.handleClick = this.handleClick.bind(this);
@@ -107,7 +108,7 @@ var GraphDrawingWrapper = (function () {
     GraphDrawingWrapper.prototype.drawCircle = function (v, strokeColor, fillColor) {
         if (strokeColor === void 0) { strokeColor = "black"; }
         if (fillColor === void 0) { fillColor = null; }
-        this.graph.addVertex(v);
+        this.vertices.push(v);
         var context = this.canvasEl.getContext('2d');
         context.strokeStyle = strokeColor;
         context.fillStyle = fillColor || "none";
@@ -134,7 +135,7 @@ var GraphDrawingWrapper = (function () {
         var newVertex = { x: e.x, y: e.y, colors: [] };
         var clickedVertex;
         var overlappingVertex;
-        this.graph.vertices.forEach(function (v) {
+        this.vertices.forEach(function (v) {
             var dist = distance(v, newVertex);
             if (dist <= _this.radius)
                 clickedVertex = v;
@@ -147,6 +148,7 @@ var GraphDrawingWrapper = (function () {
         else if (!overlappingVertex) {
             this.drawCircle(newVertex);
         }
+        console.log(this.graph);
     };
     return GraphDrawingWrapper;
 }());
@@ -17365,6 +17367,13 @@ exports.inInterior = function (polygon, v) {
     });
     return crossingNum % 2 === 1;
 };
+exports.isClockwise = function (polygon) {
+    var signedAreaSum = 0;
+    polygon.map(function (v, i, p) { return ([v, p[(i + 1) % p.length]]); }).forEach(function (pair) {
+        signedAreaSum += (pair[1].x - pair[0].x) * (pair[1].y + pair[0].y);
+    });
+    return (signedAreaSum > 0);
+};
 var PlanarGraph = (function () {
     function PlanarGraph() {
         this.vertices = [];
@@ -17373,19 +17382,121 @@ var PlanarGraph = (function () {
         this.faces = [this.infiniteFace];
         // bind methods
         this.addEdge = this.addEdge.bind(this);
-        this.addVertex = this.addVertex.bind(this);
+        this.begin = this.begin.bind(this);
         this.commonFaces = this.commonFaces.bind(this);
         this.getBoundaryEdges = this.getBoundaryEdges.bind(this);
         this.getBoundingFace = this.getBoundingFace.bind(this);
         this.getIncidentFaces = this.getIncidentFaces.bind(this);
         this.getOutgoingEdges = this.getOutgoingEdges.bind(this);
     }
-    PlanarGraph.prototype.addVertex = function (v) {
-        this.vertices.push(v);
-        return true;
-    };
     PlanarGraph.prototype.addEdge = function (v1, v2) {
-        return true;
+        if (!v1.incidentEdge && !v2.incidentEdge) {
+            if (this.vertices.length > 0)
+                throw new Error("Only one connected component!");
+            this.begin(v1, v2);
+            return true;
+        }
+        else if (!v1.incidentEdge && v2.incidentEdge) {
+            return this.connectNewVertex(v2, v1);
+        }
+        else if (!v2.incidentEdge && v1.incidentEdge) {
+            return this.connectNewVertex(v1, v2);
+        }
+        else {
+            return this.connectVertices(v1, v2);
+        }
+    };
+    PlanarGraph.prototype.begin = function (v1, v2) {
+        this.vertices = [v1, v2];
+        var v1v2 = { origin: v1, incidentFace: this.infiniteFace };
+        var v2v1 = { origin: v2, prev: v1v2, next: v1v2, twin: v1v2, incidentFace: this.infiniteFace };
+        v1.incidentEdge = v1v2;
+        v2.incidentEdge = v2v1;
+        v1v2.twin = v2v1;
+        v1v2.prev = v2v1;
+        v1v2.next = v2v1;
+        this.edges = [v1v2, v2v1];
+        this.infiniteFace.incidentEdge = v1v2;
+    };
+    PlanarGraph.prototype.connectNewVertex = function (oldVertex, newVertex) {
+        if (newVertex.incidentEdge)
+            throw new Error("Can't connect this vertex!");
+        var boundingFace = this.getEdgeFace(oldVertex, newVertex);
+        if (boundingFace) {
+            this.vertices.push(newVertex);
+            var oldOutEdge = this.getBoundaryEdges(boundingFace).filter(function (e) { return e.origin === oldVertex; })[0];
+            var oldInEdge = oldOutEdge.prev;
+            var oldNew = { origin: oldVertex, prev: oldInEdge, incidentFace: boundingFace };
+            var newOld = { origin: newVertex, twin: oldNew, prev: oldNew, next: oldOutEdge, incidentFace: boundingFace };
+            this.edges.push(oldNew);
+            this.edges.push(newOld);
+            oldNew.twin = newOld;
+            oldNew.next = newOld;
+            oldOutEdge.prev = newOld;
+            oldInEdge.next = oldNew;
+            newVertex.incidentEdge = newOld;
+            return true;
+        }
+        else {
+            return false;
+        }
+    };
+    PlanarGraph.prototype.connectVertices = function (v1, v2) {
+        var boundingFace = this.getEdgeFace(v1, v2);
+        if (boundingFace) {
+            // 1. Fix the edge pointers to other edges
+            var e1 = this.getBoundaryEdges(boundingFace).filter(function (e) { return e.origin === v1; })[0];
+            var e2 = this.getBoundaryEdges(boundingFace).filter(function (e) { return e.origin === v2; })[0];
+            var v1v2 = { origin: v1, next: e2, prev: e1.prev };
+            var v2v1 = { origin: v2, next: e1, prev: e2.prev, twin: v1v2 };
+            v1v2.twin = v2v1;
+            e1.prev.next = v1v2;
+            e1.prev = v2v1;
+            e2.prev.next = v2v1;
+            e2.prev = v1v2;
+            this.edges.push(v1v2);
+            this.edges.push(v2v1);
+            // 2. Split the face
+            var newFaceEdge = v2v1;
+            var oldFaceEdge = v1v2;
+            if (boundingFace.infinite) {
+                var vertices = [v1v2.origin];
+                var currentEdge_1 = v1v2.next;
+                while (currentEdge_1 !== v1v2) {
+                    vertices.push(currentEdge_1.origin);
+                    currentEdge_1 = currentEdge_1.next;
+                }
+                if (!exports.isClockwise(vertices)) {
+                    oldFaceEdge = v2v1;
+                    newFaceEdge = v1v2;
+                }
+            }
+            boundingFace.incidentEdge = oldFaceEdge;
+            var newFace = { infinite: false, incidentEdge: newFaceEdge };
+            this.faces.push(newFace);
+            // 3. Fix incidentFace pointers
+            oldFaceEdge.incidentFace = boundingFace;
+            newFaceEdge.incidentFace = newFace;
+            var currentEdge = newFaceEdge.next;
+            while (currentEdge !== newFaceEdge) {
+                currentEdge.incidentFace = newFace;
+                currentEdge = currentEdge.next;
+            }
+            return true;
+        }
+        else {
+            return false;
+        }
+    };
+    PlanarGraph.prototype.getEdgeFace = function (v1, v2) {
+        var midpoint = { x: (v1.x + v2.x) / 2, y: (v1.y + v2.y) / 2 };
+        var possFace = this.getBoundingFace(midpoint);
+        if (this.commonFaces(v1, v2).indexOf(possFace) > -1) {
+            return this.getBoundaryEdges(possFace).every(function (e) { return (!exports.intersect(v1, v2, e.origin, e.next.origin)); }) ? possFace : null;
+        }
+        else {
+            return null;
+        }
     };
     PlanarGraph.prototype.commonFaces = function (v1, v2) {
         return lodash_1.intersection.apply(void 0, [v1, v2].map(this.getIncidentFaces));
@@ -17394,19 +17505,22 @@ var PlanarGraph = (function () {
         var boundaryEdges = [];
         if (f.incidentEdge) {
             var currentEdge = f.incidentEdge;
-            while (!boundaryEdges.indexOf(currentEdge)) {
+            while (boundaryEdges.indexOf(currentEdge) === -1) {
                 boundaryEdges.push(currentEdge);
                 currentEdge = currentEdge.next;
             }
         }
         return boundaryEdges;
     };
+    PlanarGraph.prototype.getBoundaryVertices = function (f) {
+        return this.getBoundaryEdges(f).map(function (e) { return e.origin; });
+    };
     PlanarGraph.prototype.getBoundingFace = function (v) {
         var _this = this;
         var boundingFace = this.infiniteFace;
         this.faces.forEach(function (f) {
             if (!f.infinite &&
-                exports.inInterior(_this.getBoundaryEdges(f).map(function (e) { return e.origin; }), v)) {
+                exports.inInterior(_this.getBoundaryVertices(f), v)) {
                 boundingFace = f;
             }
         });
@@ -17414,14 +17528,14 @@ var PlanarGraph = (function () {
     };
     PlanarGraph.prototype.getIncidentFaces = function (v) {
         return v.incidentEdge ?
-            this.getOutgoingEdges(v).map(function (e) { return e.incidentFace; }) :
+            lodash_1.uniq(this.getOutgoingEdges(v).map(function (e) { return e.incidentFace; })) :
             [this.getBoundingFace(v)];
     };
     PlanarGraph.prototype.getOutgoingEdges = function (v) {
         var incidentEdges = [];
         if (v.incidentEdge) {
             var currentEdge = v.incidentEdge;
-            while (!incidentEdges.indexOf(currentEdge)) {
+            while (incidentEdges.indexOf(currentEdge) === -1) {
                 incidentEdges.push(currentEdge);
                 currentEdge = currentEdge.twin.next;
             }

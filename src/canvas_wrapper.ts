@@ -13,11 +13,13 @@ const unitVector = (v1: Vertex, v2: Vertex) => {
 export class GraphDrawingWrapper {
   canvasEl: HTMLCanvasElement;
   graph: PlanarGraph;
+  vertices: Array<Vertex>;
   highlightedVertex: Vertex | null;
   radius: number;
 
   constructor(canvasId : string, radius: number = 10) {
     this.radius = radius;
+    this.vertices = [];
     this.canvasEl = (<HTMLCanvasElement>document.getElementById(canvasId));
     this.drawCircle = this.drawCircle.bind(this);
     this.handleClick = this.handleClick.bind(this);
@@ -38,7 +40,7 @@ export class GraphDrawingWrapper {
   }
 
   drawCircle(v: Vertex, strokeColor: string = "black", fillColor: string | null = null) {
-    this.graph.addVertex(v);
+    this.vertices.push(v);
     let context = this.canvasEl.getContext('2d');
     context.strokeStyle = strokeColor;
     context.fillStyle = fillColor || "none";
@@ -64,7 +66,7 @@ export class GraphDrawingWrapper {
     let newVertex = <Vertex>{ x : e.x, y : e.y, colors: [] }
     let clickedVertex: Vertex | undefined;
     let overlappingVertex: Vertex | undefined;
-    this.graph.vertices.forEach((v : Vertex) => {
+    this.vertices.forEach((v : Vertex) => {
       let dist = distance(v, newVertex);
       if (dist <= this.radius) clickedVertex = v;
       if (dist <= 2 * this.radius) overlappingVertex = v;
@@ -74,5 +76,6 @@ export class GraphDrawingWrapper {
     } else if (!overlappingVertex) {
       this.drawCircle(newVertex);
     }
+    console.log(this.graph);
   }
 }

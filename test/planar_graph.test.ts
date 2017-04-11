@@ -1,4 +1,4 @@
-import { intersect, inInterior, PlanarGraph } from '../src/planar_graph';
+import { intersect, inInterior, isClockwise, PlanarGraph } from '../src/planar_graph';
 
 const v = (x: number, y: number) => ({ x: x, y: y });
 
@@ -116,6 +116,32 @@ describe("inInterior", () => {
   });
 });
 
+describe("isClockwise", () => {
+  const v1 = v(0, 0);
+  const v2 = v(0, 10);
+  const v3 = v(5, 8);
+  const v4 = v(10, 10);
+  const v5 = v(10, 0);
+  const v6 = v(5, 2);
+
+  it("works for clockwise triangles", () => {
+    expect(isClockwise([v1, v2, v5])).toBe(true);
+    expect(isClockwise([v3, v6, v1])).toBe(true);
+    expect(isClockwise([v4, v3, v2])).toBe(true);
+  });
+
+  it("works for counterclockwise triangles", () => {
+    expect(isClockwise([v1, v5, v2])).toBe(false);
+    expect(isClockwise([v5, v6, v1])).toBe(false);
+    expect(isClockwise([v1, v4, v3])).toBe(false);
+  });
+
+  it("works for a hexagon", () => {
+    expect(isClockwise([v1, v2, v3, v4, v5, v6])).toBe(true);
+    expect(isClockwise([v6, v5, v4, v3, v2, v1])).toBe(false);
+  })
+});
+
 describe("PlanarGraph", () => {
   let graph = new PlanarGraph();
   let vertices = [
@@ -148,14 +174,9 @@ describe("PlanarGraph", () => {
     [0, 6, false]
   ];
 
-  it("takes vertices", () => {
-    vertices.forEach(v => {
-      expect(graph.addVertex(v)).toBe(true);
-    });
-  });
-
   it("takes edges unless the new edge would cross", () => {
     edges.forEach(triple => {
+      console.log(triple);
       expect(graph.addEdge(vertices[triple[0]], vertices[triple[1]])).toBe(triple[2]);
     })
   });
