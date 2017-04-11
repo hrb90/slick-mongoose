@@ -1,5 +1,7 @@
 import { intersect, inInterior, PlanarGraph } from '../src/planar_graph';
 
+const v = (x: number, y: number) => ({ x: x, y: y });
+
 describe("intersect", () => {
   const intersectTrue = (a, b, c, d) => intersect(a, b, c, d, true);
   const intersectFalse = (a, b, c, d) => intersect(a, b, c, d, false);
@@ -62,7 +64,6 @@ describe("intersect", () => {
 });
 
 describe("inInterior", () => {
-  const v = (x: number, y: number) => ({ x: x, y: y });
   const v1 = v(0, 0);
   const v2 = v(0, 10);
   const v3 = v(5, 8);
@@ -113,4 +114,57 @@ describe("inInterior", () => {
   describe("not general position", () => {
 
   });
+});
+
+describe("PlanarGraph", () => {
+  let graph = new PlanarGraph();
+  let vertices = [
+    v(0, 0),
+    v(0, 2),
+    v(2, 2),
+    v(2, 0),
+    v(1, 1.5),
+    v(3, 1),
+    v(4, 1)
+  ];
+  // first two elements of the tuple are the indices of the vertices
+  // third element is whether the edge will maintain planarity
+  let edges : [number, number, boolean][] = [
+    [0, 1, true],
+    [1, 2, true],
+    [2, 3, true],
+    [3, 0, true],
+    [3, 4, true],
+    [0, 2, false],
+    [0, 4, true],
+    [1, 4, true],
+    [2, 4, true],
+    [4, 5, false],
+    [2, 5, true],
+    [3, 5, true],
+    [6, 5, true],
+    [2, 6, true],
+    [3, 6, true],
+    [0, 6, false]
+  ];
+
+  it("takes vertices", () => {
+    vertices.forEach(v => {
+      expect(graph.addVertex(v)).toBe(true);
+    });
+  });
+
+  it("takes edges unless the new edge would cross", () => {
+    edges.forEach(triple => {
+      expect(graph.addEdge(vertices[triple[0]], vertices[triple[1]])).toBe(triple[2]);
+    })
+  });
+
+  it("maintains the correct number of edges", () => {
+    expect(graph.edges.length/2).toBe(13);
+  })
+
+  it("maintains the correct number of faces", () => {
+    expect(graph.faces.length).toBe(8);
+  })
 });
