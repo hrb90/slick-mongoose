@@ -1,4 +1,4 @@
-import { Vertex, PlanarGraph } from './planar_graph';
+import { isClockwise, Vertex, PlanarGraph } from './planar_graph';
 
 const distance = (v1: Vertex, v2: Vertex) => {
   const s = (x : number) => x * x;
@@ -30,7 +30,9 @@ export class GraphDrawingWrapper {
 
   clickVertex(v: Vertex) {
     if (this.highlightedVertex) {
-      this.drawEdge(v, this.highlightedVertex);
+      if (v !== this.highlightedVertex) {
+        this.drawEdge(v, this.highlightedVertex);
+      }
       this.drawCircle(this.highlightedVertex);
       this.highlightedVertex = null;
     } else {
@@ -59,6 +61,7 @@ export class GraphDrawingWrapper {
       context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
       context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
       context.stroke();
+      console.log(this.graph.faces.map(this.graph.getBoundaryVertices).map(isClockwise));
     }
   }
 

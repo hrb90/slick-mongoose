@@ -96,7 +96,9 @@ var GraphDrawingWrapper = (function () {
     }
     GraphDrawingWrapper.prototype.clickVertex = function (v) {
         if (this.highlightedVertex) {
-            this.drawEdge(v, this.highlightedVertex);
+            if (v !== this.highlightedVertex) {
+                this.drawEdge(v, this.highlightedVertex);
+            }
             this.drawCircle(this.highlightedVertex);
             this.highlightedVertex = null;
         }
@@ -128,6 +130,7 @@ var GraphDrawingWrapper = (function () {
             context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
             context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
             context.stroke();
+            console.log(this.graph.faces.map(this.graph.getBoundaryVertices).map(planar_graph_1.isClockwise));
         }
     };
     GraphDrawingWrapper.prototype.handleClick = function (e) {
@@ -17384,6 +17387,7 @@ var PlanarGraph = (function () {
         this.begin = this.begin.bind(this);
         this.commonFaces = this.commonFaces.bind(this);
         this.getBoundaryEdges = this.getBoundaryEdges.bind(this);
+        this.getBoundaryVertices = this.getBoundaryVertices.bind(this);
         this.getBoundingFace = this.getBoundingFace.bind(this);
         this.getIncidentFaces = this.getIncidentFaces.bind(this);
         this.getOutgoingEdges = this.getOutgoingEdges.bind(this);
@@ -17444,48 +17448,53 @@ var PlanarGraph = (function () {
         var boundingFace = this.getEdgeFace(v1, v2);
         if (boundingFace) {
             // 1. Fix the edge pointers to other edges
-            var e1 = this.getBoundaryEdges(boundingFace).filter(function (e) { return e.origin === v1; })[0];
-            var e2 = this.getBoundaryEdges(boundingFace).filter(function (e) { return e.origin === v2; })[0];
-            var v1v2 = { origin: v1, next: e2, prev: e1.prev };
-            var v2v1 = { origin: v2, next: e1, prev: e2.prev, twin: v1v2 };
-            v1v2.twin = v2v1;
-            e1.prev.next = v1v2;
-            e1.prev = v2v1;
-            e2.prev.next = v2v1;
-            e2.prev = v1v2;
-            this.edges.push(v1v2);
-            this.edges.push(v2v1);
+            var newEdge = this.cv_edgePointers(v1, v2, boundingFace);
             // 2. Split the face
-            var newFaceEdge = v2v1;
-            var oldFaceEdge = v1v2;
-            if (boundingFace.infinite) {
-                var vertices = [v1v2.origin];
-                var currentEdge_1 = v1v2.next;
-                while (currentEdge_1 !== v1v2) {
-                    vertices.push(currentEdge_1.origin);
-                    currentEdge_1 = currentEdge_1.next;
-                }
-                if (!exports.isClockwise(vertices)) {
-                    oldFaceEdge = v2v1;
-                    newFaceEdge = v1v2;
-                }
-            }
-            boundingFace.incidentEdge = oldFaceEdge;
-            var newFace = { infinite: false, incidentEdge: newFaceEdge };
-            this.faces.push(newFace);
-            // 3. Fix incidentFace pointers
-            oldFaceEdge.incidentFace = boundingFace;
-            newFaceEdge.incidentFace = newFace;
-            var currentEdge = newFaceEdge.next;
-            while (currentEdge !== newFaceEdge) {
-                currentEdge.incidentFace = newFace;
-                currentEdge = currentEdge.next;
-            }
+            this.cv_makeNewFace(newEdge, boundingFace);
             return true;
         }
         else {
             return false;
         }
+    };
+    PlanarGraph.prototype.cv_makeNewFace = function (e, f) {
+        var newFaceEdge = e;
+        if (f.infinite) {
+            var vertices = [e.twin.origin];
+            var currentEdge_1 = e.twin.next;
+            while (currentEdge_1 !== e.twin) {
+                vertices.push(currentEdge_1.origin);
+                currentEdge_1 = currentEdge_1.next;
+            }
+            if (!exports.isClockwise(vertices)) {
+                newFaceEdge = e.twin;
+            }
+        }
+        f.incidentEdge = newFaceEdge.twin;
+        var newFace = { infinite: false, incidentEdge: newFaceEdge };
+        this.faces.push(newFace);
+        // Fix incidentFace pointers
+        newFaceEdge.twin.incidentFace = f;
+        newFaceEdge.incidentFace = newFace;
+        var currentEdge = newFaceEdge.next;
+        while (currentEdge !== newFaceEdge) {
+            currentEdge.incidentFace = newFace;
+            currentEdge = currentEdge.next;
+        }
+    };
+    PlanarGraph.prototype.cv_edgePointers = function (v1, v2, boundingFace) {
+        var e1 = this.getBoundaryEdges(boundingFace).filter(function (e) { return e.origin === v1; })[0];
+        var e2 = this.getBoundaryEdges(boundingFace).filter(function (e) { return e.origin === v2; })[0];
+        var v1v2 = { origin: v1, next: e2, prev: e1.prev };
+        var v2v1 = { origin: v2, next: e1, prev: e2.prev, twin: v1v2 };
+        v1v2.twin = v2v1;
+        e1.prev.next = v1v2;
+        e1.prev = v2v1;
+        e2.prev.next = v2v1;
+        e2.prev = v1v2;
+        this.edges.push(v1v2);
+        this.edges.push(v2v1);
+        return v1v2;
     };
     PlanarGraph.prototype.getEdgeFace = function (v1, v2) {
         var midpoint = { x: (v1.x + v2.x) / 2, y: (v1.y + v2.y) / 2 };

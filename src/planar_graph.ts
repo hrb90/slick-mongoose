@@ -101,6 +101,7 @@ export class PlanarGraph {
     this.begin = this.begin.bind(this);
     this.commonFaces = this.commonFaces.bind(this);
     this.getBoundaryEdges = this.getBoundaryEdges.bind(this);
+    this.getBoundaryVertices = this.getBoundaryVertices.bind(this);
     this.getBoundingFace = this.getBoundingFace.bind(this);
     this.getIncidentFaces = this.getIncidentFaces.bind(this);
     this.getOutgoingEdges = this.getOutgoingEdges.bind(this);
