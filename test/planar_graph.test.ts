@@ -117,5 +117,40 @@ describe("PlanarGraph", () => {
       expect(graph.faces.length).toBe(4);
     })
   });
-  });
+
+  describe("build another graph with some non-simple faces", () => {
+    let graph = new PlanarGraph();
+
+    let vertices = [
+      v(0, 0),
+      v(1, 1),
+      v(2, 1),
+      v(3, 0),
+      v(1.5, 4)
+    ];
+
+    let edges: [number, number, boolean][] = [
+      [1, 0, true],
+      [1, 2, true],
+      [2, 3, true],
+      [1, 4, true],
+      [0, 4, true],
+      [3, 4, true],
+      [4, 2, true],
+    ]
+
+    it("takes edges unless the new edge would cross", () => {
+      edges.forEach(triple => {
+        expect(graph.addEdge(vertices[triple[0]], vertices[triple[1]])).toBe(triple[2]);
+      })
+    });
+
+    it("maintains the correct number of edges", () => {
+      expect(graph.edges.length/2).toBe(7);
+    })
+
+    it("maintains the correct number of faces", () => {
+      expect(graph.faces.length).toBe(4);
+    })
+  })
 });
