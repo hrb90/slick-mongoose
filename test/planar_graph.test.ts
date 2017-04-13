@@ -134,9 +134,9 @@ describe("PlanarGraph", () => {
       [1, 2, true],
       [2, 3, true],
       [1, 4, true],
+      [4, 2, true],
       [0, 4, true],
       [3, 4, true],
-      [4, 2, true],
     ]
 
     it("takes edges unless the new edge would cross", () => {
