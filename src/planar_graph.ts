@@ -55,7 +55,7 @@ export class PlanarGraph {
     let boundingFace: Face | null = this.getEdgeFace(oldVertex, newVertex);
     if (boundingFace) {
       this.vertices.push(newVertex);
-      let oldOutEdge = this.getBoundaryEdges(boundingFace).filter(e => e.origin === oldVertex)[0];
+      let oldOutEdge = this.getNextClockwiseEdge(oldVertex, angle(oldVertex, newVertex));
       let oldInEdge = oldOutEdge.prev;
       let oldNew: HalfEdge = { origin: oldVertex, prev: oldInEdge, incidentFace: boundingFace };
       let newOld: HalfEdge = { origin: newVertex, twin: oldNew, prev: oldNew, next: oldOutEdge, incidentFace: boundingFace };
