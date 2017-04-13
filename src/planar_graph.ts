@@ -177,9 +177,9 @@ export class PlanarGraph {
       [this.getBoundingFace(v)];
   }
 
-  getNextClockwiseEdge(v: Vertex, newAngle: number) {
-    let highest = [null, -Infinity];
-    let nextAngle = [null, -Infinity];
+  getNextClockwiseEdge(v: Vertex, newAngle: number): HalfEdge {
+    let highest: [HalfEdge | null, number] = [null, -Infinity];
+    let nextAngle: [HalfEdge | null, number] = [null, -Infinity];
     this.getOutgoingEdges(v).forEach((e: HalfEdge) => {
       let currentAngle = angle(e.origin, e.next.origin);
       if ((currentAngle < newAngle) && (currentAngle > nextAngle[1])) {
