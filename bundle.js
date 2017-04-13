@@ -1,41 +1,41 @@
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
-/******/
+
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
-/******/
+
 /******/ 		// Check if module is in cache
 /******/ 		if(installedModules[moduleId])
 /******/ 			return installedModules[moduleId].exports;
-/******/
+
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			i: moduleId,
 /******/ 			l: false,
 /******/ 			exports: {}
 /******/ 		};
-/******/
+
 /******/ 		// Execute the module function
 /******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
+
 /******/ 		// Flag the module as loaded
 /******/ 		module.l = true;
-/******/
+
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
-/******/
-/******/
+
+
 /******/ 	// expose the modules object (__webpack_modules__)
 /******/ 	__webpack_require__.m = modules;
-/******/
+
 /******/ 	// expose the module cache
 /******/ 	__webpack_require__.c = installedModules;
-/******/
+
 /******/ 	// identity function for calling harmony imports with the correct context
 /******/ 	__webpack_require__.i = function(value) { return value; };
-/******/
+
 /******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
 /******/ 		if(!__webpack_require__.o(exports, name)) {
@@ -46,7 +46,7 @@
 /******/ 			});
 /******/ 		}
 /******/ 	};
-/******/
+
 /******/ 	// getDefaultExport function for compatibility with non-harmony modules
 /******/ 	__webpack_require__.n = function(module) {
 /******/ 		var getter = module && module.__esModule ?
@@ -55,15 +55,15 @@
 /******/ 		__webpack_require__.d(getter, 'a', getter);
 /******/ 		return getter;
 /******/ 	};
-/******/
+
 /******/ 	// Object.prototype.hasOwnProperty.call
 /******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-/******/
+
 /******/ 	// __webpack_public_path__
 /******/ 	__webpack_require__.p = "";
-/******/
+
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 5);
+/******/ 	return __webpack_require__(__webpack_require__.s = 6);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -73,7 +73,84 @@
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var planar_graph_1 = __webpack_require__(4);
+// coordinate equality
+exports.eq = function (a, b) { return (a.x === b.x && a.y === b.y); };
+// 2-dimensional cross product
+exports.xProd = function (v1, v2) { return (v1.x * v2.y - v1.y * v2.x); };
+// dot product
+var dot = function (v1, v2) { return (v1.x * v2.x + v1.y + v2.y); };
+exports.angle = function (v1, v2) {
+    return Math.atan2(v1.y - v2.y, v1.x - v2.x);
+};
+// Do the line segments from v1-v2 and v3-v4 intersect?
+exports.intersect = function (v1, v2, v3, v4, halfOpen) {
+    if (halfOpen === void 0) { halfOpen = false; }
+    var r = { x: v2.x - v1.x, y: v2.y - v1.y };
+    var s = { x: v4.x - v3.x, y: v4.y - v3.y };
+    var diff = { x: v3.x - v1.x, y: v3.y - v1.y };
+    var det = exports.xProd(r, s);
+    if (det !== 0) {
+        var t = exports.xProd(diff, r) / det;
+        var u = exports.xProd(diff, s) / det;
+        var interior = function (x) { return (0 < x && x < 1); };
+        var boundary = function (x) { return (x === 0 || x === 1); };
+        if (interior(t) && interior(u)) {
+            // the segments intersect
+            return true;
+        }
+        else if (boundary(t) || boundary(u)) {
+            // three points are collinear
+            return (interior(t) || interior(u)) && (!halfOpen || t === 0 || u === 0);
+        }
+        else {
+            return false;
+        }
+    }
+    else {
+        if (exports.xProd(diff, r) !== 0) {
+            // parallel, non-collinear
+            return false;
+        }
+        else {
+            // all 4 points collinear
+            var t0 = dot(diff, r) / dot(r, r);
+            var t1 = t0 + dot(s, r) / dot(r, r);
+            return (Math.max(t0, t1) > 0 && Math.min(t0, t1) < 1);
+        }
+    }
+};
+// Is v in the interior of polygon?
+exports.inInterior = function (polygon, v) {
+    if (polygon.length < 3)
+        return false;
+    var maxX = Math.max.apply(Math, polygon.map(function (v) { return v.x; }));
+    var maxY = Math.max.apply(Math, polygon.map(function (v) { return v.y; }));
+    var outerVertex = { x: maxX + 1, y: maxY + 1 };
+    var crossingNum = 0;
+    polygon.map(function (v, i, p) { return ([v, p[(i + 1) % p.length]]); }).forEach(function (pair) {
+        if (exports.intersect(v, outerVertex, pair[0], pair[1], true))
+            crossingNum += 1;
+    });
+    return crossingNum % 2 === 1;
+};
+exports.isClockwise = function (polygon) {
+    var signedAreaSum = 0;
+    polygon.map(function (v, i, p) { return ([v, p[(i + 1) % p.length]]); }).forEach(function (pair) {
+        signedAreaSum += (pair[1].x - pair[0].x) * (pair[1].y + pair[0].y);
+    });
+    return (signedAreaSum > 0);
+};
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var vertex_1 = __webpack_require__(0);
+var planar_graph_1 = __webpack_require__(3);
 var distance = function (v1, v2) {
     var s = function (x) { return x * x; };
     return Math.sqrt(s(v1.x - v2.x) + s(v1.y - v2.y));
@@ -130,7 +207,7 @@ var GraphDrawingWrapper = (function () {
             context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
             context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
             context.stroke();
-            console.log(this.graph.faces.map(this.graph.getBoundaryVertices).map(planar_graph_1.isClockwise));
+            console.log(this.graph.faces.map(this.graph.getBoundaryVertices).map(vertex_1.isClockwise));
         }
     };
     GraphDrawingWrapper.prototype.handleClick = function (e) {
@@ -158,62 +235,7 @@ exports.GraphDrawingWrapper = GraphDrawingWrapper;
 
 
 /***/ }),
-/* 1 */
-/***/ (function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
-	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ }),
 /* 2 */
-/***/ (function(module, exports) {
-
-module.exports = function(module) {
-	if(!module.webpackPolyfill) {
-		module.deprecate = function() {};
-		module.paths = [];
-		// module.parent = undefined by default
-		if(!module.children) module.children = [];
-		Object.defineProperty(module, "loaded", {
-			enumerable: true,
-			get: function() {
-				return module.l;
-			}
-		});
-		Object.defineProperty(module, "id", {
-			enumerable: true,
-			get: function() {
-				return module.i;
-			}
-		});
-		module.webpackPolyfill = 1;
-	}
-	return module;
-};
-
-
-/***/ }),
-/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -17302,80 +17324,17 @@ module.exports = function(module) {
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(2)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(5)(module)))
 
 /***/ }),
-/* 4 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var lodash_1 = __webpack_require__(3);
-// coordinate equality
-var eq = function (a, b) { return (a.x === b.x && a.y === b.y); };
-// 2-dimensional cross product
-var xProd = function (v1, v2) { return (v1.x * v2.y - v1.y * v2.x); };
-// dot product
-var dot = function (v1, v2) { return (v1.x * v2.x + v1.y + v2.y); };
-// Do the line segments from v1-v2 and v3-v4 intersect?
-exports.intersect = function (v1, v2, v3, v4, halfOpen) {
-    if (halfOpen === void 0) { halfOpen = false; }
-    var r = { x: v2.x - v1.x, y: v2.y - v1.y };
-    var s = { x: v4.x - v3.x, y: v4.y - v3.y };
-    var diff = { x: v3.x - v1.x, y: v3.y - v1.y };
-    var det = xProd(r, s);
-    if (det !== 0) {
-        var t = xProd(diff, r) / det;
-        var u = xProd(diff, s) / det;
-        var interior = function (x) { return (0 < x && x < 1); };
-        var boundary = function (x) { return (x === 0 || x === 1); };
-        if (interior(t) && interior(u)) {
-            // the segments intersect
-            return true;
-        }
-        else if (boundary(t) || boundary(u)) {
-            // three points are collinear
-            return (interior(t) || interior(u)) && (!halfOpen || t === 0 || u === 0);
-        }
-        else {
-            return false;
-        }
-    }
-    else {
-        if (xProd(diff, r) !== 0) {
-            // parallel, non-collinear
-            return false;
-        }
-        else {
-            // all 4 points collinear
-            var t0 = dot(diff, r) / dot(r, r);
-            var t1 = t0 + dot(s, r) / dot(r, r);
-            return (Math.max(t0, t1) > 0 && Math.min(t0, t1) < 1);
-        }
-    }
-};
-// Is v in the interior of polygon?
-exports.inInterior = function (polygon, v) {
-    if (polygon.length < 3)
-        return false;
-    var maxX = Math.max.apply(Math, polygon.map(function (v) { return v.x; }));
-    var maxY = Math.max.apply(Math, polygon.map(function (v) { return v.y; }));
-    var outerVertex = { x: maxX + 1, y: maxY + 1 };
-    var crossingNum = 0;
-    polygon.map(function (v, i, p) { return ([v, p[(i + 1) % p.length]]); }).forEach(function (pair) {
-        if (exports.intersect(v, outerVertex, pair[0], pair[1], true))
-            crossingNum += 1;
-    });
-    return crossingNum % 2 === 1;
-};
-exports.isClockwise = function (polygon) {
-    var signedAreaSum = 0;
-    polygon.map(function (v, i, p) { return ([v, p[(i + 1) % p.length]]); }).forEach(function (pair) {
-        signedAreaSum += (pair[1].x - pair[0].x) * (pair[1].y + pair[0].y);
-    });
-    return (signedAreaSum > 0);
-};
+var vertex_1 = __webpack_require__(0);
+var lodash_1 = __webpack_require__(2);
 var PlanarGraph = (function () {
     function PlanarGraph() {
         this.vertices = [];
@@ -17427,7 +17386,7 @@ var PlanarGraph = (function () {
         var boundingFace = this.getEdgeFace(oldVertex, newVertex);
         if (boundingFace) {
             this.vertices.push(newVertex);
-            var oldOutEdge = this.getBoundaryEdges(boundingFace).filter(function (e) { return e.origin === oldVertex; })[0];
+            var oldOutEdge = this.getNextClockwiseEdge(oldVertex, vertex_1.angle(oldVertex, newVertex));
             var oldInEdge = oldOutEdge.prev;
             var oldNew = { origin: oldVertex, prev: oldInEdge, incidentFace: boundingFace };
             var newOld = { origin: newVertex, twin: oldNew, prev: oldNew, next: oldOutEdge, incidentFace: boundingFace };
@@ -17466,7 +17425,7 @@ var PlanarGraph = (function () {
                 vertices.push(currentEdge_1.origin);
                 currentEdge_1 = currentEdge_1.next;
             }
-            if (!exports.isClockwise(vertices)) {
+            if (!vertex_1.isClockwise(vertices)) {
                 newFaceEdge = e.twin;
             }
         }
@@ -17483,8 +17442,10 @@ var PlanarGraph = (function () {
         }
     };
     PlanarGraph.prototype.cv_edgePointers = function (v1, v2, boundingFace) {
-        var e1 = this.getBoundaryEdges(boundingFace).filter(function (e) { return e.origin === v1; })[0];
-        var e2 = this.getBoundaryEdges(boundingFace).filter(function (e) { return e.origin === v2; })[0];
+        var angle1 = vertex_1.angle(v1, v2);
+        var angle2 = vertex_1.angle(v2, v1);
+        var e1 = this.getNextClockwiseEdge(v1, angle1);
+        var e2 = this.getNextClockwiseEdge(v2, angle2);
         var v1v2 = { origin: v1, next: e2, prev: e1.prev };
         var v2v1 = { origin: v2, next: e1, prev: e2.prev, twin: v1v2 };
         v1v2.twin = v2v1;
@@ -17500,7 +17461,7 @@ var PlanarGraph = (function () {
         var midpoint = { x: (v1.x + v2.x) / 2, y: (v1.y + v2.y) / 2 };
         var possFace = this.getBoundingFace(midpoint);
         if (this.commonFaces(v1, v2).indexOf(possFace) > -1) {
-            return this.getBoundaryEdges(possFace).every(function (e) { return (!exports.intersect(v1, v2, e.origin, e.next.origin)); }) ? possFace : null;
+            return this.getBoundaryEdges(possFace).every(function (e) { return (!vertex_1.intersect(v1, v2, e.origin, e.next.origin)); }) ? possFace : null;
         }
         else {
             return null;
@@ -17528,7 +17489,7 @@ var PlanarGraph = (function () {
         var boundingFace = this.infiniteFace;
         this.faces.forEach(function (f) {
             if (!f.infinite &&
-                exports.inInterior(_this.getBoundaryVertices(f), v)) {
+                vertex_1.inInterior(_this.getBoundaryVertices(f), v)) {
                 boundingFace = f;
             }
         });
@@ -17538,6 +17499,25 @@ var PlanarGraph = (function () {
         return v.incidentEdge ?
             lodash_1.uniq(this.getOutgoingEdges(v).map(function (e) { return e.incidentFace; })) :
             [this.getBoundingFace(v)];
+    };
+    PlanarGraph.prototype.getNextClockwiseEdge = function (v, newAngle) {
+        var highest = [null, -Infinity];
+        var nextAngle = [null, -Infinity];
+        this.getOutgoingEdges(v).forEach(function (e) {
+            var currentAngle = vertex_1.angle(e.origin, e.next.origin);
+            if ((currentAngle < newAngle) && (currentAngle > nextAngle[1])) {
+                nextAngle = [e, currentAngle];
+            }
+            if (currentAngle > highest[1]) {
+                highest = [e, currentAngle];
+            }
+        });
+        if (nextAngle[0]) {
+            return nextAngle[0];
+        }
+        else {
+            return highest[0];
+        }
     };
     PlanarGraph.prototype.getOutgoingEdges = function (v) {
         var incidentEdges = [];
@@ -17556,13 +17536,68 @@ exports.PlanarGraph = PlanarGraph;
 
 
 /***/ }),
+/* 4 */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
 /* 5 */
+/***/ (function(module, exports) {
+
+module.exports = function(module) {
+	if(!module.webpackPolyfill) {
+		module.deprecate = function() {};
+		module.paths = [];
+		// module.parent = undefined by default
+		if(!module.children) module.children = [];
+		Object.defineProperty(module, "loaded", {
+			enumerable: true,
+			get: function() {
+				return module.l;
+			}
+		});
+		Object.defineProperty(module, "id", {
+			enumerable: true,
+			get: function() {
+				return module.i;
+			}
+		});
+		module.webpackPolyfill = 1;
+	}
+	return module;
+};
+
+
+/***/ }),
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var canvas_wrapper_1 = __webpack_require__(0);
+var canvas_wrapper_1 = __webpack_require__(1);
 document.addEventListener('DOMContentLoaded', function () {
     var wrapper = new canvas_wrapper_1.GraphDrawingWrapper("canvas");
 });
