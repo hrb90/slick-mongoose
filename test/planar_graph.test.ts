@@ -21,7 +21,7 @@ describe("PlanarGraph", () => {
     graph2.addEdge(vs[1], vs[3]);
     graph2.addEdge(vs[3], vs[2]);
     graph2.addEdge(vs[2], vs[1]);
-    expect(graph1.getBoundaryEdges(graph1.infiniteFace).length).toBe(5);
+    expect(graph2.getBoundaryEdges(graph2.infiniteFace).length).toBe(5);
   });
 
   describe("build a small graph", () => {
@@ -58,7 +58,6 @@ describe("PlanarGraph", () => {
 
     it("takes edges unless the new edge would cross", () => {
       edges.forEach(triple => {
-        console.log(triple);
         expect(graph.addEdge(vertices[triple[0]], vertices[triple[1]])).toBe(triple[2]);
       })
     });
@@ -97,7 +96,6 @@ describe("PlanarGraph", () => {
 
     it("takes edges unless the new edge would cross", () => {
       edges.forEach(triple => {
-        console.log(triple);
         expect(graph.addEdge(vertices[triple[0]], vertices[triple[1]])).toBe(triple[2]);
       })
     });
