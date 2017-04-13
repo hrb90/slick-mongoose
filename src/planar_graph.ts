@@ -1,4 +1,4 @@
-import { Vertex, HalfEdge, Face, eq, intersect, inInterior, isClockwise } from './vertex';
+import { Vertex, HalfEdge, Face, eq, intersect, inInterior, isClockwise, angle } from './vertex';
 import { intersection, uniq } from 'lodash';
 
 export class PlanarGraph {
@@ -112,8 +112,10 @@ export class PlanarGraph {
   }
 
   cv_edgePointers(v1: Vertex, v2: Vertex, boundingFace: Face) {
-    let e1 = this.getBoundaryEdges(boundingFace).filter(e => e.origin === v1)[0];
-    let e2 = this.getBoundaryEdges(boundingFace).filter(e => e.origin === v2)[0];
+    let angle1 = angle(v1, v2);
+    let angle2 = angle(v2, v1);
+    let e1 = this.getNextClockwiseEdge(v1, angle1);
+    let e2 = this.getNextClockwiseEdge(v2, angle2);
     let v1v2: HalfEdge = { origin: v1, next: e2, prev: e1.prev };
     let v2v1: HalfEdge = { origin: v2, next: e1, prev: e2.prev, twin: v1v2};
     v1v2.twin = v2v1;
@@ -173,6 +175,25 @@ export class PlanarGraph {
     return v.incidentEdge ?
       uniq(this.getOutgoingEdges(v).map((e: HalfEdge) => e.incidentFace)) :
       [this.getBoundingFace(v)];
+  }
+
+  getNextClockwiseEdge(v: Vertex, newAngle: number) {
+    let highest = [null, -Infinity];
+    let nextAngle = [null, -Infinity];
+    this.getOutgoingEdges(v).forEach((e: HalfEdge) => {
+      let currentAngle = angle(e.origin, e.next.origin);
+      if ((currentAngle < newAngle) && (currentAngle > nextAngle[1])) {
+        nextAngle = [e, currentAngle];
+      }
+      if (currentAngle > highest[1]) {
+        highest = [e, currentAngle];
+      }
+    });
+    if (nextAngle[0]) {
+      return nextAngle[0];
+    } else{
+      return highest[0];
+    }
   }
 
   getOutgoingEdges(v: Vertex) {

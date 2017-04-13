@@ -3,7 +3,7 @@ import { PlanarGraph } from '../src/planar_graph';
 const v = (x: number, y: number) => ({ x: x, y: y });
 
 describe("PlanarGraph", () => {
-  it("keeps track of the infiniteFace", () => {
+  it("keeps track of the infiniteFace I", () => {
     let vs = [
       v(0, -10),
       v(0, 0),
@@ -16,6 +16,15 @@ describe("PlanarGraph", () => {
     graph1.addEdge(vs[2], vs[3]);
     graph1.addEdge(vs[3], vs[1]);
     expect(graph1.getBoundaryEdges(graph1.infiniteFace).length).toBe(5);
+  });
+
+  it("keeps track of the infiniteFace II ", () => {
+    let vs = [
+      v(0, -10),
+      v(0, 0),
+      v(-10, 10),
+      v(10, 10)
+    ]
     let graph2 = new PlanarGraph();
     graph2.addEdge(vs[0], vs[1]);
     graph2.addEdge(vs[1], vs[3]);

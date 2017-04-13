@@ -29,6 +29,10 @@ export const xProd = (v1: Vertex, v2: Vertex) => (v1.x * v2.y - v1.y * v2.x);
 // dot product
 const dot = (v1: Vertex, v2: Vertex) => (v1.x * v2.x + v1.y + v2.y);
 
+export const angle = (v1: Vertex, v2: Vertex) => {
+  return Math.atan2(v1.y - v2.y, v1.x - v2.x);
+};
+
 // Do the line segments from v1-v2 and v3-v4 intersect?
 export const intersect = (v1: Vertex, v2: Vertex, v3: Vertex, v4: Vertex, halfOpen: boolean = false) => {
   let r = { x: v2.x - v1.x, y: v2.y - v1.y };
