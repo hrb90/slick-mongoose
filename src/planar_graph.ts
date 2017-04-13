@@ -1,20 +1,5 @@
-import { Vertex, eq, intersect, inInterior, isClockwise } from './vertex';
+import { Vertex, HalfEdge, Face, eq, intersect, inInterior, isClockwise } from './vertex';
 import { intersection, uniq } from 'lodash';
-
-export interface Face {
-  infinite: boolean;
-  incidentEdge?: HalfEdge;
-}
-
-export interface HalfEdge {
-  origin: Vertex;
-  twin?: HalfEdge;
-  // next is the next half edge traveling along the face
-  // prev is the previous half edge traveling along the face
-  next?: HalfEdge;
-  prev?: HalfEdge;
-  incidentFace?: Face;
-}
 
 export class PlanarGraph {
   vertices: Array<Vertex>;

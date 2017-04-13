@@ -5,6 +5,21 @@ export interface Vertex {
   incidentEdge?: HalfEdge;
 }
 
+export interface Face {
+  infinite: boolean;
+  incidentEdge?: HalfEdge;
+}
+
+export interface HalfEdge {
+  origin: Vertex;
+  twin?: HalfEdge;
+  // next is the next half edge traveling along the face
+  // prev is the previous half edge traveling along the face
+  next?: HalfEdge;
+  prev?: HalfEdge;
+  incidentFace?: Face;
+}
+
 // coordinate equality
 export const eq = (a: Vertex, b: Vertex) => (a.x === b.x && a.y === b.y);
 

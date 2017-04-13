@@ -1,4 +1,5 @@
-import { isClockwise, Vertex, PlanarGraph } from './planar_graph';
+import { isClockwise, Vertex } from './vertex'
+import { PlanarGraph } from './planar_graph';
 
 const distance = (v1: Vertex, v2: Vertex) => {
   const s = (x : number) => x * x;
