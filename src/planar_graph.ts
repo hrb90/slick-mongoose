@@ -13,14 +13,7 @@ export class PlanarGraph {
     this.infiniteFace = { infinite: true };
     this.faces = [this.infiniteFace];
     // bind methods
-    this.addEdge = this.addEdge.bind(this);
-    this.begin = this.begin.bind(this);
-    this.commonFaces = this.commonFaces.bind(this);
-    this.getBoundaryEdges = this.getBoundaryEdges.bind(this);
-    this.getBoundaryVertices = this.getBoundaryVertices.bind(this);
-    this.getBoundingFace = this.getBoundingFace.bind(this);
     this.getIncidentFaces = this.getIncidentFaces.bind(this);
-    this.getOutgoingEdges = this.getOutgoingEdges.bind(this);
   }
 
   addEdge(v1: Vertex, v2: Vertex) {
@@ -112,10 +105,8 @@ export class PlanarGraph {
   }
 
   cv_edgePointers(v1: Vertex, v2: Vertex, boundingFace: Face) {
-    let angle1 = angle(v1, v2);
-    let angle2 = angle(v2, v1);
-    let e1 = this.getNextClockwiseEdge(v1, angle1);
-    let e2 = this.getNextClockwiseEdge(v2, angle2);
+    let e1 = this.getNextClockwiseEdge(v1, angle(v1, v2));
+    let e2 = this.getNextClockwiseEdge(v2, angle(v2, v1));
     let v1v2: HalfEdge = { origin: v1, next: e2, prev: e1.prev };
     let v2v1: HalfEdge = { origin: v2, next: e1, prev: e2.prev, twin: v1v2};
     v1v2.twin = v2v1;
@@ -178,21 +169,17 @@ export class PlanarGraph {
   }
 
   getNextClockwiseEdge(v: Vertex, newAngle: number): HalfEdge {
-    let highest: [HalfEdge | null, number] = [null, -Infinity];
-    let nextAngle: [HalfEdge | null, number] = [null, -Infinity];
-    this.getOutgoingEdges(v).forEach((e: HalfEdge) => {
-      let currentAngle = angle(e.origin, e.next.origin);
-      if ((currentAngle < newAngle) && (currentAngle > nextAngle[1])) {
-        nextAngle = [e, currentAngle];
-      }
-      if (currentAngle > highest[1]) {
-        highest = [e, currentAngle];
-      }
-    });
-    if (nextAngle[0]) {
-      return nextAngle[0];
-    } else{
-      return highest[0];
+    let edgesWithAngles: [HalfEdge, number][] = this.getOutgoingEdges(v).map((e: HalfEdge) =>
+      [e, angle(e.origin, e.next.origin)]);
+    // If there's an angle smaller than newAngle, return the edge with the largest such angle
+    let smallAngleEdges = edgesWithAngles.filter((ea: [HalfEdge, number]) => ea[1] < newAngle);
+    if (smallAngleEdges.length > 0) {
+      smallAngleEdges.sort((e1: [HalfEdge, number], e2: [HalfEdge, number]) => (e2[1] - e1[1]));
+      return smallAngleEdges[0][0];
+    } else {
+      // otherwise return the largest angle
+      edgesWithAngles.sort((e1: [HalfEdge, number], e2: [HalfEdge, number]) => (e2[1] - e1[1]));
+      return edgesWithAngles[0][0];
     }
   }
 
