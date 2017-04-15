@@ -1,4 +1,5 @@
-import { Vertex, HalfEdge, Face, eq, intersect, inInterior, isClockwise, angle } from './vertex';
+import { Vertex, HalfEdge, Face,
+  eq, intersect, inInterior, isClockwise, angle } from './vertex';
 import { intersection, uniq } from 'lodash';
 
 export class PlanarGraph {
@@ -79,18 +80,7 @@ export class PlanarGraph {
   }
 
   cv_makeNewFace(e: HalfEdge, f: Face) {
-    let newFaceEdge: HalfEdge = e;
-    if (f.infinite) {
-      let vertices = [e.twin.origin];
-      let currentEdge = e.twin.next;
-      while (currentEdge !== e.twin) {
-        vertices.push(currentEdge.origin);
-        currentEdge = currentEdge.next;
-      }
-      if (!isClockwise(vertices)) {
-        newFaceEdge = e.twin;
-      }
-    }
+    let newFaceEdge: HalfEdge = f.infinite ? this.pickInfiniteEdge(e) : e;
     f.incidentEdge = newFaceEdge.twin;
     let newFace: Face = { infinite: false, incidentEdge: newFaceEdge };
     this.faces.push(newFace);
@@ -169,18 +159,19 @@ export class PlanarGraph {
   }
 
   getNextClockwiseEdge(v: Vertex, newAngle: number): HalfEdge {
-    let edgesWithAngles: [HalfEdge, number][] = this.getOutgoingEdges(v).map((e: HalfEdge) =>
-      [e, angle(e.origin, e.next.origin)]);
+    let edgesWithAngles: [HalfEdge, number][] =
+      this.getOutgoingEdges(v).map((e: HalfEdge) => [e, angle(e.origin, e.next.origin)]);
     // If there's an angle smaller than newAngle, return the edge with the largest such angle
+    // Otherwise, wrap around and return the edge with the largest angle overall
     let smallAngleEdges = edgesWithAngles.filter((ea: [HalfEdge, number]) => ea[1] < newAngle);
-    if (smallAngleEdges.length > 0) {
-      smallAngleEdges.sort((e1: [HalfEdge, number], e2: [HalfEdge, number]) => (e2[1] - e1[1]));
-      return smallAngleEdges[0][0];
-    } else {
-      // otherwise return the largest angle
-      edgesWithAngles.sort((e1: [HalfEdge, number], e2: [HalfEdge, number]) => (e2[1] - e1[1]));
-      return edgesWithAngles[0][0];
-    }
+    const sortByAngleDecreasing =
+      (e1: [HalfEdge, number], e2: [HalfEdge, number]) => (e2[1] - e1[1]);
+    const getHighestAngleEdge =
+      (pairList: [HalfEdge, number][]) =>
+        (pairList.sort(sortByAngleDecreasing)[0][0]);
+    return (smallAngleEdges.length > 0) ?
+      getHighestAngleEdge(smallAngleEdges) :
+      getHighestAngleEdge(edgesWithAngles);
   }
 
   getOutgoingEdges(v: Vertex) {
@@ -193,6 +184,17 @@ export class PlanarGraph {
       }
     }
     return incidentEdges;
+  }
+
+  // given that e or e.twin is incident to the infiniteface, return the half edge that is
+  pickInfiniteEdge(e: HalfEdge) {
+    let vertices = [e.twin.origin];
+    let currentEdge = e.twin.next;
+    while (currentEdge !== e.twin) {
+      vertices.push(currentEdge.origin);
+      currentEdge = currentEdge.next;
+    }
+    return isClockwise(vertices) ? e : e.twin;
   }
 
 }
