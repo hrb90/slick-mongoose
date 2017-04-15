@@ -33,6 +33,9 @@ export const angle = (v1: Vertex, v2: Vertex) => {
   return Math.atan2(v1.y - v2.y, v1.x - v2.x);
 };
 
+export const getConsecutiveVertexPairs =
+  (v: Vertex, i: number, p: Vertex[]) => ([v, p[(i+1)%p.length]]);
+
 // Do the line segments from v1-v2 and v3-v4 intersect?
 export const intersect = (v1: Vertex, v2: Vertex, v3: Vertex, v4: Vertex, halfOpen: boolean = false) => {
   let r = { x: v2.x - v1.x, y: v2.y - v1.y };
@@ -73,7 +76,7 @@ export const inInterior = (polygon: Array<Vertex>, v: Vertex) => {
   let maxY = Math.max(...polygon.map(v => v.y));
   let outerVertex = { x: maxX + 1, y: maxY + 1 };
   let crossingNum = 0;
-  polygon.map((v, i, p) => ([v, p[(i+1)%p.length]])).forEach(pair => {
+  polygon.map(getConsecutiveVertexPairs).forEach(pair => {
     if (intersect(v, outerVertex, pair[0], pair[1], true)) crossingNum += 1;
   })
   return crossingNum % 2 === 1;
@@ -81,8 +84,12 @@ export const inInterior = (polygon: Array<Vertex>, v: Vertex) => {
 
 export const isClockwise = (polygon: Array<Vertex>) => {
   let signedAreaSum = 0;
-  polygon.map((v, i, p) => ([v, p[(i+1)%p.length]])).forEach(pair => {
+  polygon.map(getConsecutiveVertexPairs).forEach(pair => {
     signedAreaSum += (pair[1].x - pair[0].x) * (pair[1].y + pair[0].y);
   })
   return (signedAreaSum > 0);
 }
+
+export const convexHull = (vertices: Vertex[]): Vertex[] => {
+  return vertices;
+};

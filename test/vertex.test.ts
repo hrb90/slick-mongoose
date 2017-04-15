@@ -1,4 +1,5 @@
-import { intersect, inInterior, isClockwise } from '../src/vertex';
+import { Vertex, intersect, inInterior, isClockwise, convexHull } from '../src/vertex';
+import { shuffle } from 'lodash';
 
 const v = (x: number, y: number) => ({ x: x, y: y });
 
@@ -140,4 +141,33 @@ describe("isClockwise", () => {
     expect(isClockwise([v1, v2, v3, v4, v5, v6])).toBe(true);
     expect(isClockwise([v6, v5, v4, v3, v2, v1])).toBe(false);
   })
+});
+
+describe("convexHull", () => {
+  const testVertexSet = (vertexSet: Vertex[], name: string, expectedLength: number) => {
+    describe(name, () => {
+      let polygon = convexHull(shuffle(vertexSet));
+
+      it("returns in counterclockwise order", () => {
+        expect(isClockwise(polygon)).toBe(false);
+      });
+
+      it("returns a polygon containing every other vertex", () => {
+        vertexSet.forEach((v: Vertex) => {
+          expect(inInterior(polygon, v) || polygon.includes(v)).toBe(true);
+        })
+      });
+
+      it("has the right length", () => {
+        expect(polygon.length).toBe(expectedLength);
+      });
+    });
+  }
+
+  testVertexSet([v(0, 0), v(1, 3), v(4, 6)], "triangle", 3);
+  testVertexSet([v(0, 0), v(1, 2), v(3, 2), v(2, 3), v(1, 1), v(4, 0)],
+    "pentagon + 1 interior", 5);
+  testVertexSet([v(0, 0), v(0, 10), v(10, 10), v(10, 0),
+    v(3, 5), v(6, 2), v(1, 1), v(8, 3), v(4, 9), v(4, 4)],
+    "square + 6 interior", 4);
 });
