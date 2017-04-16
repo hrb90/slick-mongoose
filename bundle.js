@@ -1,41 +1,41 @@
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
-
+/******/
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
-
+/******/
 /******/ 		// Check if module is in cache
 /******/ 		if(installedModules[moduleId])
 /******/ 			return installedModules[moduleId].exports;
-
+/******/
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			i: moduleId,
 /******/ 			l: false,
 /******/ 			exports: {}
 /******/ 		};
-
+/******/
 /******/ 		// Execute the module function
 /******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-
+/******/
 /******/ 		// Flag the module as loaded
 /******/ 		module.l = true;
-
+/******/
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
-
-
+/******/
+/******/
 /******/ 	// expose the modules object (__webpack_modules__)
 /******/ 	__webpack_require__.m = modules;
-
+/******/
 /******/ 	// expose the module cache
 /******/ 	__webpack_require__.c = installedModules;
-
+/******/
 /******/ 	// identity function for calling harmony imports with the correct context
 /******/ 	__webpack_require__.i = function(value) { return value; };
-
+/******/
 /******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
 /******/ 		if(!__webpack_require__.o(exports, name)) {
@@ -46,7 +46,7 @@
 /******/ 			});
 /******/ 		}
 /******/ 	};
-
+/******/
 /******/ 	// getDefaultExport function for compatibility with non-harmony modules
 /******/ 	__webpack_require__.n = function(module) {
 /******/ 		var getter = module && module.__esModule ?
@@ -55,15 +55,15 @@
 /******/ 		__webpack_require__.d(getter, 'a', getter);
 /******/ 		return getter;
 /******/ 	};
-
+/******/
 /******/ 	// Object.prototype.hasOwnProperty.call
 /******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-
+/******/
 /******/ 	// __webpack_public_path__
 /******/ 	__webpack_require__.p = "";
-
+/******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 6);
+/******/ 	return __webpack_require__(__webpack_require__.s = 7);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -82,6 +82,7 @@ var dot = function (v1, v2) { return (v1.x * v2.x + v1.y + v2.y); };
 exports.angle = function (v1, v2) {
     return Math.atan2(v1.y - v2.y, v1.x - v2.x);
 };
+exports.getConsecutiveVertexPairs = function (v, i, p) { return ([v, p[(i + 1) % p.length]]); };
 // Do the line segments from v1-v2 and v3-v4 intersect?
 exports.intersect = function (v1, v2, v3, v4, halfOpen) {
     if (halfOpen === void 0) { halfOpen = false; }
@@ -127,7 +128,7 @@ exports.inInterior = function (polygon, v) {
     var maxY = Math.max.apply(Math, polygon.map(function (v) { return v.y; }));
     var outerVertex = { x: maxX + 1, y: maxY + 1 };
     var crossingNum = 0;
-    polygon.map(function (v, i, p) { return ([v, p[(i + 1) % p.length]]); }).forEach(function (pair) {
+    polygon.map(exports.getConsecutiveVertexPairs).forEach(function (pair) {
         if (exports.intersect(v, outerVertex, pair[0], pair[1], true))
             crossingNum += 1;
     });
@@ -135,10 +136,39 @@ exports.inInterior = function (polygon, v) {
 };
 exports.isClockwise = function (polygon) {
     var signedAreaSum = 0;
-    polygon.map(function (v, i, p) { return ([v, p[(i + 1) % p.length]]); }).forEach(function (pair) {
+    polygon.map(exports.getConsecutiveVertexPairs).forEach(function (pair) {
         signedAreaSum += (pair[1].x - pair[0].x) * (pair[1].y + pair[0].y);
     });
     return (signedAreaSum > 0);
+};
+// Helper method for convex hull
+var lexSortYX = function (a, b) {
+    if (a.y - b.y !== 0) {
+        return a.y - b.y;
+    }
+    else {
+        return a.x - b.x;
+    }
+};
+// Graham scan
+exports.convexHull = function (vertices) {
+    var stack = [];
+    // Don't mutate the input
+    var verticesCopy = vertices.slice(0);
+    // 1. Find lowest y-value
+    var firstVertex = verticesCopy.sort(lexSortYX)[0];
+    stack.unshift(firstVertex);
+    var otherVertices = verticesCopy.slice(1);
+    // 2. Sort vertices by angle
+    otherVertices.sort(function (v1, v2) { return (exports.isClockwise([firstVertex, v1, v2]) ? -1 : 1); });
+    // 3. Do the scan
+    otherVertices.forEach(function (nextVertex) {
+        while (stack.length > 1 && !exports.isClockwise([stack[1], stack[0], nextVertex])) {
+            stack.shift();
+        }
+        stack.unshift(nextVertex);
+    });
+    return stack;
 };
 
 
@@ -150,7 +180,57 @@ exports.isClockwise = function (polygon) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var vertex_1 = __webpack_require__(0);
-var planar_graph_1 = __webpack_require__(3);
+var PAUSE = 500;
+exports.animate = function (canvas) {
+    hullify(canvas);
+    triangulate(canvas);
+    color(canvas);
+};
+var hullify = function (canvas) {
+    var hullVertices = vertex_1.convexHull(canvas.graph.vertices);
+    hullVertices.map(vertex_1.getConsecutiveVertexPairs).forEach(function (pair) {
+        canvas.drawEdge(pair[0], pair[1], "blue");
+    });
+};
+var triangulate = function (canvas) {
+    var graph = canvas.graph;
+    var isTriangulated = false;
+    while (!isTriangulated) {
+        isTriangulated = true;
+        graph.faces.forEach(function (f) {
+            isTriangulated = isTriangulated && triangulateFace(canvas, f);
+        });
+    }
+};
+var triangulateFace = function (canvas, face) {
+    var graph = canvas.graph;
+    var edges = graph.getBoundaryEdges(face);
+    if (edges.length > 3 && !face.infinite) {
+        var potentialEdges = edges.map(function (e) { return [e.origin, e.next.next.origin]; });
+        for (var i = 0; i < potentialEdges.length; i++) {
+            var v1 = potentialEdges[i][0];
+            var v2 = potentialEdges[i][1];
+            if (graph.getEdgeFace(v1, v2) === face) {
+                canvas.drawEdge(v1, v2, "blue");
+                return false;
+            }
+        }
+    }
+    return true;
+};
+var color = function (canvas) {
+    var graph = canvas.graph;
+};
+
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var planar_graph_1 = __webpack_require__(6);
 var distance = function (v1, v2) {
     var s = function (x) { return x * x; };
     return Math.sqrt(s(v1.x - v2.x) + s(v1.y - v2.y));
@@ -176,12 +256,10 @@ var GraphDrawingWrapper = (function () {
             if (v !== this.highlightedVertex) {
                 this.drawEdge(v, this.highlightedVertex);
             }
-            this.drawCircle(this.highlightedVertex);
-            this.highlightedVertex = null;
+            this.unhighlight();
         }
         else {
-            this.highlightedVertex = v;
-            this.drawCircle(v, "red");
+            this.highlight(v);
         }
     };
     GraphDrawingWrapper.prototype.drawCircle = function (v, strokeColor, fillColor) {
@@ -207,27 +285,41 @@ var GraphDrawingWrapper = (function () {
             context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
             context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
             context.stroke();
-            console.log(this.graph.faces.map(this.graph.getBoundaryVertices).map(vertex_1.isClockwise));
         }
     };
     GraphDrawingWrapper.prototype.handleClick = function (e) {
         var _this = this;
-        var newVertex = { x: e.x, y: e.y, colors: [] };
-        var clickedVertex;
-        var overlappingVertex;
-        this.vertices.forEach(function (v) {
-            var dist = distance(v, newVertex);
-            if (dist <= _this.radius)
-                clickedVertex = v;
-            if (dist <= 2 * _this.radius)
-                overlappingVertex = v;
-        });
-        if (clickedVertex) {
-            this.clickVertex(clickedVertex);
+        try {
+            var newVertex_1 = { x: e.x, y: e.y, colors: [] };
+            var clickedVertex_1;
+            var overlappingVertex_1;
+            this.vertices.forEach(function (v) {
+                var dist = distance(v, newVertex_1);
+                if (dist <= _this.radius)
+                    clickedVertex_1 = v;
+                if (dist <= 2 * _this.radius)
+                    overlappingVertex_1 = v;
+            });
+            if (clickedVertex_1) {
+                this.clickVertex(clickedVertex_1);
+            }
+            else if (!overlappingVertex_1) {
+                this.drawCircle(newVertex_1);
+            }
         }
-        else if (!overlappingVertex) {
-            this.drawCircle(newVertex);
+        catch (err) {
+            alert(err.message);
         }
+    };
+    GraphDrawingWrapper.prototype.highlight = function (v) {
+        if (this.highlightedVertex)
+            this.unhighlight();
+        this.highlightedVertex = v;
+        this.drawCircle(v, "red");
+    };
+    GraphDrawingWrapper.prototype.unhighlight = function () {
+        this.drawCircle(this.highlightedVertex);
+        this.highlightedVertex = null;
     };
     return GraphDrawingWrapper;
 }());
@@ -235,7 +327,62 @@ exports.GraphDrawingWrapper = GraphDrawingWrapper;
 
 
 /***/ }),
-/* 2 */
+/* 3 */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports) {
+
+module.exports = function(module) {
+	if(!module.webpackPolyfill) {
+		module.deprecate = function() {};
+		module.paths = [];
+		// module.parent = undefined by default
+		if(!module.children) module.children = [];
+		Object.defineProperty(module, "loaded", {
+			enumerable: true,
+			get: function() {
+				return module.l;
+			}
+		});
+		Object.defineProperty(module, "id", {
+			enumerable: true,
+			get: function() {
+				return module.i;
+			}
+		});
+		module.webpackPolyfill = 1;
+	}
+	return module;
+};
+
+
+/***/ }),
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -17324,17 +17471,17 @@ exports.GraphDrawingWrapper = GraphDrawingWrapper;
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(5)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(4)(module)))
 
 /***/ }),
-/* 3 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var vertex_1 = __webpack_require__(0);
-var lodash_1 = __webpack_require__(2);
+var lodash_1 = __webpack_require__(5);
 var PlanarGraph = (function () {
     function PlanarGraph() {
         this.vertices = [];
@@ -17342,19 +17489,12 @@ var PlanarGraph = (function () {
         this.infiniteFace = { infinite: true };
         this.faces = [this.infiniteFace];
         // bind methods
-        this.addEdge = this.addEdge.bind(this);
-        this.begin = this.begin.bind(this);
-        this.commonFaces = this.commonFaces.bind(this);
-        this.getBoundaryEdges = this.getBoundaryEdges.bind(this);
-        this.getBoundaryVertices = this.getBoundaryVertices.bind(this);
-        this.getBoundingFace = this.getBoundingFace.bind(this);
         this.getIncidentFaces = this.getIncidentFaces.bind(this);
-        this.getOutgoingEdges = this.getOutgoingEdges.bind(this);
     }
     PlanarGraph.prototype.addEdge = function (v1, v2) {
         if (!v1.incidentEdge && !v2.incidentEdge) {
             if (this.vertices.length > 0)
-                throw new Error("Only one connected component!");
+                throw new Error("Please keep the graph connected");
             this.begin(v1, v2);
             return true;
         }
@@ -17382,7 +17522,7 @@ var PlanarGraph = (function () {
     };
     PlanarGraph.prototype.connectNewVertex = function (oldVertex, newVertex) {
         if (newVertex.incidentEdge)
-            throw new Error("Can't connect this vertex!");
+            throw new Error("This should be unreachable, please open an issue at https://github.com/hrb90/slick-mongoose/issues");
         var boundingFace = this.getEdgeFace(oldVertex, newVertex);
         if (boundingFace) {
             this.vertices.push(newVertex);
@@ -17417,18 +17557,7 @@ var PlanarGraph = (function () {
         }
     };
     PlanarGraph.prototype.cv_makeNewFace = function (e, f) {
-        var newFaceEdge = e;
-        if (f.infinite) {
-            var vertices = [e.twin.origin];
-            var currentEdge_1 = e.twin.next;
-            while (currentEdge_1 !== e.twin) {
-                vertices.push(currentEdge_1.origin);
-                currentEdge_1 = currentEdge_1.next;
-            }
-            if (!vertex_1.isClockwise(vertices)) {
-                newFaceEdge = e.twin;
-            }
-        }
+        var newFaceEdge = f.infinite ? this.pickInfiniteEdge(e) : e;
         f.incidentEdge = newFaceEdge.twin;
         var newFace = { infinite: false, incidentEdge: newFaceEdge };
         this.faces.push(newFace);
@@ -17442,10 +17571,8 @@ var PlanarGraph = (function () {
         }
     };
     PlanarGraph.prototype.cv_edgePointers = function (v1, v2, boundingFace) {
-        var angle1 = vertex_1.angle(v1, v2);
-        var angle2 = vertex_1.angle(v2, v1);
-        var e1 = this.getNextClockwiseEdge(v1, angle1);
-        var e2 = this.getNextClockwiseEdge(v2, angle2);
+        var e1 = this.getNextClockwiseEdge(v1, vertex_1.angle(v1, v2));
+        var e2 = this.getNextClockwiseEdge(v2, vertex_1.angle(v2, v1));
         var v1v2 = { origin: v1, next: e2, prev: e1.prev };
         var v2v1 = { origin: v2, next: e1, prev: e2.prev, twin: v1v2 };
         v1v2.twin = v2v1;
@@ -17501,23 +17628,17 @@ var PlanarGraph = (function () {
             [this.getBoundingFace(v)];
     };
     PlanarGraph.prototype.getNextClockwiseEdge = function (v, newAngle) {
-        var highest = [null, -Infinity];
-        var nextAngle = [null, -Infinity];
-        this.getOutgoingEdges(v).forEach(function (e) {
-            var currentAngle = vertex_1.angle(e.origin, e.next.origin);
-            if ((currentAngle < newAngle) && (currentAngle > nextAngle[1])) {
-                nextAngle = [e, currentAngle];
-            }
-            if (currentAngle > highest[1]) {
-                highest = [e, currentAngle];
-            }
-        });
-        if (nextAngle[0]) {
-            return nextAngle[0];
-        }
-        else {
-            return highest[0];
-        }
+        var edgesWithAngles = this.getOutgoingEdges(v).map(function (e) { return [e, vertex_1.angle(e.origin, e.next.origin)]; });
+        // If there's an angle smaller than newAngle, return the edge with the largest such angle
+        // Otherwise, wrap around and return the edge with the largest angle overall
+        var smallAngleEdges = edgesWithAngles.filter(function (ea) { return ea[1] < newAngle; });
+        var sortByAngleDecreasing = function (e1, e2) { return (e2[1] - e1[1]); };
+        var getHighestAngleEdge = function (pairList) {
+            return (pairList.sort(sortByAngleDecreasing)[0][0]);
+        };
+        return (smallAngleEdges.length > 0) ?
+            getHighestAngleEdge(smallAngleEdges) :
+            getHighestAngleEdge(edgesWithAngles);
     };
     PlanarGraph.prototype.getOutgoingEdges = function (v) {
         var incidentEdges = [];
@@ -17530,76 +17651,35 @@ var PlanarGraph = (function () {
         }
         return incidentEdges;
     };
+    // given that e or e.twin is incident to the infiniteface, return the half edge that is
+    PlanarGraph.prototype.pickInfiniteEdge = function (e) {
+        var vertices = [e.twin.origin];
+        var currentEdge = e.twin.next;
+        while (currentEdge !== e.twin) {
+            vertices.push(currentEdge.origin);
+            currentEdge = currentEdge.next;
+        }
+        return vertex_1.isClockwise(vertices) ? e : e.twin;
+    };
     return PlanarGraph;
 }());
 exports.PlanarGraph = PlanarGraph;
 
 
 /***/ }),
-/* 4 */
-/***/ (function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
-	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports) {
-
-module.exports = function(module) {
-	if(!module.webpackPolyfill) {
-		module.deprecate = function() {};
-		module.paths = [];
-		// module.parent = undefined by default
-		if(!module.children) module.children = [];
-		Object.defineProperty(module, "loaded", {
-			enumerable: true,
-			get: function() {
-				return module.l;
-			}
-		});
-		Object.defineProperty(module, "id", {
-			enumerable: true,
-			get: function() {
-				return module.i;
-			}
-		});
-		module.webpackPolyfill = 1;
-	}
-	return module;
-};
-
-
-/***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var canvas_wrapper_1 = __webpack_require__(1);
+var canvas_wrapper_1 = __webpack_require__(2);
+var animation_1 = __webpack_require__(1);
 document.addEventListener('DOMContentLoaded', function () {
     var wrapper = new canvas_wrapper_1.GraphDrawingWrapper("canvas");
+    document.getElementById('animate-button').addEventListener("click", function () {
+        animation_1.animate(wrapper);
+    });
 });
 
 
