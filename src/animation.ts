@@ -6,9 +6,13 @@ import { GraphDrawingWrapper } from './canvas_wrapper';
 const PAUSE = 500;
 
 export const animate = (canvas: GraphDrawingWrapper): void => {
-  hullify(canvas);
-  triangulate(canvas);
-  color(canvas);
+  if (canvas.graph.vertices.length < 3) {
+    alert("please connect more vertices");
+  } else {    
+    hullify(canvas);
+    triangulate(canvas);
+    color(canvas);
+  }
 }
 
 const hullify = (canvas: GraphDrawingWrapper): void => {

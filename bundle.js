@@ -182,9 +182,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var vertex_1 = __webpack_require__(0);
 var PAUSE = 500;
 exports.animate = function (canvas) {
-    hullify(canvas);
-    triangulate(canvas);
-    color(canvas);
+    if (canvas.graph.vertices.length < 3) {
+        alert("please connect more vertices");
+    }
+    else {
+        hullify(canvas);
+        triangulate(canvas);
+        color(canvas);
+    }
 };
 var hullify = function (canvas) {
     var hullVertices = vertex_1.convexHull(canvas.graph.vertices);
