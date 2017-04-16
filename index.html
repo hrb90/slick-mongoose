@@ -3,10 +3,27 @@
   <head>
     <meta charset="utf-8">
     <script src="bundle.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="./master.css">
     <title>Slick Mongoose</title>
   </head>
   <body>
     <canvas id="canvas" width="600" height="600" style="border:1px solid black;"></canvas>
-    <button id="animate-button">Animate</button>
+    <section id="sidebar">
+      <p>Thanks for helping me test my sekrit math project!</p>
+      <p>
+        You can draw a <a href="https://en.wikipedia.org/wiki/Planar_graph">planar graph</a> on the canvas.
+        Draw a new vertex by clicking an empty part of the graph; draw an edge by clicking two existing vertices.
+        Try to keep all the edges connected.
+      </p>
+      <p>
+        If you draw a graph and then click the "triangulate" button, it will add blue edges to the graph so that all inner faces are triangles.
+        If there are faces that aren't triangles, or there are crossing edges, please let me know in <a href="https://github.com/hrb90/slick-mongoose/issues/1">this issue</a>.
+        Please include the log of how your graph was constructed (open up the developer tools console and type "graphLog").
+      </p>
+      <p>
+        If you run into any other problems, please <a href="https://github.com/hrb90/slick-mongoose/issues/new">open a new issue</a> :). Thanks again!
+      </p>
+      <button id="animate-button">Triangulate</button>
+    </section>
   </body>
 </html>

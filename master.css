@@ -1,0 +1,9 @@
+body, html {
+  display: flex;
+  margin: 0;
+}
+
+#canvas {
+  cursor: crosshair;
+  margin-right: 5px;
+}

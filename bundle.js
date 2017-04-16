@@ -249,6 +249,7 @@ var GraphDrawingWrapper = (function () {
         this.handleClick = this.handleClick.bind(this);
         this.canvasEl.addEventListener("click", this.handleClick);
         this.graph = new planar_graph_1.PlanarGraph();
+        window.graphLog = "";
         this.highlightedVertex = null;
     }
     GraphDrawingWrapper.prototype.clickVertex = function (v) {
@@ -278,6 +279,7 @@ var GraphDrawingWrapper = (function () {
     GraphDrawingWrapper.prototype.drawEdge = function (v1, v2, strokeColor) {
         if (strokeColor === void 0) { strokeColor = "black"; }
         if (this.graph.addEdge(v1, v2)) {
+            window.graphLog = window.graphLog.concat(v1.x + "," + v1.y + "," + v2.x + "," + v2.y + ";");
             var context = this.canvasEl.getContext('2d');
             var unit = unitVector(v1, v2);
             context.strokeStyle = strokeColor;

@@ -26,6 +26,7 @@ export class GraphDrawingWrapper {
     this.handleClick = this.handleClick.bind(this);
     this.canvasEl.addEventListener("click", this.handleClick);
     this.graph = new PlanarGraph();
+    window.graphLog = "";
     this.highlightedVertex = null;
   }
 
@@ -53,6 +54,7 @@ export class GraphDrawingWrapper {
 
   drawEdge(v1: Vertex, v2: Vertex, strokeColor: string = "black") {
     if (this.graph.addEdge(v1, v2)) {
+      window.graphLog = window.graphLog.concat(`${v1.x},${v1.y},${v2.x},${v2.y};`);
       let context = this.canvasEl.getContext('2d');
       let unit = unitVector(v1, v2);
       context.strokeStyle = strokeColor;
