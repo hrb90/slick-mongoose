@@ -1,12 +1,21 @@
-import { Vertex, HalfEdge, Face } from './vertex';
+import { Vertex, HalfEdge, Face,
+  angle, getConsecutiveVertexPairs, convexHull } from './vertex';
 import { PlanarGraph } from './planar_graph';
 import { GraphDrawingWrapper } from './canvas_wrapper';
 
 const PAUSE = 500;
 
 export const animate = (canvas: GraphDrawingWrapper): void => {
+  hullify(canvas);
   triangulate(canvas);
   color(canvas);
+}
+
+const hullify = (canvas: GraphDrawingWrapper): void => {
+  let hullVertices = convexHull(canvas.graph.vertices);
+  hullVertices.map(getConsecutiveVertexPairs).forEach((pair: Vertex[]) => {
+    canvas.drawEdge(pair[0], pair[1], "blue");
+  });
 }
 
 const triangulate = (canvas: GraphDrawingWrapper): void => {
@@ -39,5 +48,4 @@ const triangulateFace = (canvas: GraphDrawingWrapper, face: Face): boolean => {
 
 const color = (canvas: GraphDrawingWrapper): void => {
   let graph = canvas.graph;
-  console.log("coloring");
 }
