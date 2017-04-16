@@ -64,18 +64,22 @@ export class GraphDrawingWrapper {
   }
 
   handleClick(e : MouseEvent) {
-    let newVertex = <Vertex>{ x : e.x, y : e.y, colors: [] }
-    let clickedVertex: Vertex | undefined;
-    let overlappingVertex: Vertex | undefined;
-    this.vertices.forEach((v : Vertex) => {
-      let dist = distance(v, newVertex);
-      if (dist <= this.radius) clickedVertex = v;
-      if (dist <= 2 * this.radius) overlappingVertex = v;
-    });
-    if (clickedVertex) {
-      this.clickVertex(clickedVertex);
-    } else if (!overlappingVertex) {
-      this.drawCircle(newVertex);
+    try {
+      let newVertex = <Vertex>{ x : e.x, y : e.y, colors: [] }
+      let clickedVertex: Vertex | undefined;
+      let overlappingVertex: Vertex | undefined;
+      this.vertices.forEach((v : Vertex) => {
+        let dist = distance(v, newVertex);
+        if (dist <= this.radius) clickedVertex = v;
+        if (dist <= 2 * this.radius) overlappingVertex = v;
+      });
+      if (clickedVertex) {
+        this.clickVertex(clickedVertex);
+      } else if (!overlappingVertex) {
+        this.drawCircle(newVertex);
+      }
+    } catch (err) {
+      alert(err.message);
     }
   }
 

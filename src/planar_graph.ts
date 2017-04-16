@@ -19,7 +19,7 @@ export class PlanarGraph {
 
   addEdge(v1: Vertex, v2: Vertex) {
     if (!v1.incidentEdge && !v2.incidentEdge) {
-      if (this.vertices.length > 0) throw new Error("Only one connected component!");
+      if (this.vertices.length > 0) throw new Error("Please keep the graph connected");
       this.begin(v1, v2);
       return true;
     } else if (!v1.incidentEdge && v2.incidentEdge) {
@@ -45,7 +45,7 @@ export class PlanarGraph {
   }
 
   connectNewVertex(oldVertex: Vertex, newVertex: Vertex) {
-    if (newVertex.incidentEdge) throw new Error("Can't connect this vertex!");
+    if (newVertex.incidentEdge) throw new Error("This should be unreachable, please open an issue at https://github.com/hrb90/slick-mongoose/issues");
     let boundingFace: Face | null = this.getEdgeFace(oldVertex, newVertex);
     if (boundingFace) {
       this.vertices.push(newVertex);
