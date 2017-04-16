@@ -8,9 +8,12 @@ const PAUSE = 500;
 export const animate = (canvas: GraphDrawingWrapper): void => {
   if (canvas.graph.vertices.length < 3) {
     alert("please connect more vertices");
-  } else {    
+  } else {
+    window.graphLog = window.graphLog.concat("beginHullify;");
     hullify(canvas);
+    window.graphLog = window.graphLog.concat("beginTriangulate;");
     triangulate(canvas);
+    window.graphLog = window.graphLog.concat("endTrianguate;");
     color(canvas);
   }
 }

@@ -186,8 +186,11 @@ exports.animate = function (canvas) {
         alert("please connect more vertices");
     }
     else {
+        window.graphLog = window.graphLog.concat("beginHullify;");
         hullify(canvas);
+        window.graphLog = window.graphLog.concat("beginTriangulate;");
         triangulate(canvas);
+        window.graphLog = window.graphLog.concat("endTrianguate;");
         color(canvas);
     }
 };
