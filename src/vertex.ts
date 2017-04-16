@@ -90,6 +90,34 @@ export const isClockwise = (polygon: Array<Vertex>) => {
   return (signedAreaSum > 0);
 }
 
+// Helper method for convex hull
+const lexSortYX = (a: Vertex, b: Vertex) => {
+  if (a.y - b.y !== 0) {
+    return a.y - b.y;
+  } else {
+    return a.x - b.x;
+  }
+}
+
+// Graham scan
 export const convexHull = (vertices: Vertex[]): Vertex[] => {
-  return vertices;
+  let stack: Vertex[] = [];
+  // Don't mutate the input
+  let verticesCopy = vertices.slice(0);
+  // 1. Find lowest y-value
+  let firstVertex: Vertex = verticesCopy.sort(lexSortYX)[0];
+  stack.unshift(firstVertex);
+  let otherVertices = verticesCopy.slice(1);
+  // 2. Sort vertices by angle
+  otherVertices.sort((v1: Vertex, v2: Vertex) => (
+    isClockwise([firstVertex, v1, v2]) ? -1 : 1
+  ))
+  // 3. Do the scan
+  otherVertices.forEach(nextVertex => {
+    while (stack.length > 1 && !isClockwise([stack[1], stack[0], nextVertex])) {
+      stack.shift();
+    }
+    stack.unshift(nextVertex);
+  });
+  return stack;
 };
