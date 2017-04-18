@@ -17554,6 +17554,9 @@ var PlanarGraph = (function () {
         }
     };
     PlanarGraph.prototype.connectVertices = function (v1, v2) {
+        if (this.getOutgoingEdges(v1).map(function (e) { return e.next.origin; }).includes(v2)) {
+            return false;
+        }
         var boundingFace = this.getEdgeFace(v1, v2);
         if (boundingFace) {
             // 1. Fix the edge pointers to other edges

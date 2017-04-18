@@ -67,6 +67,9 @@ export class PlanarGraph {
   }
 
   connectVertices(v1: Vertex, v2: Vertex) {
+    if (this.getOutgoingEdges(v1).map((e: HalfEdge) => e.next.origin).includes(v2)) {
+      return false;
+    }
     let boundingFace: Face | null = this.getEdgeFace(v1, v2);
     if (boundingFace) {
       // 1. Fix the edge pointers to other edges
