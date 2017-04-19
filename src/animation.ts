@@ -53,6 +53,26 @@ const triangulateFace = (canvas: GraphDrawingWrapper, face: Face): boolean => {
   return true;
 }
 
+const findChord = (graph: PlanarGraph): HalfEdge | null => {
+  let chord = null;
+  let outerVertices = graph.getBoundaryVertices(graph.infiniteFace);
+  outerVertices.forEach(v => {
+    let edges = graph.getOutgoingEdges(v);
+    edges.forEach(e => {
+      if (outerVertices.includes(e.next.origin) && e.incidentFace != graph.infiniteFace) {
+        chord = e;
+      }
+    });
+  });
+  return chord;
+}
+
 const color = (canvas: GraphDrawingWrapper): void => {
   let graph = canvas.graph;
+  let chord = findChord(graph);
+  if (chord) {
+
+  } else {
+
+  }
 }
