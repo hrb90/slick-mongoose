@@ -83,6 +83,11 @@ describe("inInterior", () => {
       expect(inInterior([v1, v2, v4], v6)).toBe(false);
       expect(inInterior([v1, v3, v5], v6)).toBe(true);
       expect(inInterior([v1, v3, v5], v4)).toBe(false);
+      expect(inInterior([
+        v(468, 483),
+        v(175, 394),
+        v(332, 407)
+      ], v(90, 105))).toBe(false);
     });
 
     it("handles quadrilaterals", () => {

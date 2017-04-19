@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 7);
+/******/ 	return __webpack_require__(__webpack_require__.s = 4);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -238,7 +238,7 @@ var color = function (canvas) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var planar_graph_1 = __webpack_require__(6);
+var planar_graph_1 = __webpack_require__(5);
 var distance = function (v1, v2) {
     var s = function (x) { return x * x; };
     return Math.sqrt(s(v1.x - v2.x) + s(v1.y - v2.y));
@@ -258,6 +258,7 @@ var GraphDrawingWrapper = (function () {
         this.canvasEl.addEventListener("click", this.handleClick);
         this.graph = new planar_graph_1.PlanarGraph();
         window.graphLog = "";
+        window.parseLog = planar_graph_1.PlanarGraph.parseLog;
         this.highlightedVertex = null;
     }
     GraphDrawingWrapper.prototype.clickVertex = function (v) {
@@ -338,61 +339,6 @@ exports.GraphDrawingWrapper = GraphDrawingWrapper;
 
 /***/ }),
 /* 3 */
-/***/ (function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
-	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports) {
-
-module.exports = function(module) {
-	if(!module.webpackPolyfill) {
-		module.deprecate = function() {};
-		module.paths = [];
-		// module.parent = undefined by default
-		if(!module.children) module.children = [];
-		Object.defineProperty(module, "loaded", {
-			enumerable: true,
-			get: function() {
-				return module.l;
-			}
-		});
-		Object.defineProperty(module, "id", {
-			enumerable: true,
-			get: function() {
-				return module.i;
-			}
-		});
-		module.webpackPolyfill = 1;
-	}
-	return module;
-};
-
-
-/***/ }),
-/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -17481,17 +17427,34 @@ module.exports = function(module) {
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(4)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6), __webpack_require__(7)(module)))
 
 /***/ }),
-/* 6 */
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var canvas_wrapper_1 = __webpack_require__(2);
+var animation_1 = __webpack_require__(1);
+document.addEventListener('DOMContentLoaded', function () {
+    var wrapper = new canvas_wrapper_1.GraphDrawingWrapper("canvas");
+    document.getElementById('animate-button').addEventListener("click", function () {
+        animation_1.animate(wrapper);
+    });
+});
+
+
+/***/ }),
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var vertex_1 = __webpack_require__(0);
-var lodash_1 = __webpack_require__(5);
+var lodash_1 = __webpack_require__(3);
 var PlanarGraph = (function () {
     function PlanarGraph() {
         this.vertices = [];
@@ -17501,6 +17464,24 @@ var PlanarGraph = (function () {
         // bind methods
         this.getIncidentFaces = this.getIncidentFaces.bind(this);
     }
+    PlanarGraph.parseLog = function (log) {
+        var graph = new PlanarGraph();
+        var steps = log.split(";");
+        var vertices = {};
+        steps.forEach(function (step) {
+            var coords = step.split(",");
+            if (coords.length > 1) {
+                var vertexAlias1 = [coords[0], coords[1]].join(",");
+                var vertexAlias2 = [coords[2], coords[3]].join(",");
+                vertices[vertexAlias1] = vertices[vertexAlias1] ||
+                    { x: parseInt(coords[0]), y: parseInt(coords[1]) };
+                vertices[vertexAlias2] = vertices[vertexAlias2] ||
+                    { x: parseInt(coords[2]), y: parseInt(coords[3]) };
+                graph.addEdge(vertices[vertexAlias1], vertices[vertexAlias2]);
+            }
+        });
+        return graph;
+    };
     PlanarGraph.prototype.addEdge = function (v1, v2) {
         if (!v1.incidentEdge && !v2.incidentEdge) {
             if (this.vertices.length > 0)
@@ -17680,20 +17661,58 @@ exports.PlanarGraph = PlanarGraph;
 
 
 /***/ }),
+/* 6 */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
 /* 7 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var canvas_wrapper_1 = __webpack_require__(2);
-var animation_1 = __webpack_require__(1);
-document.addEventListener('DOMContentLoaded', function () {
-    var wrapper = new canvas_wrapper_1.GraphDrawingWrapper("canvas");
-    document.getElementById('animate-button').addEventListener("click", function () {
-        animation_1.animate(wrapper);
-    });
-});
+module.exports = function(module) {
+	if(!module.webpackPolyfill) {
+		module.deprecate = function() {};
+		module.paths = [];
+		// module.parent = undefined by default
+		if(!module.children) module.children = [];
+		Object.defineProperty(module, "loaded", {
+			enumerable: true,
+			get: function() {
+				return module.l;
+			}
+		});
+		Object.defineProperty(module, "id", {
+			enumerable: true,
+			get: function() {
+				return module.i;
+			}
+		});
+		module.webpackPolyfill = 1;
+	}
+	return module;
+};
 
 
 /***/ })

@@ -27,6 +27,7 @@ export class GraphDrawingWrapper {
     this.canvasEl.addEventListener("click", this.handleClick);
     this.graph = new PlanarGraph();
     window.graphLog = "";
+    window.parseLog = PlanarGraph.parseLog;
     this.highlightedVertex = null;
   }
 

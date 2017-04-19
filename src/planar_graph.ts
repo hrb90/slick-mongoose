@@ -2,6 +2,10 @@ import { Vertex, HalfEdge, Face,
   eq, intersect, inInterior, isClockwise, angle } from './vertex';
 import { intersection, uniq } from 'lodash';
 
+interface VertexMemoizer {
+  [key: string]: Vertex
+}
+
 export class PlanarGraph {
   vertices: Array<Vertex>;
   edges: Array<HalfEdge>;
@@ -15,6 +19,25 @@ export class PlanarGraph {
     this.faces = [this.infiniteFace];
     // bind methods
     this.getIncidentFaces = this.getIncidentFaces.bind(this);
+  }
+
+  static parseLog(log: string): PlanarGraph {
+    let graph = new PlanarGraph();
+    let steps = log.split(";");
+    let vertices = {} as VertexMemoizer;
+    steps.forEach((step: string) => {
+      let coords = step.split(",");
+      if (coords.length > 1) {
+        let vertexAlias1 = [coords[0], coords[1]].join(",");
+        let vertexAlias2 = [coords[2], coords[3]].join(",");
+        vertices[vertexAlias1] = vertices[vertexAlias1] ||
+          { x: parseInt(coords[0]), y: parseInt(coords[1]) };
+        vertices[vertexAlias2] = vertices[vertexAlias2] ||
+          { x: parseInt(coords[2]), y: parseInt(coords[3]) };
+        graph.addEdge(vertices[vertexAlias1], vertices[vertexAlias2]);
+      }
+    });
+    return graph;
   }
 
   addEdge(v1: Vertex, v2: Vertex) {
