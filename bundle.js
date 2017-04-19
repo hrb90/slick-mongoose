@@ -1,41 +1,41 @@
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
-/******/
+
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
-/******/
+
 /******/ 		// Check if module is in cache
 /******/ 		if(installedModules[moduleId])
 /******/ 			return installedModules[moduleId].exports;
-/******/
+
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			i: moduleId,
 /******/ 			l: false,
 /******/ 			exports: {}
 /******/ 		};
-/******/
+
 /******/ 		// Execute the module function
 /******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
+
 /******/ 		// Flag the module as loaded
 /******/ 		module.l = true;
-/******/
+
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
-/******/
-/******/
+
+
 /******/ 	// expose the modules object (__webpack_modules__)
 /******/ 	__webpack_require__.m = modules;
-/******/
+
 /******/ 	// expose the module cache
 /******/ 	__webpack_require__.c = installedModules;
-/******/
+
 /******/ 	// identity function for calling harmony imports with the correct context
 /******/ 	__webpack_require__.i = function(value) { return value; };
-/******/
+
 /******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
 /******/ 		if(!__webpack_require__.o(exports, name)) {
@@ -46,7 +46,7 @@
 /******/ 			});
 /******/ 		}
 /******/ 	};
-/******/
+
 /******/ 	// getDefaultExport function for compatibility with non-harmony modules
 /******/ 	__webpack_require__.n = function(module) {
 /******/ 		var getter = module && module.__esModule ?
@@ -55,15 +55,15 @@
 /******/ 		__webpack_require__.d(getter, 'a', getter);
 /******/ 		return getter;
 /******/ 	};
-/******/
+
 /******/ 	// Object.prototype.hasOwnProperty.call
 /******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-/******/
+
 /******/ 	// __webpack_public_path__
 /******/ 	__webpack_require__.p = "";
-/******/
+
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
+/******/ 	return __webpack_require__(__webpack_require__.s = 7);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -122,11 +122,14 @@ exports.intersect = function (v1, v2, v3, v4, halfOpen) {
 };
 // Is v in the interior of polygon?
 exports.inInterior = function (polygon, v) {
-    if (polygon.length < 3)
+    if (polygon.length < 3 || polygon.some(function (u) { return exports.eq(u, v); }))
         return false;
     var maxX = Math.max.apply(Math, polygon.map(function (v) { return v.x; }));
     var maxY = Math.max.apply(Math, polygon.map(function (v) { return v.y; }));
     var outerVertex = { x: maxX + 1, y: maxY + 1 };
+    while (polygon.some(function (u) { return exports.collinear3([u, v, outerVertex]); })) {
+        outerVertex.x = outerVertex.x + 1;
+    }
     var crossingNum = 0;
     polygon.map(exports.getConsecutiveVertexPairs).forEach(function (pair) {
         if (exports.intersect(v, outerVertex, pair[0], pair[1], true))
@@ -134,13 +137,15 @@ exports.inInterior = function (polygon, v) {
     });
     return crossingNum % 2 === 1;
 };
-exports.isClockwise = function (polygon) {
+exports.signedArea = function (polygon) {
     var signedAreaSum = 0;
     polygon.map(exports.getConsecutiveVertexPairs).forEach(function (pair) {
         signedAreaSum += (pair[1].x - pair[0].x) * (pair[1].y + pair[0].y);
     });
-    return (signedAreaSum > 0);
+    return signedAreaSum;
 };
+exports.isClockwise = function (polygon) { return (exports.signedArea(polygon) > 0); };
+exports.collinear3 = function (polygon) { return (exports.signedArea(polygon) === 0); };
 // Helper method for convex hull
 var lexSortYX = function (a, b) {
     if (a.y - b.y !== 0) {
@@ -238,7 +243,7 @@ var color = function (canvas) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var planar_graph_1 = __webpack_require__(5);
+var planar_graph_1 = __webpack_require__(4);
 var distance = function (v1, v2) {
     var s = function (x) { return x * x; };
     return Math.sqrt(s(v1.x - v2.x) + s(v1.y - v2.y));
@@ -17427,27 +17432,10 @@ exports.GraphDrawingWrapper = GraphDrawingWrapper;
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6), __webpack_require__(7)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(6)(module)))
 
 /***/ }),
 /* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var canvas_wrapper_1 = __webpack_require__(2);
-var animation_1 = __webpack_require__(1);
-document.addEventListener('DOMContentLoaded', function () {
-    var wrapper = new canvas_wrapper_1.GraphDrawingWrapper("canvas");
-    document.getElementById('animate-button').addEventListener("click", function () {
-        animation_1.animate(wrapper);
-    });
-});
-
-
-/***/ }),
-/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17661,7 +17649,7 @@ exports.PlanarGraph = PlanarGraph;
 
 
 /***/ }),
-/* 6 */
+/* 5 */
 /***/ (function(module, exports) {
 
 var g;
@@ -17688,7 +17676,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 7 */
+/* 6 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -17713,6 +17701,23 @@ module.exports = function(module) {
 	}
 	return module;
 };
+
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var canvas_wrapper_1 = __webpack_require__(2);
+var animation_1 = __webpack_require__(1);
+document.addEventListener('DOMContentLoaded', function () {
+    var wrapper = new canvas_wrapper_1.GraphDrawingWrapper("canvas");
+    document.getElementById('animate-button').addEventListener("click", function () {
+        animation_1.animate(wrapper);
+    });
+});
 
 
 /***/ })
