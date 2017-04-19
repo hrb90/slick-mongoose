@@ -71,10 +71,13 @@ export const intersect = (v1: Vertex, v2: Vertex, v3: Vertex, v4: Vertex, halfOp
 
 // Is v in the interior of polygon?
 export const inInterior = (polygon: Array<Vertex>, v: Vertex) => {
-  if (polygon.length < 3) return false;
+  if (polygon.length < 3 || polygon.some(u => eq(u, v))) return false;
   let maxX = Math.max(...polygon.map(v => v.x));
   let maxY = Math.max(...polygon.map(v => v.y));
   let outerVertex = { x: maxX + 1, y: maxY + 1 };
+  while (polygon.some(u => collinear3([u, v, outerVertex]))) {
+    outerVertex.x = outerVertex.x + 1;
+  }
   let crossingNum = 0;
   polygon.map(getConsecutiveVertexPairs).forEach(pair => {
     if (intersect(v, outerVertex, pair[0], pair[1], true)) crossingNum += 1;
@@ -82,13 +85,17 @@ export const inInterior = (polygon: Array<Vertex>, v: Vertex) => {
   return crossingNum % 2 === 1;
 }
 
-export const isClockwise = (polygon: Array<Vertex>) => {
+export const signedArea = (polygon: Array<Vertex>) => {
   let signedAreaSum = 0;
   polygon.map(getConsecutiveVertexPairs).forEach(pair => {
     signedAreaSum += (pair[1].x - pair[0].x) * (pair[1].y + pair[0].y);
   })
-  return (signedAreaSum > 0);
+  return signedAreaSum;
 }
+
+export const isClockwise = (polygon: Array<Vertex>) => (signedArea(polygon) > 0);
+
+export const collinear3 = (polygon: Array<Vertex>) => (signedArea(polygon) === 0);
 
 // Helper method for convex hull
 const lexSortYX = (a: Vertex, b: Vertex) => {

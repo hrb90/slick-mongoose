@@ -86,7 +86,12 @@ describe("inInterior", () => {
       expect(inInterior([
         v(468, 483),
         v(175, 394),
-        v(332, 407)
+        v(332, 406)
+      ], v(90, 105))).toBe(false);
+      expect(inInterior([
+        v(175, 394),
+        v(468, 483),
+        v(332, 406)
       ], v(90, 105))).toBe(false);
     });
 
