@@ -2,35 +2,35 @@ import { Vertex, HalfEdge, Face,
   eq, intersect, inInterior, isClockwise, angle } from './vertex';
 import { intersection, uniq } from 'lodash';
 
-const addEdge = (graph: PlanarGraph, v1: Vertex, v2: Vertex): PlanarGraph => {
+export const addEdge = (graph: PlanarGraph, v1: Vertex, v2: Vertex): PlanarGraph => {
   return graph;
 }
 
-const removeEdge = (graph: PlanarGraph, v1: Vertex, v2: Vertex): PlanarGraph => {
+export const removeEdge = (graph: PlanarGraph, v1: Vertex, v2: Vertex): PlanarGraph => {
   return graph;
 }
 
-const removeVertex = (graph: PlanarGraph, v: Vertex): PlanarGraph => {
+export const removeVertex = (graph: PlanarGraph, v: Vertex): PlanarGraph => {
   return graph;
 }
 
-const getBoundaryEdges = (graph: PlanarGraph, f: Face): HalfEdge[] => {
+export const getBoundaryEdges = (graph: PlanarGraph, f: Face): HalfEdge[] => {
   return [];
 }
 
-const getBoundaryVertices = (graph: PlanarGraph, f: Face): Vertex[] => {
+export const getBoundaryVertices = (graph: PlanarGraph, f: Face): Vertex[] => {
   return [];
 }
 
-const getOutgoingEdges = (graph: PlanarGraph, v: Vertex): HalfEdge[] => {
+export const getOutgoingEdges = (graph: PlanarGraph, v: Vertex): HalfEdge[] => {
   return [];
 }
 
-const getIncidentFaces = (graph: PlanarGraph, v: Vertex): Face[] => {
+export const getIncidentFaces = (graph: PlanarGraph, v: Vertex): Face[] => {
   return [];
 }
 
-const getBoundingFace = (graph: PlanarGraph, v: Vertex): Face => {
+export const getBoundingFace = (graph: PlanarGraph, v: Vertex): Face => {
   return graph.infiniteFace;
 }
 
