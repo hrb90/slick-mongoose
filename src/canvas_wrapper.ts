@@ -1,21 +1,21 @@
-import { isClockwise, Vertex } from './vertex'
-import { PlanarGraph } from './planar_graph';
+import { isClockwise, Coord } from './geom'
+import { PlanarGraph, createEmptyPlanarGraph, addEdge } from './planar_graph';
 
-const distance = (v1: Vertex, v2: Vertex) => {
+const distance = (v1: Coord, v2: Coord) => {
   const s = (x : number) => x * x;
   return Math.sqrt(s(v1.x - v2.x) + s(v1.y - v2.y));
 };
 
-const unitVector = (v1: Vertex, v2: Vertex) => {
+const unitVector = (v1: Coord, v2: Coord) => {
   const d = distance(v1, v2);
-  return <Vertex>{ x: (v1.x - v2.x) / d, y: (v1.y - v2.y) / d };
+  return <Coord>{ x: (v1.x - v2.x) / d, y: (v1.y - v2.y) / d };
 };
 
 export class GraphDrawingWrapper {
   canvasEl: HTMLCanvasElement;
   graph: PlanarGraph;
-  vertices: Array<Vertex>;
-  highlightedVertex: Vertex | null;
+  vertices: Array<Coord>;
+  highlightedVertex: Coord | null;
   radius: number;
 
   constructor(canvasId : string, radius: number = 10) {
@@ -25,13 +25,12 @@ export class GraphDrawingWrapper {
     this.drawCircle = this.drawCircle.bind(this);
     this.handleClick = this.handleClick.bind(this);
     this.canvasEl.addEventListener("click", this.handleClick);
-    this.graph = new PlanarGraph();
+    this.graph = createEmptyPlanarGraph();
     window.graphLog = "";
-    window.parseLog = PlanarGraph.parseLog;
     this.highlightedVertex = null;
   }
 
-  clickVertex(v: Vertex) {
+  clickVertex(v: Coord) {
     if (this.highlightedVertex) {
       if (v !== this.highlightedVertex) {
         this.drawEdge(v, this.highlightedVertex);
@@ -42,7 +41,13 @@ export class GraphDrawingWrapper {
     }
   }
 
-  drawCircle(v: Vertex, strokeColor: string = "black", fillColor: string | null = null) {
+  doesAddEdge(v1: Coord, v2: Coord) {
+    let initialEdgeNum = Object.keys(this.graph.edges).length;
+    this.graph = addEdge(this.graph, v1, v2);
+    return Object.keys(this.graph.edges).length !== initialEdgeNum;
+  }
+
+  drawCircle(v: Coord, strokeColor: string = "black", fillColor: string | null = null) {
     this.vertices.push(v);
     let context = this.canvasEl.getContext('2d');
     context.strokeStyle = strokeColor;
@@ -53,8 +58,8 @@ export class GraphDrawingWrapper {
     if (fillColor) context.fill();
   }
 
-  drawEdge(v1: Vertex, v2: Vertex, strokeColor: string = "black") {
-    if (this.graph.addEdge(v1, v2)) {
+  drawEdge(v1: Coord, v2: Coord, strokeColor: string = "black") {
+    if (this.doesAddEdge(v1, v2)) {
       window.graphLog = window.graphLog.concat(`${v1.x},${v1.y},${v2.x},${v2.y};`);
       let context = this.canvasEl.getContext('2d');
       let unit = unitVector(v1, v2);
@@ -68,10 +73,10 @@ export class GraphDrawingWrapper {
 
   handleClick(e : MouseEvent) {
     try {
-      let newVertex = <Vertex>{ x : e.x, y : e.y, colors: [] }
-      let clickedVertex: Vertex | undefined;
-      let overlappingVertex: Vertex | undefined;
-      this.vertices.forEach((v : Vertex) => {
+      let newVertex = <Coord>{ x : e.x, y : e.y, colors: [] }
+      let clickedVertex: Coord | undefined;
+      let overlappingVertex: Coord | undefined;
+      this.vertices.forEach((v : Coord) => {
         let dist = distance(v, newVertex);
         if (dist <= this.radius) clickedVertex = v;
         if (dist <= 2 * this.radius) overlappingVertex = v;
@@ -86,7 +91,7 @@ export class GraphDrawingWrapper {
     }
   }
 
-  highlight(v: Vertex) {
+  highlight(v: Coord) {
     if (this.highlightedVertex) this.unhighlight();
     this.highlightedVertex = v;
     this.drawCircle(v, "red");

@@ -1,4 +1,4 @@
-import { Vertex, intersect, inInterior, isClockwise, convexHull } from '../src/vertex';
+import { Coord, intersect, inInterior, isClockwise, convexHull } from '../src/geom';
 import { shuffle } from 'lodash';
 
 const v = (x: number, y: number) => ({ x: x, y: y });
@@ -154,7 +154,7 @@ describe("isClockwise", () => {
 });
 
 describe("convexHull", () => {
-  const testVertexSet = (vertexSet: Vertex[], name: string, expectedLength: number) => {
+  const testCoordSet = (vertexSet: Coord[], name: string, expectedLength: number) => {
     describe(name, () => {
       let polygon = convexHull(shuffle(vertexSet));
 
@@ -163,7 +163,7 @@ describe("convexHull", () => {
       });
 
       it("returns a polygon containing every other vertex", () => {
-        vertexSet.forEach((v: Vertex) => {
+        vertexSet.forEach((v: Coord) => {
           expect(inInterior(polygon, v) || polygon.includes(v)).toBe(true);
         })
       });
@@ -174,10 +174,10 @@ describe("convexHull", () => {
     });
   }
 
-  testVertexSet([v(0, 0), v(1, 3), v(4, 6)], "triangle", 3);
-  testVertexSet([v(0, 0), v(1, 2), v(3, 2), v(2, 3), v(1, 1), v(4, 0)],
+  testCoordSet([v(0, 0), v(1, 3), v(4, 6)], "triangle", 3);
+  testCoordSet([v(0, 0), v(1, 2), v(3, 2), v(2, 3), v(1, 1), v(4, 0)],
     "pentagon + 1 interior", 5);
-  testVertexSet([v(0, 0), v(0, 10), v(10, 10), v(10, 0),
+  testCoordSet([v(0, 0), v(0, 10), v(10, 10), v(10, 0),
     v(3, 5), v(6, 2), v(1, 1), v(8, 3), v(4, 9), v(4, 4)],
     "square + 6 interior", 4);
 });
