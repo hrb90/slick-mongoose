@@ -42,9 +42,12 @@ export class GraphDrawingWrapper {
   }
 
   doesAddEdge(v1: Coord, v2: Coord) {
-    let initialEdgeNum = Object.keys(this.graph.edges).length;
-    this.graph = addEdge(this.graph, v1, v2);
-    return Object.keys(this.graph.edges).length !== initialEdgeNum;
+    try {
+      this.graph = addEdge(this.graph, v1, v2);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   drawCircle(v: Coord, strokeColor: string = "black", fillColor: string | null = null) {

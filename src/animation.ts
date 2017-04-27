@@ -1,5 +1,6 @@
 import { Coord, angle, getConsecutiveCoordPairs, convexHull } from './geom';
 import { Vertex, HalfEdge, Face, PlanarGraph,
+  addEdge, safeAddEdge, removeEdge, removeVertex,
   getBoundaryEdgeKeys, getBoundaryVertexKeys, getOutgoingEdgeKeys, getSplitFaceKey } from './planar_graph';
 import { GraphDrawingWrapper } from './canvas_wrapper';
 import { values, forIn } from 'lodash';
@@ -7,52 +8,88 @@ import { values, forIn } from 'lodash';
 const PAUSE = 500;
 
 export const animate = (canvas: GraphDrawingWrapper): void => {
-  if (values(canvas.graph.vertices).length < 3) {
+  let animations = makeAnimation(canvas.graph);
+  animations.forEach(a => {
+    if (a.type === "DRAW_EDGE") {
+      canvas.drawEdge(a.data[0], a.data[1], "blue");
+    }
+  })
+};
+
+const makeAnimation = (graph: PlanarGraph): any[] => {
+  if (values(graph.vertices).length < 3) {
     alert("please connect more vertices");
   } else {
-    window.graphLog = window.graphLog.concat("beginHullify;");
-    hullify(canvas);
-    window.graphLog = window.graphLog.concat("beginTriangulate;");
-    triangulate(canvas);
-    window.graphLog = window.graphLog.concat("endTrianguate;");
-    color(canvas);
-  }
-}
+    let animations = [];
 
-const hullify = (canvas: GraphDrawingWrapper): void => {
-  let hullVertices = convexHull(values(canvas.graph.vertices));
-  hullVertices.map(getConsecutiveCoordPairs).forEach((pair: Vertex[]) => {
-    canvas.drawEdge(pair[0], pair[1], "blue");
-  });
-}
-
-const triangulate = (canvas: GraphDrawingWrapper): void => {
-  let graph = canvas.graph;
-  let isTriangulated = false;
-  while (!isTriangulated) {
-    isTriangulated = true;
-    forIn(graph.faces, (f, fKey) => {
-      isTriangulated = isTriangulated && triangulateFace(canvas, fKey)
-    });
-  }
-}
-
-const triangulateFace = (canvas: GraphDrawingWrapper, faceKey: string): boolean => {
-  let graph = canvas.graph;
-  let edges = getBoundaryEdgeKeys(graph, faceKey);
-  if (edges.length > 3 && graph.infiniteFace !== faceKey) {
-    let potentialEdges: string[][] = edges.map(eKey =>
-      [graph.edges[eKey].origin, graph.edges[graph.edges[graph.edges[eKey].next].next].origin]);
-    for (let i = 0; i < potentialEdges.length; i++) {
-      let v1 = graph.vertices[potentialEdges[i][0]];
-      let v2 = graph.vertices[potentialEdges[i][1]];
-      if (getSplitFaceKey(graph, v1, v2) === faceKey) {
-        canvas.drawEdge(v1, v2, "blue");
-        return false;
-      }
+    const hullify = (g: PlanarGraph): PlanarGraph => {
+      let hullVertices = convexHull(values(g.vertices));
+      hullVertices.map(getConsecutiveCoordPairs).forEach((pair: Vertex[]) => {
+        if (safeAddEdge(g, pair[0], pair[1])) {
+          animations.push({
+            type: "DRAW_EDGE",
+            data: pair
+          })
+          g = addEdge(g, pair[0], pair[1]);
+        }
+      });
+      return g;
     }
+
+    const splitFace = (g: PlanarGraph, faceKey: string): PlanarGraph => {
+      let edges = getBoundaryEdgeKeys(g, faceKey);
+      if (edges.length > 3 && g.infiniteFace !== faceKey) {
+        let potentialEdges: string[][] = edges.map(eKey =>
+          [g.edges[eKey].origin, g.edges[g.edges[g.edges[eKey].next].next].origin]);
+        for (let i = 0; i < potentialEdges.length; i++) {
+          let v1 = g.vertices[potentialEdges[i][0]];
+          let v2 = g.vertices[potentialEdges[i][1]];
+          if (getSplitFaceKey(g, v1, v2) === faceKey) {
+            animations.push({
+              type: "DRAW_EDGE",
+              data: [v1, v2]
+            })
+            return addEdge(g, v1, v2);
+          }
+        }
+      }
+      return g;
+    }
+
+    const triangulate = (g: PlanarGraph): PlanarGraph => {
+      while (!isTriangulated(g)) {
+        forIn(g.faces, (f, fKey) => {
+          if (getBoundaryEdgeKeys(g, fKey).length > 3) {
+            g = splitFace(g, fKey)
+          }
+        });
+      }
+      return g;
+    }
+
+    const color = (g: PlanarGraph): PlanarGraph => {
+      let chord = findChordKey(graph);
+      if (chord) {
+
+      } else {
+
+      }
+      return g;
+    }
+
+    window.graphLog = window.graphLog.concat("beginHullify;");
+    graph = hullify(graph);
+    window.graphLog = window.graphLog.concat("beginTriangulate;");
+    graph = triangulate(graph);
+    window.graphLog = window.graphLog.concat("endTrianguate;");
+    graph = color(graph);
+    return animations;
   }
-  return true;
+}
+
+const isTriangulated = (g: PlanarGraph): boolean => {
+  return Object.keys(g.faces).every(fKey =>
+    (g.infiniteFace === fKey || getBoundaryEdgeKeys(g, fKey).length === 3));
 }
 
 const findChordKey = (graph: PlanarGraph): string | null => {
@@ -68,14 +105,4 @@ const findChordKey = (graph: PlanarGraph): string | null => {
     });
   });
   return chordKey;
-}
-
-const color = (canvas: GraphDrawingWrapper): void => {
-  let graph = canvas.graph;
-  let chord = findChordKey(graph);
-  if (chord) {
-
-  } else {
-
-  }
 }

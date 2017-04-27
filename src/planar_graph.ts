@@ -272,7 +272,6 @@ export const getOutgoingEdgeKeys = (graph: PlanarGraph, vKey: string): string[] 
   return incidentEdgeKeys;
 }
 
-
 const getNextClockwiseEdgeKey = (graph: PlanarGraph, vKey: string, newAngle: number): string => {
   let keysWithAngles: [string, number][] =
     getOutgoingEdgeKeys(graph, vKey).map((eKey: string) => {
@@ -289,4 +288,13 @@ const getNextClockwiseEdgeKey = (graph: PlanarGraph, vKey: string, newAngle: num
   return (smallAngleEdges.length > 0) ?
     getHighestAngleEdge(smallAngleEdges) :
     getHighestAngleEdge(keysWithAngles);
+}
+
+export const safeAddEdge = (graph: PlanarGraph, c1: Coord, c2: Coord): boolean => {
+  try {
+    addEdge(graph, c1, c2);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }

@@ -1,18 +1,9 @@
 import { PlanarGraph, createEmptyPlanarGraph,
-  addEdge, removeEdge, removeVertex,
+  addEdge, safeAddEdge, removeEdge, removeVertex,
   getBoundaryEdgeKeys, getBoundaryVertexKeys, getOutgoingEdgeKeys } from '../src/planar_graph';
 import { Coord } from '../src/geom';
 
 const v = (x: number, y: number) => ({ x: x, y: y });
-
-const safeAddEdge = (graph: PlanarGraph, c1: Coord, c2: Coord): boolean => {
-  try {
-    addEdge(graph, c1, c2);
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
 
 describe("PlanarGraph", () => {
   it("keeps track of the infiniteFace I", () => {

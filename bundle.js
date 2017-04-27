@@ -70,282 +70,6 @@
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-// coordinate equality
-exports.eq = function (a, b) { return (a.x === b.x && a.y === b.y); };
-// 2-dimensional cross product
-exports.xProd = function (v1, v2) { return (v1.x * v2.y - v1.y * v2.x); };
-// dot product
-var dot = function (v1, v2) { return (v1.x * v2.x + v1.y + v2.y); };
-exports.angle = function (v1, v2) {
-    return Math.atan2(v1.y - v2.y, v1.x - v2.x);
-};
-exports.getConsecutiveVertexPairs = function (v, i, p) { return ([v, p[(i + 1) % p.length]]); };
-// Do the line segments from v1-v2 and v3-v4 intersect?
-exports.intersect = function (v1, v2, v3, v4, halfOpen) {
-    if (halfOpen === void 0) { halfOpen = false; }
-    var r = { x: v2.x - v1.x, y: v2.y - v1.y };
-    var s = { x: v4.x - v3.x, y: v4.y - v3.y };
-    var diff = { x: v3.x - v1.x, y: v3.y - v1.y };
-    var det = exports.xProd(r, s);
-    if (det !== 0) {
-        var t = exports.xProd(diff, r) / det;
-        var u = exports.xProd(diff, s) / det;
-        var interior = function (x) { return (0 < x && x < 1); };
-        var boundary = function (x) { return (x === 0 || x === 1); };
-        if (interior(t) && interior(u)) {
-            // the segments intersect
-            return true;
-        }
-        else if (boundary(t) || boundary(u)) {
-            // three points are collinear
-            return (interior(t) || interior(u)) && (!halfOpen || t === 0 || u === 0);
-        }
-        else {
-            return false;
-        }
-    }
-    else {
-        if (exports.xProd(diff, r) !== 0) {
-            // parallel, non-collinear
-            return false;
-        }
-        else {
-            // all 4 points collinear
-            var t0 = dot(diff, r) / dot(r, r);
-            var t1 = t0 + dot(s, r) / dot(r, r);
-            return (Math.max(t0, t1) > 0 && Math.min(t0, t1) < 1);
-        }
-    }
-};
-// Is v in the interior of polygon?
-exports.inInterior = function (polygon, v) {
-    if (polygon.length < 3 || polygon.some(function (u) { return exports.eq(u, v); }))
-        return false;
-    var maxX = Math.max.apply(Math, polygon.map(function (v) { return v.x; }));
-    var maxY = Math.max.apply(Math, polygon.map(function (v) { return v.y; }));
-    var outerVertex = { x: maxX + 1, y: maxY + 1 };
-    while (polygon.some(function (u) { return exports.collinear3([u, v, outerVertex]); })) {
-        outerVertex.x = outerVertex.x + 1;
-    }
-    var crossingNum = 0;
-    polygon.map(exports.getConsecutiveVertexPairs).forEach(function (pair) {
-        if (exports.intersect(v, outerVertex, pair[0], pair[1], true))
-            crossingNum += 1;
-    });
-    return crossingNum % 2 === 1;
-};
-exports.signedArea = function (polygon) {
-    var signedAreaSum = 0;
-    polygon.map(exports.getConsecutiveVertexPairs).forEach(function (pair) {
-        signedAreaSum += (pair[1].x - pair[0].x) * (pair[1].y + pair[0].y);
-    });
-    return signedAreaSum;
-};
-exports.isClockwise = function (polygon) { return (exports.signedArea(polygon) > 0); };
-exports.collinear3 = function (polygon) { return (exports.signedArea(polygon) === 0); };
-// Helper method for convex hull
-var lexSortYX = function (a, b) {
-    if (a.y - b.y !== 0) {
-        return a.y - b.y;
-    }
-    else {
-        return a.x - b.x;
-    }
-};
-// Graham scan
-exports.convexHull = function (vertices) {
-    var stack = [];
-    // Don't mutate the input
-    var verticesCopy = vertices.slice(0);
-    // 1. Find lowest y-value
-    var firstVertex = verticesCopy.sort(lexSortYX)[0];
-    stack.unshift(firstVertex);
-    var otherVertices = verticesCopy.slice(1);
-    // 2. Sort vertices by angle
-    otherVertices.sort(function (v1, v2) { return (exports.isClockwise([firstVertex, v1, v2]) ? -1 : 1); });
-    // 3. Do the scan
-    otherVertices.forEach(function (nextVertex) {
-        while (stack.length > 1 && !exports.isClockwise([stack[1], stack[0], nextVertex])) {
-            stack.shift();
-        }
-        stack.unshift(nextVertex);
-    });
-    return stack;
-};
-
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var vertex_1 = __webpack_require__(0);
-var PAUSE = 500;
-exports.animate = function (canvas) {
-    if (canvas.graph.vertices.length < 3) {
-        alert("please connect more vertices");
-    }
-    else {
-        window.graphLog = window.graphLog.concat("beginHullify;");
-        hullify(canvas);
-        window.graphLog = window.graphLog.concat("beginTriangulate;");
-        triangulate(canvas);
-        window.graphLog = window.graphLog.concat("endTrianguate;");
-        color(canvas);
-    }
-};
-var hullify = function (canvas) {
-    var hullVertices = vertex_1.convexHull(canvas.graph.vertices);
-    hullVertices.map(vertex_1.getConsecutiveVertexPairs).forEach(function (pair) {
-        canvas.drawEdge(pair[0], pair[1], "blue");
-    });
-};
-var triangulate = function (canvas) {
-    var graph = canvas.graph;
-    var isTriangulated = false;
-    while (!isTriangulated) {
-        isTriangulated = true;
-        graph.faces.forEach(function (f) {
-            isTriangulated = isTriangulated && triangulateFace(canvas, f);
-        });
-    }
-};
-var triangulateFace = function (canvas, face) {
-    var graph = canvas.graph;
-    var edges = graph.getBoundaryEdges(face);
-    if (edges.length > 3 && !face.infinite) {
-        var potentialEdges = edges.map(function (e) { return [e.origin, e.next.next.origin]; });
-        for (var i = 0; i < potentialEdges.length; i++) {
-            var v1 = potentialEdges[i][0];
-            var v2 = potentialEdges[i][1];
-            if (graph.getEdgeFace(v1, v2) === face) {
-                canvas.drawEdge(v1, v2, "blue");
-                return false;
-            }
-        }
-    }
-    return true;
-};
-var color = function (canvas) {
-    var graph = canvas.graph;
-};
-
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var planar_graph_1 = __webpack_require__(4);
-var distance = function (v1, v2) {
-    var s = function (x) { return x * x; };
-    return Math.sqrt(s(v1.x - v2.x) + s(v1.y - v2.y));
-};
-var unitVector = function (v1, v2) {
-    var d = distance(v1, v2);
-    return { x: (v1.x - v2.x) / d, y: (v1.y - v2.y) / d };
-};
-var GraphDrawingWrapper = (function () {
-    function GraphDrawingWrapper(canvasId, radius) {
-        if (radius === void 0) { radius = 10; }
-        this.radius = radius;
-        this.vertices = [];
-        this.canvasEl = document.getElementById(canvasId);
-        this.drawCircle = this.drawCircle.bind(this);
-        this.handleClick = this.handleClick.bind(this);
-        this.canvasEl.addEventListener("click", this.handleClick);
-        this.graph = new planar_graph_1.PlanarGraph();
-        window.graphLog = "";
-        window.parseLog = planar_graph_1.PlanarGraph.parseLog;
-        this.highlightedVertex = null;
-    }
-    GraphDrawingWrapper.prototype.clickVertex = function (v) {
-        if (this.highlightedVertex) {
-            if (v !== this.highlightedVertex) {
-                this.drawEdge(v, this.highlightedVertex);
-            }
-            this.unhighlight();
-        }
-        else {
-            this.highlight(v);
-        }
-    };
-    GraphDrawingWrapper.prototype.drawCircle = function (v, strokeColor, fillColor) {
-        if (strokeColor === void 0) { strokeColor = "black"; }
-        if (fillColor === void 0) { fillColor = null; }
-        this.vertices.push(v);
-        var context = this.canvasEl.getContext('2d');
-        context.strokeStyle = strokeColor;
-        context.fillStyle = fillColor || "none";
-        context.beginPath();
-        context.arc(v.x, v.y, this.radius, 0, 2 * Math.PI);
-        context.stroke();
-        if (fillColor)
-            context.fill();
-    };
-    GraphDrawingWrapper.prototype.drawEdge = function (v1, v2, strokeColor) {
-        if (strokeColor === void 0) { strokeColor = "black"; }
-        if (this.graph.addEdge(v1, v2)) {
-            window.graphLog = window.graphLog.concat(v1.x + "," + v1.y + "," + v2.x + "," + v2.y + ";");
-            var context = this.canvasEl.getContext('2d');
-            var unit = unitVector(v1, v2);
-            context.strokeStyle = strokeColor;
-            context.beginPath();
-            context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
-            context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
-            context.stroke();
-        }
-    };
-    GraphDrawingWrapper.prototype.handleClick = function (e) {
-        var _this = this;
-        try {
-            var newVertex_1 = { x: e.x, y: e.y, colors: [] };
-            var clickedVertex_1;
-            var overlappingVertex_1;
-            this.vertices.forEach(function (v) {
-                var dist = distance(v, newVertex_1);
-                if (dist <= _this.radius)
-                    clickedVertex_1 = v;
-                if (dist <= 2 * _this.radius)
-                    overlappingVertex_1 = v;
-            });
-            if (clickedVertex_1) {
-                this.clickVertex(clickedVertex_1);
-            }
-            else if (!overlappingVertex_1) {
-                this.drawCircle(newVertex_1);
-            }
-        }
-        catch (err) {
-            alert(err.message);
-        }
-    };
-    GraphDrawingWrapper.prototype.highlight = function (v) {
-        if (this.highlightedVertex)
-            this.unhighlight();
-        this.highlightedVertex = v;
-        this.drawCircle(v, "red");
-    };
-    GraphDrawingWrapper.prototype.unhighlight = function () {
-        this.drawCircle(this.highlightedVertex);
-        this.highlightedVertex = null;
-    };
-    return GraphDrawingWrapper;
-}());
-exports.GraphDrawingWrapper = GraphDrawingWrapper;
-
-
-/***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
  * @license
  * Lodash <https://lodash.com/>
@@ -17435,217 +17159,599 @@ exports.GraphDrawingWrapper = GraphDrawingWrapper;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(6)(module)))
 
 /***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+// coordinate equality
+exports.eq = function (a, b) { return (a.x === b.x && a.y === b.y); };
+// 2-dimensional cross product
+exports.xProd = function (v1, v2) { return (v1.x * v2.y - v1.y * v2.x); };
+// dot product
+var dot = function (v1, v2) { return (v1.x * v2.x + v1.y + v2.y); };
+exports.angle = function (v1, v2) {
+    return Math.atan2(v1.y - v2.y, v1.x - v2.x);
+};
+exports.getConsecutiveCoordPairs = function (v, i, p) { return ([v, p[(i + 1) % p.length]]); };
+// Do the line segments from v1-v2 and v3-v4 intersect?
+exports.intersect = function (v1, v2, v3, v4, halfOpen) {
+    if (halfOpen === void 0) { halfOpen = false; }
+    var r = { x: v2.x - v1.x, y: v2.y - v1.y };
+    var s = { x: v4.x - v3.x, y: v4.y - v3.y };
+    var diff = { x: v3.x - v1.x, y: v3.y - v1.y };
+    var det = exports.xProd(r, s);
+    if (det !== 0) {
+        var t = exports.xProd(diff, r) / det;
+        var u = exports.xProd(diff, s) / det;
+        var interior = function (x) { return (0 < x && x < 1); };
+        var boundary = function (x) { return (x === 0 || x === 1); };
+        if (interior(t) && interior(u)) {
+            // the segments intersect
+            return true;
+        }
+        else if (boundary(t) || boundary(u)) {
+            // three points are collinear
+            return (interior(t) || interior(u)) && (!halfOpen || t === 0 || u === 0);
+        }
+        else {
+            return false;
+        }
+    }
+    else {
+        if (exports.xProd(diff, r) !== 0) {
+            // parallel, non-collinear
+            return false;
+        }
+        else {
+            // all 4 points collinear
+            var t0 = dot(diff, r) / dot(r, r);
+            var t1 = t0 + dot(s, r) / dot(r, r);
+            return (Math.max(t0, t1) > 0 && Math.min(t0, t1) < 1);
+        }
+    }
+};
+// Is v in the interior of polygon?
+exports.inInterior = function (polygon, v) {
+    if (polygon.length < 3 || polygon.some(function (u) { return exports.eq(u, v); }))
+        return false;
+    var maxX = Math.max.apply(Math, polygon.map(function (v) { return v.x; }));
+    var maxY = Math.max.apply(Math, polygon.map(function (v) { return v.y; }));
+    var outerCoord = { x: maxX + 1, y: maxY + 1 };
+    while (polygon.some(function (u) { return exports.collinear3([u, v, outerCoord]); })) {
+        outerCoord.x = outerCoord.x + 1;
+    }
+    var crossingNum = 0;
+    polygon.map(exports.getConsecutiveCoordPairs).forEach(function (pair) {
+        if (exports.intersect(v, outerCoord, pair[0], pair[1], true))
+            crossingNum += 1;
+    });
+    return crossingNum % 2 === 1;
+};
+exports.signedArea = function (polygon) {
+    var signedAreaSum = 0;
+    polygon.map(exports.getConsecutiveCoordPairs).forEach(function (pair) {
+        signedAreaSum += (pair[1].x - pair[0].x) * (pair[1].y + pair[0].y);
+    });
+    return signedAreaSum;
+};
+exports.isClockwise = function (polygon) { return (exports.signedArea(polygon) > 0); };
+exports.collinear3 = function (polygon) { return (exports.signedArea(polygon) === 0); };
+// Helper method for convex hull
+var lexSortYX = function (a, b) {
+    if (a.y - b.y !== 0) {
+        return a.y - b.y;
+    }
+    else {
+        return a.x - b.x;
+    }
+};
+// Graham scan
+exports.convexHull = function (vertices) {
+    var stack = [];
+    // Don't mutate the input
+    var verticesCopy = vertices.slice(0);
+    // 1. Find lowest y-value
+    var firstCoord = verticesCopy.sort(lexSortYX)[0];
+    stack.unshift(firstCoord);
+    var otherVertices = verticesCopy.slice(1);
+    // 2. Sort vertices by angle
+    otherVertices.sort(function (v1, v2) { return (exports.isClockwise([firstCoord, v1, v2]) ? -1 : 1); });
+    // 3. Do the scan
+    otherVertices.forEach(function (nextCoord) {
+        while (stack.length > 1 && !exports.isClockwise([stack[1], stack[0], nextCoord])) {
+            stack.shift();
+        }
+        stack.unshift(nextCoord);
+    });
+    return stack;
+};
+
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var geom_1 = __webpack_require__(1);
+var lodash_1 = __webpack_require__(0);
+var alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+var Color;
+(function (Color) {
+    Color[Color["Red"] = 0] = "Red";
+    Color[Color["Orange"] = 1] = "Orange";
+    Color[Color["Yellow"] = 2] = "Yellow";
+    Color[Color["Green"] = 3] = "Green";
+    Color[Color["Blue"] = 4] = "Blue";
+})(Color || (Color = {}));
+var ALL_COLORS = [Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue];
+var getSlug = function () {
+    var slug = "";
+    for (var i = 0; i < 10; i++) {
+        slug = slug.concat(alphabet[Math.floor(alphabet.length * Math.random())]);
+    }
+    return slug;
+};
+exports.createEmptyPlanarGraph = function () {
+    var infFace = { infinite: true };
+    return {
+        infiniteFace: 'infinite',
+        vertices: {},
+        edges: {},
+        faces: { 'infinite': infFace }
+    };
+};
+var getVertexKey = function (graph, c) {
+    var matchedVertexKey = null;
+    lodash_1.forIn(graph.vertices, function (value, key) {
+        if (geom_1.eq(value, c))
+            matchedVertexKey = key;
+    });
+    return matchedVertexKey;
+};
+var begin = function (c1, c2) {
+    var v1Slug = getSlug();
+    var v2Slug = getSlug();
+    var e12Slug = getSlug();
+    var e21Slug = getSlug();
+    var v1 = { x: c1.x, y: c1.y, incidentEdge: e12Slug, colors: ALL_COLORS };
+    var v2 = { x: c2.x, y: c2.y, incidentEdge: e21Slug, colors: ALL_COLORS };
+    var e12 = { twin: e21Slug, next: e21Slug, prev: e21Slug, origin: v1Slug, incidentFace: 'infinite' };
+    var e21 = { twin: e12Slug, next: e12Slug, prev: e12Slug, origin: v2Slug, incidentFace: 'infinite' };
+    return {
+        infiniteFace: 'infinite',
+        vertices: (_a = {}, _a[v1Slug] = v1, _a[v2Slug] = v2, _a),
+        edges: (_b = {}, _b[e12Slug] = e12, _b[e21Slug] = e21, _b),
+        faces: { 'infinite': { infinite: true, incidentEdge: e12Slug } }
+    };
+    var _a, _b;
+};
+var connectNewVertex = function (graph, vKey, newVertex) {
+    var boundingFaceKey = exports.getSplitFaceKey(graph, graph.vertices[vKey], newVertex);
+    if (boundingFaceKey) {
+        var newGraph = lodash_1.cloneDeep(graph);
+        var newVertexSlug = getSlug();
+        var oldVertex = newGraph.vertices[vKey];
+        var oldOutEdgeKey = getNextClockwiseEdgeKey(newGraph, vKey, geom_1.angle(oldVertex, newVertex));
+        var oldOutEdge = newGraph.edges[oldOutEdgeKey];
+        var oldInEdgeKey = oldOutEdge.prev;
+        var oldInEdge = newGraph.edges[oldInEdgeKey];
+        var oldNewSlug = getSlug();
+        var newOldSlug = getSlug();
+        var oldNew = { origin: vKey, prev: oldInEdgeKey, twin: newOldSlug,
+            next: newOldSlug, incidentFace: boundingFaceKey };
+        var newOld = { origin: newVertexSlug, prev: oldNewSlug,
+            next: oldOutEdgeKey, twin: oldNewSlug, incidentFace: boundingFaceKey };
+        oldInEdge.next = oldNewSlug;
+        oldOutEdge.prev = newOldSlug;
+        newGraph.vertices[newVertexSlug] = { x: newVertex.x, y: newVertex.y,
+            colors: ALL_COLORS, incidentEdge: newOldSlug };
+        newGraph.edges[oldNewSlug] = oldNew;
+        newGraph.edges[newOldSlug] = newOld;
+        return newGraph;
+    }
+    else {
+        throw new Error("Can't connect those vertices");
+    }
+};
+var pickInfiniteEdge = function (graph, eKey) {
+    var e = graph.edges[eKey];
+    var eTwin = graph.edges[e.twin];
+    var vertices = [graph.vertices[eTwin.origin]];
+    var currentEdge = graph.edges[eTwin.next];
+    while (currentEdge !== eTwin) {
+        vertices.push(graph.vertices[currentEdge.origin]);
+        currentEdge = graph.edges[currentEdge.next];
+    }
+    return geom_1.isClockwise(vertices) ? eKey : e.twin;
+};
+var connect = function (graph, vKey1, vKey2) {
+    var newGraph = lodash_1.cloneDeep(graph);
+    if (getAdjacentVertices(newGraph, vKey1).includes(vKey2)) {
+        throw new Error("Can't connect already connected vertices");
+    }
+    var v1 = newGraph.vertices[vKey1];
+    var v2 = newGraph.vertices[vKey2];
+    var boundingFace = exports.getSplitFaceKey(newGraph, v1, v2);
+    if (boundingFace) {
+        // First we fix all the edge pointers
+        var e1Key = getNextClockwiseEdgeKey(newGraph, vKey1, geom_1.angle(v1, v2));
+        var e1 = newGraph.edges[e1Key];
+        var e2Key = getNextClockwiseEdgeKey(newGraph, vKey2, geom_1.angle(v2, v1));
+        var e2 = newGraph.edges[e2Key];
+        var v1v2Slug = getSlug();
+        var v2v1Slug = getSlug();
+        // The incidentFace pointers will be fixed later on...
+        var v1v2 = { origin: vKey1, next: e2Key, prev: e1.prev, twin: v2v1Slug,
+            incidentFace: boundingFace };
+        var v2v1 = { origin: vKey2, next: e1Key, prev: e2.prev, twin: v1v2Slug,
+            incidentFace: boundingFace };
+        newGraph.edges[e1.prev].next = v1v2Slug;
+        e1.prev = v2v1Slug;
+        newGraph.edges[e2.prev].next = v2v1Slug;
+        e2.prev = v1v2Slug;
+        newGraph.edges[v1v2Slug] = v1v2;
+        newGraph.edges[v2v1Slug] = v2v1;
+        // Now we create a new face
+        var newFaceEdge = newGraph.faces[boundingFace].infinite ? pickInfiniteEdge(newGraph, v1v2Slug) : v1v2Slug;
+        newGraph.faces[boundingFace].incidentEdge = newGraph.edges[newFaceEdge].twin;
+        var newFaceSlug = getSlug();
+        var newFace = { infinite: false, incidentEdge: newFaceEdge };
+        newGraph.edges[newGraph.edges[newFaceEdge].twin].incidentFace = boundingFace;
+        newGraph.edges[newFaceEdge].incidentFace = newFaceSlug;
+        var currentEdge = newGraph.edges[newFaceEdge].next;
+        while (currentEdge !== newFaceEdge) {
+            newGraph.edges[currentEdge].incidentFace = newFaceSlug;
+            currentEdge = newGraph.edges[currentEdge].next;
+        }
+        newGraph.faces[newFaceSlug] = newFace;
+        return newGraph;
+    }
+    else {
+        throw new Error("Can't connect those vertices");
+    }
+};
+exports.addEdge = function (graph, c1, c2) {
+    var vKey1 = getVertexKey(graph, c1);
+    var vKey2 = getVertexKey(graph, c2);
+    if (!vKey1 && !vKey2) {
+        if (lodash_1.values(graph.vertices).length > 0)
+            throw new Error("Please keep the graph connected");
+        return begin(c1, c2);
+    }
+    else if (!vKey1 && vKey2) {
+        return connectNewVertex(graph, vKey2, c1);
+    }
+    else if (!vKey2 && vKey1) {
+        return connectNewVertex(graph, vKey1, c2);
+    }
+    else {
+        return connect(graph, vKey1, vKey2);
+    }
+};
+exports.removeEdge = function (graph, edgeKey) {
+    return graph;
+};
+exports.removeVertex = function (graph, vertexKey) {
+    return graph;
+};
+var getAdjacentVertices = function (graph, vertexKey) {
+    return exports.getOutgoingEdgeKeys(graph, vertexKey).map(function (eKey) {
+        return graph.edges[graph.edges[eKey].next].origin;
+    });
+};
+exports.getBoundaryEdgeKeys = function (graph, fKey) {
+    var face = graph.faces[fKey];
+    var boundaryEdgeKeys = [];
+    if (face.incidentEdge) {
+        var currentEdge = face.incidentEdge;
+        while (!boundaryEdgeKeys.includes(currentEdge)) {
+            boundaryEdgeKeys.push(currentEdge);
+            currentEdge = graph.edges[currentEdge].next;
+        }
+    }
+    return boundaryEdgeKeys;
+};
+exports.getBoundaryVertexKeys = function (graph, fKey) {
+    return exports.getBoundaryEdgeKeys(graph, fKey).map(function (eKey) { return graph.edges[eKey].origin; });
+};
+var getBoundaryVertices = function (graph, fKey) {
+    return exports.getBoundaryVertexKeys(graph, fKey).map(function (vKey) { return graph.vertices[vKey]; });
+};
+var getBoundingFaceKey = function (graph, c) {
+    var boundingFaceKey = graph.infiniteFace;
+    Object.keys(graph.faces).forEach(function (fKey) {
+        if (graph.infiniteFace !== fKey &&
+            geom_1.inInterior(getBoundaryVertices(graph, fKey), c)) {
+            boundingFaceKey = fKey;
+        }
+    });
+    return boundingFaceKey;
+};
+exports.getSplitFaceKey = function (graph, c1, c2) {
+    var midpoint = { x: (c1.x + c2.x) / 2, y: (c1.y + c2.y) / 2 };
+    var possFaceKey = getBoundingFaceKey(graph, midpoint);
+    var commonFaces = lodash_1.intersection(getIncidentFaceKeys(graph, c1), getIncidentFaceKeys(graph, c2));
+    if (commonFaces.includes(possFaceKey)) {
+        var nonIntersect = function (edgeKey) {
+            var firstVertex = graph.vertices[graph.edges[edgeKey].origin];
+            var secondVertex = graph.vertices[graph.edges[graph.edges[edgeKey].next].origin];
+            return !geom_1.intersect(c1, c2, firstVertex, secondVertex);
+        };
+        return exports.getBoundaryEdgeKeys(graph, possFaceKey).every(nonIntersect) ? possFaceKey : null;
+    }
+    else {
+        return null;
+    }
+};
+var getIncidentFaceKeys = function (graph, c) {
+    var vKey = getVertexKey(graph, c);
+    if (vKey) {
+        var edgeKeys = exports.getOutgoingEdgeKeys(graph, vKey);
+        return edgeKeys.map(function (eKey) { return graph.edges[eKey].incidentFace; });
+    }
+    else {
+        return [getBoundingFaceKey(graph, c)];
+    }
+};
+exports.getOutgoingEdgeKeys = function (graph, vKey) {
+    var incidentEdgeKeys = [];
+    if (graph.vertices[vKey].incidentEdge) {
+        var currentEdgeKey = graph.vertices[vKey].incidentEdge;
+        while (!incidentEdgeKeys.includes(currentEdgeKey)) {
+            incidentEdgeKeys.push(currentEdgeKey);
+            currentEdgeKey = graph.edges[graph.edges[currentEdgeKey].twin].next;
+        }
+    }
+    return incidentEdgeKeys;
+};
+var getNextClockwiseEdgeKey = function (graph, vKey, newAngle) {
+    var keysWithAngles = exports.getOutgoingEdgeKeys(graph, vKey).map(function (eKey) {
+        var v1 = graph.vertices[graph.edges[eKey].origin];
+        var v2 = graph.vertices[graph.edges[graph.edges[eKey].next].origin];
+        return [eKey, geom_1.angle(v1, v2)];
+    });
+    var smallAngleEdges = keysWithAngles.filter(function (ea) { return ea[1] < newAngle; });
+    var sortByAngleDecreasing = function (e1, e2) { return (e2[1] - e1[1]); };
+    var getHighestAngleEdge = function (pairList) {
+        return (pairList.sort(sortByAngleDecreasing)[0][0]);
+    };
+    return (smallAngleEdges.length > 0) ?
+        getHighestAngleEdge(smallAngleEdges) :
+        getHighestAngleEdge(keysWithAngles);
+};
+exports.safeAddEdge = function (graph, c1, c2) {
+    try {
+        exports.addEdge(graph, c1, c2);
+        return true;
+    }
+    catch (e) {
+        return false;
+    }
+};
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var geom_1 = __webpack_require__(1);
+var planar_graph_1 = __webpack_require__(2);
+var lodash_1 = __webpack_require__(0);
+var PAUSE = 500;
+exports.animate = function (canvas) {
+    var animations = makeAnimation(canvas.graph);
+    animations.forEach(function (a) {
+        if (a.type === "DRAW_EDGE") {
+            canvas.drawEdge(a.data[0], a.data[1], "blue");
+        }
+    });
+};
+var makeAnimation = function (graph) {
+    if (lodash_1.values(graph.vertices).length < 3) {
+        alert("please connect more vertices");
+    }
+    else {
+        var animations_1 = [];
+        var hullify = function (g) {
+            var hullVertices = geom_1.convexHull(lodash_1.values(g.vertices));
+            hullVertices.map(geom_1.getConsecutiveCoordPairs).forEach(function (pair) {
+                if (planar_graph_1.safeAddEdge(g, pair[0], pair[1])) {
+                    animations_1.push({
+                        type: "DRAW_EDGE",
+                        data: pair
+                    });
+                    g = planar_graph_1.addEdge(g, pair[0], pair[1]);
+                }
+            });
+            return g;
+        };
+        var splitFace_1 = function (g, faceKey) {
+            var edges = planar_graph_1.getBoundaryEdgeKeys(g, faceKey);
+            if (edges.length > 3 && g.infiniteFace !== faceKey) {
+                var potentialEdges = edges.map(function (eKey) {
+                    return [g.edges[eKey].origin, g.edges[g.edges[g.edges[eKey].next].next].origin];
+                });
+                for (var i = 0; i < potentialEdges.length; i++) {
+                    var v1 = g.vertices[potentialEdges[i][0]];
+                    var v2 = g.vertices[potentialEdges[i][1]];
+                    if (planar_graph_1.getSplitFaceKey(g, v1, v2) === faceKey) {
+                        animations_1.push({
+                            type: "DRAW_EDGE",
+                            data: [v1, v2]
+                        });
+                        return planar_graph_1.addEdge(g, v1, v2);
+                    }
+                }
+            }
+            return g;
+        };
+        var triangulate = function (g) {
+            while (!isTriangulated(g)) {
+                lodash_1.forIn(g.faces, function (f, fKey) {
+                    if (planar_graph_1.getBoundaryEdgeKeys(g, fKey).length > 3) {
+                        g = splitFace_1(g, fKey);
+                    }
+                });
+            }
+            return g;
+        };
+        var color = function (g) {
+            var chord = findChordKey(graph);
+            if (chord) {
+            }
+            else {
+            }
+            return g;
+        };
+        window.graphLog = window.graphLog.concat("beginHullify;");
+        graph = hullify(graph);
+        window.graphLog = window.graphLog.concat("beginTriangulate;");
+        graph = triangulate(graph);
+        window.graphLog = window.graphLog.concat("endTrianguate;");
+        graph = color(graph);
+        return animations_1;
+    }
+};
+var isTriangulated = function (g) {
+    return Object.keys(g.faces).every(function (fKey) {
+        return (g.infiniteFace === fKey || planar_graph_1.getBoundaryEdgeKeys(g, fKey).length === 3);
+    });
+};
+var findChordKey = function (graph) {
+    var chordKey = null;
+    var outerVertices = planar_graph_1.getBoundaryVertexKeys(graph, graph.infiniteFace);
+    outerVertices.forEach(function (vKey) {
+        var edgeKeys = planar_graph_1.getOutgoingEdgeKeys(graph, vKey);
+        edgeKeys.forEach(function (eKey) {
+            var e = graph.edges[eKey];
+            if (outerVertices.includes(graph.edges[e.next].origin) && e.incidentFace != graph.infiniteFace) {
+                chordKey = eKey;
+            }
+        });
+    });
+    return chordKey;
+};
+
+
+/***/ }),
 /* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var vertex_1 = __webpack_require__(0);
-var lodash_1 = __webpack_require__(3);
-var PlanarGraph = (function () {
-    function PlanarGraph() {
+var planar_graph_1 = __webpack_require__(2);
+var distance = function (v1, v2) {
+    var s = function (x) { return x * x; };
+    return Math.sqrt(s(v1.x - v2.x) + s(v1.y - v2.y));
+};
+var unitVector = function (v1, v2) {
+    var d = distance(v1, v2);
+    return { x: (v1.x - v2.x) / d, y: (v1.y - v2.y) / d };
+};
+var GraphDrawingWrapper = (function () {
+    function GraphDrawingWrapper(canvasId, radius) {
+        if (radius === void 0) { radius = 10; }
+        this.radius = radius;
         this.vertices = [];
-        this.edges = [];
-        this.infiniteFace = { infinite: true };
-        this.faces = [this.infiniteFace];
-        // bind methods
-        this.getIncidentFaces = this.getIncidentFaces.bind(this);
+        this.canvasEl = document.getElementById(canvasId);
+        this.drawCircle = this.drawCircle.bind(this);
+        this.handleClick = this.handleClick.bind(this);
+        this.canvasEl.addEventListener("click", this.handleClick);
+        this.graph = planar_graph_1.createEmptyPlanarGraph();
+        window.graphLog = "";
+        this.highlightedVertex = null;
     }
-    PlanarGraph.parseLog = function (log) {
-        var graph = new PlanarGraph();
-        var steps = log.split(";");
-        var vertices = {};
-        steps.forEach(function (step) {
-            var coords = step.split(",");
-            if (coords.length > 1) {
-                var vertexAlias1 = [coords[0], coords[1]].join(",");
-                var vertexAlias2 = [coords[2], coords[3]].join(",");
-                vertices[vertexAlias1] = vertices[vertexAlias1] ||
-                    { x: parseInt(coords[0]), y: parseInt(coords[1]) };
-                vertices[vertexAlias2] = vertices[vertexAlias2] ||
-                    { x: parseInt(coords[2]), y: parseInt(coords[3]) };
-                graph.addEdge(vertices[vertexAlias1], vertices[vertexAlias2]);
+    GraphDrawingWrapper.prototype.clickVertex = function (v) {
+        if (this.highlightedVertex) {
+            if (v !== this.highlightedVertex) {
+                this.drawEdge(v, this.highlightedVertex);
             }
-        });
-        return graph;
-    };
-    PlanarGraph.prototype.addEdge = function (v1, v2) {
-        if (!v1.incidentEdge && !v2.incidentEdge) {
-            if (this.vertices.length > 0)
-                throw new Error("Please keep the graph connected");
-            this.begin(v1, v2);
-            return true;
-        }
-        else if (!v1.incidentEdge && v2.incidentEdge) {
-            return this.connectNewVertex(v2, v1);
-        }
-        else if (!v2.incidentEdge && v1.incidentEdge) {
-            return this.connectNewVertex(v1, v2);
+            this.unhighlight();
         }
         else {
-            return this.connectVertices(v1, v2);
+            this.highlight(v);
         }
     };
-    PlanarGraph.prototype.begin = function (v1, v2) {
-        this.vertices = [v1, v2];
-        var v1v2 = { origin: v1, incidentFace: this.infiniteFace };
-        var v2v1 = { origin: v2, prev: v1v2, next: v1v2, twin: v1v2, incidentFace: this.infiniteFace };
-        v1.incidentEdge = v1v2;
-        v2.incidentEdge = v2v1;
-        v1v2.twin = v2v1;
-        v1v2.prev = v2v1;
-        v1v2.next = v2v1;
-        this.edges = [v1v2, v2v1];
-        this.infiniteFace.incidentEdge = v1v2;
-    };
-    PlanarGraph.prototype.connectNewVertex = function (oldVertex, newVertex) {
-        if (newVertex.incidentEdge)
-            throw new Error("This should be unreachable, please open an issue at https://github.com/hrb90/slick-mongoose/issues");
-        var boundingFace = this.getEdgeFace(oldVertex, newVertex);
-        if (boundingFace) {
-            this.vertices.push(newVertex);
-            var oldOutEdge = this.getNextClockwiseEdge(oldVertex, vertex_1.angle(oldVertex, newVertex));
-            var oldInEdge = oldOutEdge.prev;
-            var oldNew = { origin: oldVertex, prev: oldInEdge, incidentFace: boundingFace };
-            var newOld = { origin: newVertex, twin: oldNew, prev: oldNew, next: oldOutEdge, incidentFace: boundingFace };
-            this.edges.push(oldNew);
-            this.edges.push(newOld);
-            oldNew.twin = newOld;
-            oldNew.next = newOld;
-            oldOutEdge.prev = newOld;
-            oldInEdge.next = oldNew;
-            newVertex.incidentEdge = newOld;
+    GraphDrawingWrapper.prototype.doesAddEdge = function (v1, v2) {
+        try {
+            this.graph = planar_graph_1.addEdge(this.graph, v1, v2);
             return true;
         }
-        else {
+        catch (e) {
             return false;
         }
     };
-    PlanarGraph.prototype.connectVertices = function (v1, v2) {
-        if (this.getOutgoingEdges(v1).map(function (e) { return e.next.origin; }).includes(v2)) {
-            return false;
-        }
-        var boundingFace = this.getEdgeFace(v1, v2);
-        if (boundingFace) {
-            // 1. Fix the edge pointers to other edges
-            var newEdge = this.cv_edgePointers(v1, v2, boundingFace);
-            // 2. Split the face
-            this.cv_makeNewFace(newEdge, boundingFace);
-            return true;
-        }
-        else {
-            return false;
-        }
+    GraphDrawingWrapper.prototype.drawCircle = function (v, strokeColor, fillColor) {
+        if (strokeColor === void 0) { strokeColor = "black"; }
+        if (fillColor === void 0) { fillColor = null; }
+        this.vertices.push(v);
+        var context = this.canvasEl.getContext('2d');
+        context.strokeStyle = strokeColor;
+        context.fillStyle = fillColor || "none";
+        context.beginPath();
+        context.arc(v.x, v.y, this.radius, 0, 2 * Math.PI);
+        context.stroke();
+        if (fillColor)
+            context.fill();
     };
-    PlanarGraph.prototype.cv_makeNewFace = function (e, f) {
-        var newFaceEdge = f.infinite ? this.pickInfiniteEdge(e) : e;
-        f.incidentEdge = newFaceEdge.twin;
-        var newFace = { infinite: false, incidentEdge: newFaceEdge };
-        this.faces.push(newFace);
-        // Fix incidentFace pointers
-        newFaceEdge.twin.incidentFace = f;
-        newFaceEdge.incidentFace = newFace;
-        var currentEdge = newFaceEdge.next;
-        while (currentEdge !== newFaceEdge) {
-            currentEdge.incidentFace = newFace;
-            currentEdge = currentEdge.next;
+    GraphDrawingWrapper.prototype.drawEdge = function (v1, v2, strokeColor) {
+        if (strokeColor === void 0) { strokeColor = "black"; }
+        if (this.doesAddEdge(v1, v2)) {
+            window.graphLog = window.graphLog.concat(v1.x + "," + v1.y + "," + v2.x + "," + v2.y + ";");
+            var context = this.canvasEl.getContext('2d');
+            var unit = unitVector(v1, v2);
+            context.strokeStyle = strokeColor;
+            context.beginPath();
+            context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
+            context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
+            context.stroke();
         }
     };
-    PlanarGraph.prototype.cv_edgePointers = function (v1, v2, boundingFace) {
-        var e1 = this.getNextClockwiseEdge(v1, vertex_1.angle(v1, v2));
-        var e2 = this.getNextClockwiseEdge(v2, vertex_1.angle(v2, v1));
-        var v1v2 = { origin: v1, next: e2, prev: e1.prev };
-        var v2v1 = { origin: v2, next: e1, prev: e2.prev, twin: v1v2 };
-        v1v2.twin = v2v1;
-        e1.prev.next = v1v2;
-        e1.prev = v2v1;
-        e2.prev.next = v2v1;
-        e2.prev = v1v2;
-        this.edges.push(v1v2);
-        this.edges.push(v2v1);
-        return v1v2;
-    };
-    PlanarGraph.prototype.getEdgeFace = function (v1, v2) {
-        var midpoint = { x: (v1.x + v2.x) / 2, y: (v1.y + v2.y) / 2 };
-        var possFace = this.getBoundingFace(midpoint);
-        if (this.commonFaces(v1, v2).indexOf(possFace) > -1) {
-            return this.getBoundaryEdges(possFace).every(function (e) { return (!vertex_1.intersect(v1, v2, e.origin, e.next.origin)); }) ? possFace : null;
-        }
-        else {
-            return null;
-        }
-    };
-    PlanarGraph.prototype.commonFaces = function (v1, v2) {
-        return lodash_1.intersection.apply(void 0, [v1, v2].map(this.getIncidentFaces));
-    };
-    PlanarGraph.prototype.getBoundaryEdges = function (f) {
-        var boundaryEdges = [];
-        if (f.incidentEdge) {
-            var currentEdge = f.incidentEdge;
-            while (boundaryEdges.indexOf(currentEdge) === -1) {
-                boundaryEdges.push(currentEdge);
-                currentEdge = currentEdge.next;
-            }
-        }
-        return boundaryEdges;
-    };
-    PlanarGraph.prototype.getBoundaryVertices = function (f) {
-        return this.getBoundaryEdges(f).map(function (e) { return e.origin; });
-    };
-    PlanarGraph.prototype.getBoundingFace = function (v) {
+    GraphDrawingWrapper.prototype.handleClick = function (e) {
         var _this = this;
-        var boundingFace = this.infiniteFace;
-        this.faces.forEach(function (f) {
-            if (!f.infinite &&
-                vertex_1.inInterior(_this.getBoundaryVertices(f), v)) {
-                boundingFace = f;
+        try {
+            var newVertex_1 = { x: e.x, y: e.y, colors: [] };
+            var clickedVertex_1;
+            var overlappingVertex_1;
+            this.vertices.forEach(function (v) {
+                var dist = distance(v, newVertex_1);
+                if (dist <= _this.radius)
+                    clickedVertex_1 = v;
+                if (dist <= 2 * _this.radius)
+                    overlappingVertex_1 = v;
+            });
+            if (clickedVertex_1) {
+                this.clickVertex(clickedVertex_1);
             }
-        });
-        return boundingFace;
-    };
-    PlanarGraph.prototype.getIncidentFaces = function (v) {
-        return v.incidentEdge ?
-            lodash_1.uniq(this.getOutgoingEdges(v).map(function (e) { return e.incidentFace; })) :
-            [this.getBoundingFace(v)];
-    };
-    PlanarGraph.prototype.getNextClockwiseEdge = function (v, newAngle) {
-        var edgesWithAngles = this.getOutgoingEdges(v).map(function (e) { return [e, vertex_1.angle(e.origin, e.next.origin)]; });
-        // If there's an angle smaller than newAngle, return the edge with the largest such angle
-        // Otherwise, wrap around and return the edge with the largest angle overall
-        var smallAngleEdges = edgesWithAngles.filter(function (ea) { return ea[1] < newAngle; });
-        var sortByAngleDecreasing = function (e1, e2) { return (e2[1] - e1[1]); };
-        var getHighestAngleEdge = function (pairList) {
-            return (pairList.sort(sortByAngleDecreasing)[0][0]);
-        };
-        return (smallAngleEdges.length > 0) ?
-            getHighestAngleEdge(smallAngleEdges) :
-            getHighestAngleEdge(edgesWithAngles);
-    };
-    PlanarGraph.prototype.getOutgoingEdges = function (v) {
-        var incidentEdges = [];
-        if (v.incidentEdge) {
-            var currentEdge = v.incidentEdge;
-            while (incidentEdges.indexOf(currentEdge) === -1) {
-                incidentEdges.push(currentEdge);
-                currentEdge = currentEdge.twin.next;
+            else if (!overlappingVertex_1) {
+                this.drawCircle(newVertex_1);
             }
         }
-        return incidentEdges;
-    };
-    // given that e or e.twin is incident to the infiniteface, return the half edge that is
-    PlanarGraph.prototype.pickInfiniteEdge = function (e) {
-        var vertices = [e.twin.origin];
-        var currentEdge = e.twin.next;
-        while (currentEdge !== e.twin) {
-            vertices.push(currentEdge.origin);
-            currentEdge = currentEdge.next;
+        catch (err) {
+            alert(err.message);
         }
-        return vertex_1.isClockwise(vertices) ? e : e.twin;
     };
-    return PlanarGraph;
+    GraphDrawingWrapper.prototype.highlight = function (v) {
+        if (this.highlightedVertex)
+            this.unhighlight();
+        this.highlightedVertex = v;
+        this.drawCircle(v, "red");
+    };
+    GraphDrawingWrapper.prototype.unhighlight = function () {
+        this.drawCircle(this.highlightedVertex);
+        this.highlightedVertex = null;
+    };
+    return GraphDrawingWrapper;
 }());
-exports.PlanarGraph = PlanarGraph;
+exports.GraphDrawingWrapper = GraphDrawingWrapper;
 
 
 /***/ }),
@@ -17710,8 +17816,8 @@ module.exports = function(module) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var canvas_wrapper_1 = __webpack_require__(2);
-var animation_1 = __webpack_require__(1);
+var canvas_wrapper_1 = __webpack_require__(4);
+var animation_1 = __webpack_require__(3);
 document.addEventListener('DOMContentLoaded', function () {
     var wrapper = new canvas_wrapper_1.GraphDrawingWrapper("canvas");
     document.getElementById('animate-button').addEventListener("click", function () {
