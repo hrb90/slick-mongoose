@@ -70,6 +70,125 @@
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+// coordinate equality
+exports.eq = function (a, b) { return (a.x === b.x && a.y === b.y); };
+// 2-dimensional cross product
+exports.xProd = function (v1, v2) { return (v1.x * v2.y - v1.y * v2.x); };
+// dot product
+var dot = function (v1, v2) { return (v1.x * v2.x + v1.y + v2.y); };
+exports.angle = function (v1, v2) {
+    return Math.atan2(v1.y - v2.y, v1.x - v2.x);
+};
+exports.getConsecutiveCoordPairs = function (v, i, p) { return ([v, p[(i + 1) % p.length]]); };
+// Do the line segments from v1-v2 and v3-v4 intersect?
+exports.intersect = function (v1, v2, v3, v4, halfOpen) {
+    if (halfOpen === void 0) { halfOpen = false; }
+    var r = { x: v2.x - v1.x, y: v2.y - v1.y };
+    var s = { x: v4.x - v3.x, y: v4.y - v3.y };
+    var diff = { x: v3.x - v1.x, y: v3.y - v1.y };
+    var det = exports.xProd(r, s);
+    if (det !== 0) {
+        var t = exports.xProd(diff, r) / det;
+        var u = exports.xProd(diff, s) / det;
+        var interior = function (x) { return (0 < x && x < 1); };
+        var boundary = function (x) { return (x === 0 || x === 1); };
+        if (interior(t) && interior(u)) {
+            // the segments intersect
+            return true;
+        }
+        else if (boundary(t) || boundary(u)) {
+            // three points are collinear
+            return (interior(t) || interior(u)) && (!halfOpen || t === 0 || u === 0);
+        }
+        else {
+            return false;
+        }
+    }
+    else {
+        if (exports.xProd(diff, r) !== 0) {
+            // parallel, non-collinear
+            return false;
+        }
+        else {
+            // all 4 points collinear
+            var t0 = dot(diff, r) / dot(r, r);
+            var t1 = t0 + dot(s, r) / dot(r, r);
+            return (Math.max(t0, t1) > 0 && Math.min(t0, t1) < 1);
+        }
+    }
+};
+// Is v in the interior of polygon?
+exports.inInterior = function (polygon, v) {
+    if (polygon.length < 3 || polygon.some(function (u) { return exports.eq(u, v); }))
+        return false;
+    var maxX = Math.max.apply(Math, polygon.map(function (v) { return v.x; }));
+    var maxY = Math.max.apply(Math, polygon.map(function (v) { return v.y; }));
+    var outerCoord = { x: maxX + 1, y: maxY + 1 };
+    while (polygon.some(function (u) { return exports.collinear3([u, v, outerCoord]); })) {
+        outerCoord.x = outerCoord.x + 1;
+    }
+    var crossingNum = 0;
+    polygon.map(exports.getConsecutiveCoordPairs).forEach(function (pair) {
+        if (exports.intersect(v, outerCoord, pair[0], pair[1], true))
+            crossingNum += 1;
+    });
+    return crossingNum % 2 === 1;
+};
+exports.signedArea = function (polygon) {
+    var signedAreaSum = 0;
+    polygon.map(exports.getConsecutiveCoordPairs).forEach(function (pair) {
+        signedAreaSum += (pair[1].x - pair[0].x) * (pair[1].y + pair[0].y);
+    });
+    return signedAreaSum;
+};
+exports.isClockwise = function (polygon) { return (exports.signedArea(polygon) > 0); };
+exports.collinear3 = function (polygon) { return (exports.signedArea(polygon) === 0); };
+// Helper method for convex hull
+var lexSortYX = function (a, b) {
+    if (a.y - b.y !== 0) {
+        return a.y - b.y;
+    }
+    else {
+        return a.x - b.x;
+    }
+};
+// Graham scan
+exports.convexHull = function (vertices) {
+    var stack = [];
+    // Don't mutate the input
+    var verticesCopy = vertices.slice(0);
+    // 1. Find lowest y-value
+    var firstCoord = verticesCopy.sort(lexSortYX)[0];
+    stack.unshift(firstCoord);
+    var otherVertices = verticesCopy.slice(1);
+    // 2. Sort vertices by angle
+    otherVertices.sort(function (v1, v2) { return (exports.isClockwise([firstCoord, v1, v2]) ? -1 : 1); });
+    // 3. Do the scan
+    otherVertices.forEach(function (nextCoord) {
+        while (stack.length > 1 && !exports.isClockwise([stack[1], stack[0], nextCoord])) {
+            stack.shift();
+        }
+        stack.unshift(nextCoord);
+    });
+    return stack;
+};
+exports.distance = function (v1, v2) {
+    var s = function (x) { return x * x; };
+    return Math.sqrt(s(v1.x - v2.x) + s(v1.y - v2.y));
+};
+exports.unitVector = function (v1, v2) {
+    var d = exports.distance(v1, v2);
+    return { x: (v1.x - v2.x) / d, y: (v1.y - v2.y) / d };
+};
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
  * @license
  * Lodash <https://lodash.com/>
@@ -17159,125 +17278,14 @@
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(6)(module)))
 
 /***/ }),
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-// coordinate equality
-exports.eq = function (a, b) { return (a.x === b.x && a.y === b.y); };
-// 2-dimensional cross product
-exports.xProd = function (v1, v2) { return (v1.x * v2.y - v1.y * v2.x); };
-// dot product
-var dot = function (v1, v2) { return (v1.x * v2.x + v1.y + v2.y); };
-exports.angle = function (v1, v2) {
-    return Math.atan2(v1.y - v2.y, v1.x - v2.x);
-};
-exports.getConsecutiveCoordPairs = function (v, i, p) { return ([v, p[(i + 1) % p.length]]); };
-// Do the line segments from v1-v2 and v3-v4 intersect?
-exports.intersect = function (v1, v2, v3, v4, halfOpen) {
-    if (halfOpen === void 0) { halfOpen = false; }
-    var r = { x: v2.x - v1.x, y: v2.y - v1.y };
-    var s = { x: v4.x - v3.x, y: v4.y - v3.y };
-    var diff = { x: v3.x - v1.x, y: v3.y - v1.y };
-    var det = exports.xProd(r, s);
-    if (det !== 0) {
-        var t = exports.xProd(diff, r) / det;
-        var u = exports.xProd(diff, s) / det;
-        var interior = function (x) { return (0 < x && x < 1); };
-        var boundary = function (x) { return (x === 0 || x === 1); };
-        if (interior(t) && interior(u)) {
-            // the segments intersect
-            return true;
-        }
-        else if (boundary(t) || boundary(u)) {
-            // three points are collinear
-            return (interior(t) || interior(u)) && (!halfOpen || t === 0 || u === 0);
-        }
-        else {
-            return false;
-        }
-    }
-    else {
-        if (exports.xProd(diff, r) !== 0) {
-            // parallel, non-collinear
-            return false;
-        }
-        else {
-            // all 4 points collinear
-            var t0 = dot(diff, r) / dot(r, r);
-            var t1 = t0 + dot(s, r) / dot(r, r);
-            return (Math.max(t0, t1) > 0 && Math.min(t0, t1) < 1);
-        }
-    }
-};
-// Is v in the interior of polygon?
-exports.inInterior = function (polygon, v) {
-    if (polygon.length < 3 || polygon.some(function (u) { return exports.eq(u, v); }))
-        return false;
-    var maxX = Math.max.apply(Math, polygon.map(function (v) { return v.x; }));
-    var maxY = Math.max.apply(Math, polygon.map(function (v) { return v.y; }));
-    var outerCoord = { x: maxX + 1, y: maxY + 1 };
-    while (polygon.some(function (u) { return exports.collinear3([u, v, outerCoord]); })) {
-        outerCoord.x = outerCoord.x + 1;
-    }
-    var crossingNum = 0;
-    polygon.map(exports.getConsecutiveCoordPairs).forEach(function (pair) {
-        if (exports.intersect(v, outerCoord, pair[0], pair[1], true))
-            crossingNum += 1;
-    });
-    return crossingNum % 2 === 1;
-};
-exports.signedArea = function (polygon) {
-    var signedAreaSum = 0;
-    polygon.map(exports.getConsecutiveCoordPairs).forEach(function (pair) {
-        signedAreaSum += (pair[1].x - pair[0].x) * (pair[1].y + pair[0].y);
-    });
-    return signedAreaSum;
-};
-exports.isClockwise = function (polygon) { return (exports.signedArea(polygon) > 0); };
-exports.collinear3 = function (polygon) { return (exports.signedArea(polygon) === 0); };
-// Helper method for convex hull
-var lexSortYX = function (a, b) {
-    if (a.y - b.y !== 0) {
-        return a.y - b.y;
-    }
-    else {
-        return a.x - b.x;
-    }
-};
-// Graham scan
-exports.convexHull = function (vertices) {
-    var stack = [];
-    // Don't mutate the input
-    var verticesCopy = vertices.slice(0);
-    // 1. Find lowest y-value
-    var firstCoord = verticesCopy.sort(lexSortYX)[0];
-    stack.unshift(firstCoord);
-    var otherVertices = verticesCopy.slice(1);
-    // 2. Sort vertices by angle
-    otherVertices.sort(function (v1, v2) { return (exports.isClockwise([firstCoord, v1, v2]) ? -1 : 1); });
-    // 3. Do the scan
-    otherVertices.forEach(function (nextCoord) {
-        while (stack.length > 1 && !exports.isClockwise([stack[1], stack[0], nextCoord])) {
-            stack.shift();
-        }
-        stack.unshift(nextCoord);
-    });
-    return stack;
-};
-
-
-/***/ }),
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var geom_1 = __webpack_require__(1);
-var lodash_1 = __webpack_require__(0);
+var geom_1 = __webpack_require__(0);
+var lodash_1 = __webpack_require__(1);
 var alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 var Color;
 (function (Color) {
@@ -17541,9 +17549,9 @@ exports.safeAddEdge = function (graph, c1, c2) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var geom_1 = __webpack_require__(1);
+var geom_1 = __webpack_require__(0);
 var planar_graph_1 = __webpack_require__(2);
-var lodash_1 = __webpack_require__(0);
+var lodash_1 = __webpack_require__(1);
 var PAUSE = 500;
 exports.animate = function (canvas) {
     var animations = makeAnimation(canvas.graph);
@@ -17647,15 +17655,8 @@ var findChordKey = function (graph) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+var geom_1 = __webpack_require__(0);
 var planar_graph_1 = __webpack_require__(2);
-var distance = function (v1, v2) {
-    var s = function (x) { return x * x; };
-    return Math.sqrt(s(v1.x - v2.x) + s(v1.y - v2.y));
-};
-var unitVector = function (v1, v2) {
-    var d = distance(v1, v2);
-    return { x: (v1.x - v2.x) / d, y: (v1.y - v2.y) / d };
-};
 var GraphDrawingWrapper = (function () {
     function GraphDrawingWrapper(canvasId, radius) {
         if (radius === void 0) { radius = 10; }
@@ -17707,7 +17708,7 @@ var GraphDrawingWrapper = (function () {
         if (this.doesAddEdge(v1, v2)) {
             window.graphLog = window.graphLog.concat(v1.x + "," + v1.y + "," + v2.x + "," + v2.y + ";");
             var context = this.canvasEl.getContext('2d');
-            var unit = unitVector(v1, v2);
+            var unit = geom_1.unitVector(v1, v2);
             context.strokeStyle = strokeColor;
             context.beginPath();
             context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
@@ -17722,7 +17723,7 @@ var GraphDrawingWrapper = (function () {
             var clickedVertex_1;
             var overlappingVertex_1;
             this.vertices.forEach(function (v) {
-                var dist = distance(v, newVertex_1);
+                var dist = geom_1.distance(v, newVertex_1);
                 if (dist <= _this.radius)
                     clickedVertex_1 = v;
                 if (dist <= 2 * _this.radius)

@@ -1,15 +1,5 @@
-import { isClockwise, Coord } from './geom'
+import { Coord, isClockwise, distance, unitVector } from './geom'
 import { PlanarGraph, createEmptyPlanarGraph, addEdge } from './planar_graph';
-
-const distance = (v1: Coord, v2: Coord) => {
-  const s = (x : number) => x * x;
-  return Math.sqrt(s(v1.x - v2.x) + s(v1.y - v2.y));
-};
-
-const unitVector = (v1: Coord, v2: Coord) => {
-  const d = distance(v1, v2);
-  return <Coord>{ x: (v1.x - v2.x) / d, y: (v1.y - v2.y) / d };
-};
 
 export class GraphDrawingWrapper {
   canvasEl: HTMLCanvasElement;

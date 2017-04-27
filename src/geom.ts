@@ -111,3 +111,13 @@ export const convexHull = (vertices: Coord[]): Coord[] => {
   });
   return stack;
 };
+
+export const distance = (v1: Coord, v2: Coord) => {
+  const s = (x : number) => x * x;
+  return Math.sqrt(s(v1.x - v2.x) + s(v1.y - v2.y));
+};
+
+export const unitVector = (v1: Coord, v2: Coord) => {
+  const d = distance(v1, v2);
+  return <Coord>{ x: (v1.x - v2.x) / d, y: (v1.y - v2.y) / d };
+};
