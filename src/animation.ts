@@ -22,12 +22,12 @@ export const animate = (canvas: GraphDrawingWrapper): void => {
 };
 
 const minDist = (cList: Coord[], ep1: Coord, ep2: Coord): number => {
-  let sansEndpoints = cList.filter(v => !(eq(v, ep1) && eq(v, ep2)));
+  let sansEndpoints = cList.filter(v => !(eq(v, ep1) || eq(v, ep2)));
   return Math.min(...sansEndpoints.map(v => pointSegmentDistance(v, ep1, ep2)));
 }
 
 const getBestSplittingEdge = (g: PlanarGraph, edgeKeys: string[], faceKey: string): Vertex[] => {
-  let leastDist = Infinity;
+  let mostDist = -1;
   let bestPair = [] as Vertex[];
   let potentialEdges: string[][] = edgeKeys.map(eKey =>
     [g.edges[eKey].origin, g.edges[g.edges[g.edges[eKey].next].next].origin]);
@@ -37,8 +37,8 @@ const getBestSplittingEdge = (g: PlanarGraph, edgeKeys: string[], faceKey: strin
     let v2 = g.vertices[potentialEdges[i][1]];
     if (getSplitFaceKey(g, v1, v2) === faceKey) {
       let dist = minDist(faceVertices, v1, v2);
-      if (dist < leastDist) {
-        leastDist = dist;
+      if (dist > mostDist) {
+        mostDist = dist;
         bestPair = [v1, v2]
       }
     }

@@ -17309,7 +17309,6 @@ exports.pointSegmentDistance = function (p, endPoint1, endPoint2) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var geom_1 = __webpack_require__(0);
 var lodash_1 = __webpack_require__(1);
-var alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 var Color;
 (function (Color) {
     Color[Color["Red"] = 0] = "Red";
@@ -17319,12 +17318,10 @@ var Color;
     Color[Color["Blue"] = 4] = "Blue";
 })(Color || (Color = {}));
 var ALL_COLORS = [Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue];
+var slugCounter = 0;
 var getSlug = function () {
-    var slug = "";
-    for (var i = 0; i < 10; i++) {
-        slug = slug.concat(alphabet[Math.floor(alphabet.length * Math.random())]);
-    }
-    return slug;
+    slugCounter = slugCounter + 1;
+    return slugCounter + "";
 };
 exports.createEmptyPlanarGraph = function () {
     var infFace = { infinite: true };
@@ -17585,11 +17582,11 @@ exports.animate = function (canvas) {
     });
 };
 var minDist = function (cList, ep1, ep2) {
-    var sansEndpoints = cList.filter(function (v) { return !(geom_1.eq(v, ep1) && geom_1.eq(v, ep2)); });
+    var sansEndpoints = cList.filter(function (v) { return !(geom_1.eq(v, ep1) || geom_1.eq(v, ep2)); });
     return Math.min.apply(Math, sansEndpoints.map(function (v) { return geom_1.pointSegmentDistance(v, ep1, ep2); }));
 };
 var getBestSplittingEdge = function (g, edgeKeys, faceKey) {
-    var leastDist = Infinity;
+    var mostDist = -1;
     var bestPair = [];
     var potentialEdges = edgeKeys.map(function (eKey) {
         return [g.edges[eKey].origin, g.edges[g.edges[g.edges[eKey].next].next].origin];
@@ -17600,8 +17597,8 @@ var getBestSplittingEdge = function (g, edgeKeys, faceKey) {
         var v2 = g.vertices[potentialEdges[i][1]];
         if (planar_graph_1.getSplitFaceKey(g, v1, v2) === faceKey) {
             var dist = minDist(faceVertices, v1, v2);
-            if (dist < leastDist) {
-                leastDist = dist;
+            if (dist > mostDist) {
+                mostDist = dist;
                 bestPair = [v1, v2];
             }
         }
@@ -17650,18 +17647,15 @@ var makeAnimation = function (graph) {
             return g;
         };
         var color = function (g) {
-            var chord = findChordKey(graph);
+            var chord = findChordKey(g);
             if (chord) {
             }
             else {
             }
             return g;
         };
-        window.graphLog = window.graphLog.concat("beginHullify;");
         graph = hullify(graph);
-        window.graphLog = window.graphLog.concat("beginTriangulate;");
         graph = triangulate(graph);
-        window.graphLog = window.graphLog.concat("endTrianguate;");
         graph = color(graph);
         return animations_1;
     }
@@ -17706,7 +17700,6 @@ var GraphDrawingWrapper = (function () {
         this.handleClick = this.handleClick.bind(this);
         this.canvasEl.addEventListener("click", this.handleClick);
         this.graph = planar_graph_1.createEmptyPlanarGraph();
-        window.graphLog = "";
         this.highlightedVertex = null;
     }
     GraphDrawingWrapper.prototype.clickVertex = function (v) {
@@ -17745,7 +17738,6 @@ var GraphDrawingWrapper = (function () {
     GraphDrawingWrapper.prototype.drawEdge = function (v1, v2, strokeColor) {
         if (strokeColor === void 0) { strokeColor = "black"; }
         if (this.doesAddEdge(v1, v2)) {
-            window.graphLog = window.graphLog.concat(v1.x + "," + v1.y + "," + v2.x + "," + v2.y + ";");
             var context = this.canvasEl.getContext('2d');
             var unit = geom_1.unitVector(v1, v2);
             context.strokeStyle = strokeColor;
