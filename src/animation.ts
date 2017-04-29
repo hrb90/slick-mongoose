@@ -100,11 +100,8 @@ const makeAnimation = (graph: PlanarGraph): any[] => {
       return g;
     }
 
-    window.graphLog = window.graphLog.concat("beginHullify;");
     graph = hullify(graph);
-    window.graphLog = window.graphLog.concat("beginTriangulate;");
     graph = triangulate(graph);
-    window.graphLog = window.graphLog.concat("endTrianguate;");
     graph = color(graph);
     return animations;
   }

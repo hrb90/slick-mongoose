@@ -277,7 +277,7 @@ const getNextClockwiseEdgeKey = (graph: PlanarGraph, vKey: string, newAngle: num
     getOutgoingEdgeKeys(graph, vKey).map((eKey: string) => {
       let v1 = graph.vertices[graph.edges[eKey].origin];
       let v2 = graph.vertices[graph.edges[graph.edges[eKey].next].origin];
-      return [eKey, angle(v1, v2)];
+      return [eKey, angle(v1, v2)] as [string, number];
     });
   let smallAngleEdges = keysWithAngles.filter((ea: [string, number]) => ea[1] < newAngle);
   const sortByAngleDecreasing =
