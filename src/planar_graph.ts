@@ -1,8 +1,6 @@
 import { Coord, eq, intersect, inInterior, isClockwise, angle } from './geom';
 import { intersection, uniq, forIn, values, cloneDeep } from 'lodash';
 
-const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-
 export interface Face {
   infinite: boolean;
   incidentEdge?: string;
@@ -44,12 +42,11 @@ export interface PlanarGraph {
   faces: HashMap<Face>;
 }
 
+let slugCounter: number = 0;
+
 const getSlug = () => {
-  let slug = "";
-  for (var i = 0; i < 10; i++) {
-    slug = slug.concat(alphabet[Math.floor(alphabet.length * Math.random())]);
-  }
-  return slug;
+  slugCounter = slugCounter + 1;
+  return slugCounter + "";
 }
 
 export const createEmptyPlanarGraph = (): PlanarGraph => {
