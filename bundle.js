@@ -1,41 +1,41 @@
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
-
+/******/
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
-
+/******/
 /******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId])
+/******/ 		if(installedModules[moduleId]) {
 /******/ 			return installedModules[moduleId].exports;
-
+/******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			i: moduleId,
 /******/ 			l: false,
 /******/ 			exports: {}
 /******/ 		};
-
+/******/
 /******/ 		// Execute the module function
 /******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-
+/******/
 /******/ 		// Flag the module as loaded
 /******/ 		module.l = true;
-
+/******/
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
-
-
+/******/
+/******/
 /******/ 	// expose the modules object (__webpack_modules__)
 /******/ 	__webpack_require__.m = modules;
-
+/******/
 /******/ 	// expose the module cache
 /******/ 	__webpack_require__.c = installedModules;
-
+/******/
 /******/ 	// identity function for calling harmony imports with the correct context
 /******/ 	__webpack_require__.i = function(value) { return value; };
-
+/******/
 /******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
 /******/ 		if(!__webpack_require__.o(exports, name)) {
@@ -46,7 +46,7 @@
 /******/ 			});
 /******/ 		}
 /******/ 	};
-
+/******/
 /******/ 	// getDefaultExport function for compatibility with non-harmony modules
 /******/ 	__webpack_require__.n = function(module) {
 /******/ 		var getter = module && module.__esModule ?
@@ -55,15 +55,15 @@
 /******/ 		__webpack_require__.d(getter, 'a', getter);
 /******/ 		return getter;
 /******/ 	};
-
+/******/
 /******/ 	// Object.prototype.hasOwnProperty.call
 /******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-
+/******/
 /******/ 	// __webpack_public_path__
 /******/ 	__webpack_require__.p = "";
-
+/******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 7);
+/******/ 	return __webpack_require__(__webpack_require__.s = 5);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -78,7 +78,16 @@ exports.eq = function (a, b) { return (a.x === b.x && a.y === b.y); };
 // 2-dimensional cross product
 exports.xProd = function (v1, v2) { return (v1.x * v2.y - v1.y * v2.x); };
 // dot product
-var dot = function (v1, v2) { return (v1.x * v2.x + v1.y + v2.y); };
+var dot = function (v1, v2) { return (v1.x * v2.x + v1.y * v2.y); };
+var scale = function (scalar, v) { return ({
+    x: scalar * v.x,
+    y: scalar * v.y
+}); };
+var plus = function (a, b) { return ({
+    x: a.x + b.x,
+    y: a.y + b.y
+}); };
+var minus = function (a, b) { return plus(a, scale(-1, b)); };
 exports.angle = function (v1, v2) {
     return Math.atan2(v1.y - v2.y, v1.x - v2.x);
 };
@@ -86,9 +95,9 @@ exports.getConsecutiveCoordPairs = function (v, i, p) { return ([v, p[(i + 1) % 
 // Do the line segments from v1-v2 and v3-v4 intersect?
 exports.intersect = function (v1, v2, v3, v4, halfOpen) {
     if (halfOpen === void 0) { halfOpen = false; }
-    var r = { x: v2.x - v1.x, y: v2.y - v1.y };
-    var s = { x: v4.x - v3.x, y: v4.y - v3.y };
-    var diff = { x: v3.x - v1.x, y: v3.y - v1.y };
+    var r = minus(v2, v1);
+    var s = minus(v4, v3);
+    var diff = minus(v3, v1);
     var det = exports.xProd(r, s);
     if (det !== 0) {
         var t = exports.xProd(diff, r) / det;
@@ -175,13 +184,27 @@ exports.convexHull = function (vertices) {
     });
     return stack;
 };
+var dist2 = function (v1, v2) {
+    var diff = minus(v2, v1);
+    return dot(diff, diff);
+};
 exports.distance = function (v1, v2) {
-    var s = function (x) { return x * x; };
-    return Math.sqrt(s(v1.x - v2.x) + s(v1.y - v2.y));
+    return Math.sqrt(dist2(v1, v2));
 };
 exports.unitVector = function (v1, v2) {
     var d = exports.distance(v1, v2);
     return { x: (v1.x - v2.x) / d, y: (v1.y - v2.y) / d };
+};
+exports.pointSegmentDistance = function (p, endPoint1, endPoint2) {
+    if (exports.eq(endPoint1, endPoint2)) {
+        return exports.distance(p, endPoint1);
+    }
+    else {
+        var l2 = dist2(endPoint2, endPoint1);
+        var t = dot(minus(p, endPoint1), minus(endPoint2, endPoint1)) / l2;
+        t = Math.max(0, Math.min(1, t));
+        return exports.distance(p, plus(endPoint1, scale(t, minus(endPoint2, endPoint1))));
+    }
 };
 
 
@@ -17275,7 +17298,7 @@ exports.unitVector = function (v1, v2) {
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(6)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6), __webpack_require__(7)(module)))
 
 /***/ }),
 /* 2 */
@@ -17561,6 +17584,30 @@ exports.animate = function (canvas) {
         }
     });
 };
+var minDist = function (cList, ep1, ep2) {
+    var sansEndpoints = cList.filter(function (v) { return !(geom_1.eq(v, ep1) && geom_1.eq(v, ep2)); });
+    return Math.min.apply(Math, sansEndpoints.map(function (v) { return geom_1.pointSegmentDistance(v, ep1, ep2); }));
+};
+var getBestSplittingEdge = function (g, edgeKeys, faceKey) {
+    var leastDist = Infinity;
+    var bestPair = [];
+    var potentialEdges = edgeKeys.map(function (eKey) {
+        return [g.edges[eKey].origin, g.edges[g.edges[g.edges[eKey].next].next].origin];
+    });
+    var faceVertices = edgeKeys.map(function (eKey) { return g.vertices[g.edges[eKey].origin]; });
+    for (var i = 0; i < potentialEdges.length; i++) {
+        var v1 = g.vertices[potentialEdges[i][0]];
+        var v2 = g.vertices[potentialEdges[i][1]];
+        if (planar_graph_1.getSplitFaceKey(g, v1, v2) === faceKey) {
+            var dist = minDist(faceVertices, v1, v2);
+            if (dist < leastDist) {
+                leastDist = dist;
+                bestPair = [v1, v2];
+            }
+        }
+    }
+    return bestPair;
+};
 var makeAnimation = function (graph) {
     if (lodash_1.values(graph.vertices).length < 3) {
         alert("please connect more vertices");
@@ -17583,20 +17630,12 @@ var makeAnimation = function (graph) {
         var splitFace_1 = function (g, faceKey) {
             var edges = planar_graph_1.getBoundaryEdgeKeys(g, faceKey);
             if (edges.length > 3 && g.infiniteFace !== faceKey) {
-                var potentialEdges = edges.map(function (eKey) {
-                    return [g.edges[eKey].origin, g.edges[g.edges[g.edges[eKey].next].next].origin];
+                var e = getBestSplittingEdge(g, edges, faceKey);
+                animations_1.push({
+                    type: "DRAW_EDGE",
+                    data: e
                 });
-                for (var i = 0; i < potentialEdges.length; i++) {
-                    var v1 = g.vertices[potentialEdges[i][0]];
-                    var v2 = g.vertices[potentialEdges[i][1]];
-                    if (planar_graph_1.getSplitFaceKey(g, v1, v2) === faceKey) {
-                        animations_1.push({
-                            type: "DRAW_EDGE",
-                            data: [v1, v2]
-                        });
-                        return planar_graph_1.addEdge(g, v1, v2);
-                    }
-                }
+                g = planar_graph_1.addEdge(g, e[0], e[1]);
             }
             return g;
         };
@@ -17757,6 +17796,23 @@ exports.GraphDrawingWrapper = GraphDrawingWrapper;
 
 /***/ }),
 /* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var canvas_wrapper_1 = __webpack_require__(4);
+var animation_1 = __webpack_require__(3);
+document.addEventListener('DOMContentLoaded', function () {
+    var wrapper = new canvas_wrapper_1.GraphDrawingWrapper("canvas");
+    document.getElementById('animate-button').addEventListener("click", function () {
+        animation_1.animate(wrapper);
+    });
+});
+
+
+/***/ }),
+/* 6 */
 /***/ (function(module, exports) {
 
 var g;
@@ -17783,7 +17839,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -17808,23 +17864,6 @@ module.exports = function(module) {
 	}
 	return module;
 };
-
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var canvas_wrapper_1 = __webpack_require__(4);
-var animation_1 = __webpack_require__(3);
-document.addEventListener('DOMContentLoaded', function () {
-    var wrapper = new canvas_wrapper_1.GraphDrawingWrapper("canvas");
-    document.getElementById('animate-button').addEventListener("click", function () {
-        animation_1.animate(wrapper);
-    });
-});
 
 
 /***/ })

@@ -1,4 +1,4 @@
-import { Coord, angle, getConsecutiveCoordPairs, convexHull } from './geom';
+import { Coord, eq, angle, getConsecutiveCoordPairs, convexHull, pointSegmentDistance } from './geom';
 import { Vertex, HalfEdge, Face, PlanarGraph,
   addEdge, safeAddEdge, removeEdge, removeVertex,
   getBoundaryEdgeKeys, getBoundaryVertexKeys, getOutgoingEdgeKeys, getSplitFaceKey } from './planar_graph';
@@ -6,6 +6,11 @@ import { GraphDrawingWrapper } from './canvas_wrapper';
 import { values, forIn } from 'lodash';
 
 const PAUSE = 500;
+
+interface Animation {
+  type: string,
+  data: any
+}
 
 export const animate = (canvas: GraphDrawingWrapper): void => {
   let animations = makeAnimation(canvas.graph);
@@ -16,11 +21,36 @@ export const animate = (canvas: GraphDrawingWrapper): void => {
   })
 };
 
+const minDist = (cList: Coord[], ep1: Coord, ep2: Coord): number => {
+  let sansEndpoints = cList.filter(v => !(eq(v, ep1) && eq(v, ep2)));
+  return Math.min(...sansEndpoints.map(v => pointSegmentDistance(v, ep1, ep2)));
+}
+
+const getBestSplittingEdge = (g: PlanarGraph, edgeKeys: string[], faceKey: string): Vertex[] => {
+  let leastDist = Infinity;
+  let bestPair = [] as Vertex[];
+  let potentialEdges: string[][] = edgeKeys.map(eKey =>
+    [g.edges[eKey].origin, g.edges[g.edges[g.edges[eKey].next].next].origin]);
+  let faceVertices = edgeKeys.map(eKey => g.vertices[g.edges[eKey].origin])
+  for (let i = 0; i < potentialEdges.length; i++) {
+    let v1 = g.vertices[potentialEdges[i][0]];
+    let v2 = g.vertices[potentialEdges[i][1]];
+    if (getSplitFaceKey(g, v1, v2) === faceKey) {
+      let dist = minDist(faceVertices, v1, v2);
+      if (dist < leastDist) {
+        leastDist = dist;
+        bestPair = [v1, v2]
+      }
+    }
+  }
+  return bestPair;
+}
+
 const makeAnimation = (graph: PlanarGraph): any[] => {
   if (values(graph.vertices).length < 3) {
     alert("please connect more vertices");
   } else {
-    let animations = [];
+    let animations: Animation[] = [];
 
     const hullify = (g: PlanarGraph): PlanarGraph => {
       let hullVertices = convexHull(values(g.vertices));
@@ -39,26 +69,19 @@ const makeAnimation = (graph: PlanarGraph): any[] => {
     const splitFace = (g: PlanarGraph, faceKey: string): PlanarGraph => {
       let edges = getBoundaryEdgeKeys(g, faceKey);
       if (edges.length > 3 && g.infiniteFace !== faceKey) {
-        let potentialEdges: string[][] = edges.map(eKey =>
-          [g.edges[eKey].origin, g.edges[g.edges[g.edges[eKey].next].next].origin]);
-        for (let i = 0; i < potentialEdges.length; i++) {
-          let v1 = g.vertices[potentialEdges[i][0]];
-          let v2 = g.vertices[potentialEdges[i][1]];
-          if (getSplitFaceKey(g, v1, v2) === faceKey) {
-            animations.push({
-              type: "DRAW_EDGE",
-              data: [v1, v2]
-            })
-            return addEdge(g, v1, v2);
-          }
-        }
+        let e = getBestSplittingEdge(g, edges, faceKey);
+        animations.push({
+          type: "DRAW_EDGE",
+          data: e
+        })
+        g = addEdge(g, e[0], e[1]);
       }
       return g;
     }
 
     const triangulate = (g: PlanarGraph): PlanarGraph => {
       while (!isTriangulated(g)) {
-        forIn(g.faces, (f, fKey) => {
+        forIn(g.faces, (f: Face, fKey: string) => {
           if (getBoundaryEdgeKeys(g, fKey).length > 3) {
             g = splitFace(g, fKey)
           }

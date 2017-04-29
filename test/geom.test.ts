@@ -1,4 +1,4 @@
-import { Coord, intersect, inInterior, isClockwise, convexHull } from '../src/geom';
+import { Coord, intersect, inInterior, isClockwise, convexHull, pointSegmentDistance } from '../src/geom';
 import { shuffle } from 'lodash';
 
 const v = (x: number, y: number) => ({ x: x, y: y });
@@ -180,4 +180,13 @@ describe("convexHull", () => {
   testCoordSet([v(0, 0), v(0, 10), v(10, 10), v(10, 0),
     v(3, 5), v(6, 2), v(1, 1), v(8, 3), v(4, 9), v(4, 4)],
     "square + 6 interior", 4);
+});
+
+describe("pointSegmentDistance", () => {
+  it("calculates the distance correctly", () => {
+    expect(pointSegmentDistance(v(3, 3), v(0, 0), v(5, 0))).toBe(3);
+    expect(pointSegmentDistance(v(2, -5), v(0, 0), v(5, 0))).toBe(5);
+    expect(pointSegmentDistance(v(-4, 3), v(0, 0), v(5, 0))).toBe(5);
+    expect(pointSegmentDistance(v(2, 0), v(0, 0), v(5, 0))).toBe(0);
+  })
 });

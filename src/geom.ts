@@ -10,7 +10,19 @@ export const eq = (a: Coord, b: Coord) => (a.x === b.x && a.y === b.y);
 export const xProd = (v1: Coord, v2: Coord) => (v1.x * v2.y - v1.y * v2.x);
 
 // dot product
-const dot = (v1: Coord, v2: Coord) => (v1.x * v2.x + v1.y + v2.y);
+const dot = (v1: Coord, v2: Coord) => (v1.x * v2.x + v1.y * v2.y);
+
+const scale = (scalar: number, v: Coord) => ({
+  x: scalar * v.x,
+  y: scalar * v.y
+})
+
+const plus = (a: Coord, b: Coord) => ({
+  x: a.x + b.x,
+  y: a.y + b.y
+})
+
+const minus = (a: Coord, b: Coord) => plus(a, scale(-1, b))
 
 export const angle = (v1: Coord, v2: Coord) => {
   return Math.atan2(v1.y - v2.y, v1.x - v2.x);
@@ -21,9 +33,9 @@ export const getConsecutiveCoordPairs =
 
 // Do the line segments from v1-v2 and v3-v4 intersect?
 export const intersect = (v1: Coord, v2: Coord, v3: Coord, v4: Coord, halfOpen: boolean = false) => {
-  let r = { x: v2.x - v1.x, y: v2.y - v1.y };
-  let s = { x: v4.x - v3.x, y: v4.y - v3.y };
-  let diff = { x: v3.x - v1.x, y: v3.y - v1.y };
+  let r = minus(v2, v1);
+  let s = minus(v4, v3);
+  let diff = minus(v3, v1);
   let det = xProd(r, s);
   if (det !== 0) {
     let t = xProd(diff, r)/det;
@@ -112,12 +124,27 @@ export const convexHull = (vertices: Coord[]): Coord[] => {
   return stack;
 };
 
-export const distance = (v1: Coord, v2: Coord) => {
-  const s = (x : number) => x * x;
-  return Math.sqrt(s(v1.x - v2.x) + s(v1.y - v2.y));
+const dist2 = (v1: Coord, v2: Coord) => {
+  let diff = minus(v2, v1);
+  return dot(diff, diff);
 };
+
+export const distance = (v1: Coord, v2: Coord) => {
+  return Math.sqrt(dist2(v1, v2));
+}
 
 export const unitVector = (v1: Coord, v2: Coord) => {
   const d = distance(v1, v2);
   return <Coord>{ x: (v1.x - v2.x) / d, y: (v1.y - v2.y) / d };
+};
+
+export const pointSegmentDistance = (p: Coord, endPoint1: Coord, endPoint2: Coord) => {
+  if (eq(endPoint1, endPoint2)) {
+    return distance(p, endPoint1);
+  } else {
+    let l2 = dist2(endPoint2, endPoint1);
+    let t = dot(minus(p, endPoint1), minus(endPoint2, endPoint1))/l2;
+    t = Math.max(0, Math.min(1, t));
+    return distance(p, plus(endPoint1, scale(t, minus(endPoint2, endPoint1))));
+  }
 };
