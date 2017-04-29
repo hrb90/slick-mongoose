@@ -91,7 +91,7 @@ const makeAnimation = (graph: PlanarGraph): any[] => {
     }
 
     const color = (g: PlanarGraph): PlanarGraph => {
-      let chord = findChordKey(graph);
+      let chord = findChordKey(g);
       if (chord) {
 
       } else {
