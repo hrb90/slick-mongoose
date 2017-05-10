@@ -199,14 +199,18 @@ const removeEdgeFixOrigin = (graph: PlanarGraph, edgeKey: string): PlanarGraph =
 export const removeEdge = (graph: PlanarGraph, edgeKey: string): PlanarGraph => {
   let newGraph = cloneDeep(graph);
   let twinEdgeKey = newGraph.edges[edgeKey].twin;
-  let keepFaceKey = newGraph.edges[edgeKey].incidentFace;
-  let delFaceKey = newGraph.edges[twinEdgeKey].incidentFace;
-  let newFaceEdges = getBoundaryEdgeKeys(newGraph, delFaceKey);
-  newGraph = removeEdgeFixOrigin(newGraph, edgeKey);
-  newGraph = removeEdgeFixOrigin(newGraph, twinEdgeKey);
-  delete newGraph.faces[delFaceKey];
-  newFaceEdges.forEach(eKey => newGraph.edges[eKey].incidentFace = keepFaceKey);
-  return newGraph;
+  if (edgeKey !== twinEdgeKey) {
+    let keepFaceKey = newGraph.edges[edgeKey].incidentFace;
+    let delFaceKey = newGraph.edges[twinEdgeKey].incidentFace;
+    let newFaceEdges = getBoundaryEdgeKeys(newGraph, delFaceKey);
+    newGraph = removeEdgeFixOrigin(newGraph, edgeKey);
+    newGraph = removeEdgeFixOrigin(newGraph, twinEdgeKey);
+    delete newGraph.faces[delFaceKey];
+    newFaceEdges.forEach(eKey => newGraph.edges[eKey].incidentFace = keepFaceKey);
+    return newGraph;
+  } else {
+    throw new Error("Please keep the graph connected");
+  }
 }
 
 export const removeEdgeByVertices = (graph: PlanarGraph, c1: Coord, c2: Coord) => {
@@ -221,8 +225,33 @@ export const removeEdgeByVertices = (graph: PlanarGraph, c1: Coord, c2: Coord) =
   }
 }
 
+const removeLeafVertex = (graph: PlanarGraph, vertexKey: string): PlanarGraph => {
+  if (getOutgoingEdgeKeys(graph, vertexKey).length !== 1) {
+    let outgoingEdgeKey = graph.edges[graph.vertices[vertexKey].incidentEdge]
+    let twinEdgeKey = graph.edges[outgoingEdgeKey].twin
+    graph = removeEdgeFixOrigin(graph, twinEdgeKey);
+    delete graph.vertices[vertexKey];
+    delete graph.edges[outgoingEdgeKey];
+    delete graph.edges[twinEdgeKey];
+  } else {
+    throw new Error("Not a leaf vertex!")
+  }
+}
+
 export const removeVertex = (graph: PlanarGraph, vertexKey: string): PlanarGraph => {
-  return graph;
+  let newGraph = cloneDeep(graph);
+  getOutgoingEdgeKeys(graph, vertexKey).forEach(eKey => {
+    try {
+      newGraph = removeEdge(newGraph, eKey);
+    } catch (e) {
+      newGraph = removeLeafVertex(newGraph, vertexKey)
+    }
+  });
+  return newGraph;
+}
+
+export const removeVertexByCoord = (graph: PlanarGraph, c: Coord) => {
+  return removeVertex(graph, getVertexKey(graph, c));
 }
 
 const getAdjacentVertices = (graph: PlanarGraph, vertexKey: string): string[] => {
