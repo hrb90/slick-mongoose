@@ -1,5 +1,5 @@
 import { Coord, eq, intersect, inInterior, isClockwise, angle } from './geom';
-import { intersection, uniq, forIn, values, cloneDeep } from 'lodash';
+import { intersection, find, uniq, forIn, values, cloneDeep } from 'lodash';
 
 export interface Face {
   infinite: boolean;
@@ -185,8 +185,40 @@ export const addEdge = (graph: PlanarGraph, c1: Coord, c2: Coord): PlanarGraph =
   }
 }
 
-export const removeEdge = (graph: PlanarGraph, edgeKey: string): PlanarGraph => {
+const removeEdgeFixOrigin = (graph: PlanarGraph, edgeKey: string): PlanarGraph => {
+  let incomingEdgeKey = graph.edges[edgeKey].prev;
+  let newOutgoingEdgeKey = graph.edges[graph.edges[edgeKey].twin].next;
+  let faceKey = graph.edges[edgeKey].incidentFace;
+  graph.edges[incomingEdgeKey].next = newOutgoingEdgeKey;
+  graph.edges[newOutgoingEdgeKey].prev = incomingEdgeKey;
+  graph.faces[faceKey].incidentEdge = incomingEdgeKey;
+  graph.vertices[graph.edges[edgeKey].origin].incidentEdge = newOutgoingEdgeKey;
   return graph;
+}
+
+export const removeEdge = (graph: PlanarGraph, edgeKey: string): PlanarGraph => {
+  let newGraph = cloneDeep(graph);
+  let twinEdgeKey = newGraph.edges[edgeKey].twin;
+  let keepFaceKey = newGraph.edges[edgeKey].incidentFace;
+  let delFaceKey = newGraph.edges[twinEdgeKey].incidentFace;
+  let newFaceEdges = getBoundaryEdgeKeys(newGraph, delFaceKey);
+  newGraph = removeEdgeFixOrigin(newGraph, edgeKey);
+  newGraph = removeEdgeFixOrigin(newGraph, twinEdgeKey);
+  delete newGraph.faces[delFaceKey];
+  newFaceEdges.forEach(eKey => newGraph.edges[eKey].incidentFace = keepFaceKey);
+  return newGraph;
+}
+
+export const removeEdgeByVertices = (graph: PlanarGraph, c1: Coord, c2: Coord) => {
+  let vKey1 = getVertexKey(graph, c1);
+  let vKey2 = getVertexKey(graph, c2);
+  let ourEdge = find(getOutgoingEdgeKeys(graph, vKey1), key =>
+    (graph.edges[graph.edges[key].twin].origin === vKey2));
+  if (ourEdge) {
+    return removeEdge(graph, ourEdge);
+  } else {
+    throw new Error("Can't connect already connected vertices");
+  }
 }
 
 export const removeVertex = (graph: PlanarGraph, vertexKey: string): PlanarGraph => {

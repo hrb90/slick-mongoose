@@ -1,11 +1,11 @@
 import { PlanarGraph, createEmptyPlanarGraph,
-  addEdge, safeAddEdge, removeEdge, removeVertex,
+  addEdge, safeAddEdge, removeEdgeByVertices, removeVertex,
   getBoundaryEdgeKeys, getBoundaryVertexKeys, getOutgoingEdgeKeys } from '../src/planar_graph';
 import { Coord } from '../src/geom';
 
 const v = (x: number, y: number) => ({ x: x, y: y });
 
-describe("PlanarGraph", () => {
+describe("addEdge", () => {
   it("keeps track of the infiniteFace I", () => {
     let vs = [
       v(0, -10),
@@ -169,3 +169,23 @@ describe("PlanarGraph", () => {
     })
   })
 });
+
+describe("removeEdge", () => {
+  it("keeps track of the infiniteFace", () => {
+    let vs = [
+      v(0, -10),
+      v(0, 0),
+      v(-10, 10),
+      v(10, 10)
+    ]
+    const graph1 = createEmptyPlanarGraph();
+    const graph2 = addEdge(graph1, vs[0], vs[1]);
+    const graph3 = addEdge(graph2, vs[1], vs[2]);
+    const graph4 = addEdge(graph3, vs[2], vs[3]);
+    const graph5 = addEdge(graph4, vs[3], vs[0]);
+    const graph6 = addEdge(graph5, vs[1], vs[3]);
+    const graph7 = removeEdgeByVertices(graph6, vs[1], vs[2]);
+    expect(getBoundaryEdgeKeys(graph5, graph5.infiniteFace).length).toBe(4);
+    expect(getBoundaryEdgeKeys(graph7, graph7.infiniteFace).length).toBe(5);
+  });
+})
