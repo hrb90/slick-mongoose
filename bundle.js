@@ -17545,14 +17545,14 @@ var getAdjacentVertices = function (graph, vertexKey) {
         return graph.edges[graph.edges[eKey].next].origin;
     });
 };
-var getBoundaryVertices = function (graph, fKey) {
+exports.getBoundaryVertices = function (graph, fKey) {
     return exports.getBoundaryVertexKeys(graph, fKey).map(function (vKey) { return graph.vertices[vKey]; });
 };
 var getBoundingFaceKey = function (graph, c) {
     var boundingFaceKey = graph.infiniteFace;
     Object.keys(graph.faces).forEach(function (fKey) {
         if (graph.infiniteFace !== fKey &&
-            geom_1.inInterior(getBoundaryVertices(graph, fKey), c)) {
+            geom_1.inInterior(exports.getBoundaryVertices(graph, fKey), c)) {
             boundingFaceKey = fKey;
         }
     });
@@ -17628,6 +17628,14 @@ var removeLeafVertex = function (graph, vertexKey) {
         throw new Error("Not a leaf vertex!");
     }
 };
+exports.getColors = function (g, vKey) {
+    return g.vertices[vKey].colors;
+};
+exports.setColors = function (g, vKey, newColors) {
+    var newGraph = lodash_1.cloneDeep(g);
+    newGraph.vertices[vKey].colors = newColors;
+    return newGraph;
+};
 
 
 /***/ }),
@@ -17640,6 +17648,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var AnimationType;
 (function (AnimationType) {
     AnimationType[AnimationType["DrawEdge"] = 0] = "DrawEdge";
+    AnimationType[AnimationType["UpdateColors"] = 1] = "UpdateColors";
 })(AnimationType = exports.AnimationType || (exports.AnimationType = {}));
 var animationSteps = [];
 // A controlled effectful function to use in the thomassen algorithms.
@@ -17647,10 +17656,14 @@ exports.addStep = function (type, data) {
     animationSteps.push({ type: type, data: data });
 };
 exports.animate = function (canvas) {
-    var PAUSE = 500;
     animationSteps.forEach(function (a) {
-        if (a.type === AnimationType.DrawEdge) {
-            canvas.drawEdge(a.data[0], a.data[1], "blue");
+        switch (a.type) {
+            case AnimationType.DrawEdge:
+                canvas.drawEdge(a.data[0], a.data[1], "blue");
+                break;
+            case AnimationType.UpdateColors:
+                canvas.drawCircle(a.data.vertex, "none", a.data.colors);
+                break;
         }
     });
 };
@@ -17665,6 +17678,20 @@ exports.animate = function (canvas) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var geom_1 = __webpack_require__(0);
 var planar_graph_1 = __webpack_require__(2);
+var colorToString = function (c) {
+    switch (c) {
+        case planar_graph_1.Color.Red:
+            return "red";
+        case planar_graph_1.Color.Blue:
+            return "blue";
+        case planar_graph_1.Color.Green:
+            return "green";
+        case planar_graph_1.Color.Orange:
+            return "orange";
+        case planar_graph_1.Color.Yellow:
+            return "yellow";
+    }
+};
 var GraphDrawingWrapper = (function () {
     function GraphDrawingWrapper(canvasId, radius) {
         if (radius === void 0) { radius = 10; }
@@ -17697,18 +17724,19 @@ var GraphDrawingWrapper = (function () {
             return false;
         }
     };
-    GraphDrawingWrapper.prototype.drawCircle = function (v, strokeColor, fillColor) {
+    GraphDrawingWrapper.prototype.drawCircle = function (v, strokeColor, fillColors) {
         if (strokeColor === void 0) { strokeColor = "black"; }
-        if (fillColor === void 0) { fillColor = null; }
+        if (fillColors === void 0) { fillColors = planar_graph_1.ALL_COLORS; }
         this.vertices.push(v);
         var context = this.canvasEl.getContext('2d');
         context.strokeStyle = strokeColor;
-        context.fillStyle = fillColor || "none";
+        context.fillStyle = "none";
         context.beginPath();
         context.arc(v.x, v.y, this.radius, 0, 2 * Math.PI);
         context.stroke();
-        if (fillColor)
-            context.fill();
+        if (fillColors.length > 0) {
+            this.fillCircle(v, fillColors);
+        }
     };
     GraphDrawingWrapper.prototype.drawEdge = function (v1, v2, strokeColor) {
         if (strokeColor === void 0) { strokeColor = "black"; }
@@ -17721,6 +17749,19 @@ var GraphDrawingWrapper = (function () {
             context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
             context.stroke();
         }
+    };
+    GraphDrawingWrapper.prototype.fillCircle = function (v, fillColors) {
+        var _this = this;
+        var n = fillColors.length;
+        fillColors.forEach(function (color, idx) {
+            var context = _this.canvasEl.getContext('2d');
+            context.fillStyle = colorToString(color);
+            context.beginPath();
+            context.arc(v.x, v.y, _this.radius, 2 * idx * Math.PI / n, 2 * (idx + 1) * Math.PI / n);
+            context.lineTo(v.x, v.y);
+            context.closePath();
+            context.fill();
+        });
     };
     GraphDrawingWrapper.prototype.handleClick = function (e) {
         var _this = this;
@@ -17776,12 +17817,15 @@ var minDist = function (cList, ep1, ep2) {
     var sansEndpoints = cList.filter(function (v) { return !(geom_1.eq(v, ep1) || geom_1.eq(v, ep2)); });
     return Math.min.apply(Math, sansEndpoints.map(function (v) { return geom_1.pointSegmentDistance(v, ep1, ep2); }));
 };
+var animAddEdge = function (g, pair) {
+    animation_1.addStep(animation_1.AnimationType.DrawEdge, pair);
+    return planar_graph_1.addEdge(g, pair[0], pair[1]);
+};
 var hullify = function (g) {
     var hullVertices = geom_1.convexHull(lodash_1.values(g.vertices));
     hullVertices.map(geom_1.getConsecutiveCoordPairs).forEach(function (pair) {
         if (planar_graph_1.safeAddEdge(g, pair[0], pair[1])) {
-            animation_1.addStep(animation_1.AnimationType.DrawEdge, pair);
-            g = planar_graph_1.addEdge(g, pair[0], pair[1]);
+            g = animAddEdge(g, pair);
         }
     });
     return g;
@@ -17810,8 +17854,7 @@ var splitFace = function (g, faceKey) {
     var edges = planar_graph_1.getBoundaryEdgeKeys(g, faceKey);
     if (edges.length > 3 && g.infiniteFace !== faceKey) {
         var e = getBestSplittingEdge(g, edges, faceKey);
-        animation_1.addStep(animation_1.AnimationType.DrawEdge, e);
-        g = planar_graph_1.addEdge(g, e[0], e[1]);
+        g = animAddEdge(g, e);
     }
     return g;
 };
@@ -17830,6 +17873,17 @@ var triangulate = function (g) {
     }
     return g;
 };
+var preColor = function (g) {
+    var boundingVertices = planar_graph_1.getBoundaryVertexKeys(g, g.infiniteFace);
+    g.mark1 = boundingVertices[0];
+    g.mark2 = boundingVertices[1];
+    g = updateColors(g, g.mark1, [planar_graph_1.Color.Red]);
+    g = updateColors(g, g.mark2, [planar_graph_1.Color.Blue]);
+    boundingVertices.slice(2).forEach(function (vKey) {
+        return g = updateColors(g, vKey, planar_graph_1.getColors(g, vKey).slice(0, 3));
+    });
+    return g;
+};
 var findChordKey = function (graph) {
     var chordKey = null;
     var outerVertices = planar_graph_1.getBoundaryVertexKeys(graph, graph.infiniteFace);
@@ -17844,28 +17898,36 @@ var findChordKey = function (graph) {
     });
     return chordKey;
 };
-var colorSmallGraph = function (g) {
-    var unused_colors = planar_graph_1.ALL_COLORS;
-    lodash_1.forIn(g.vertices, function (v, vKey) {
-        var newColor = lodash_1.intersection(v.colors, unused_colors)[0];
-        v.colors = [newColor];
-        unused_colors = unused_colors.filter(function (c) { return c !== newColor; });
-    });
+var updateColors = function (g, vKey, colors) {
+    animation_1.addStep(animation_1.AnimationType.UpdateColors, { vertex: g.vertices[vKey], colors: colors });
+    return planar_graph_1.setColors(g, vKey, colors);
+};
+var colorTriangle = function (g) {
+    var badColors = [planar_graph_1.getColors(g, g.mark1)[0], planar_graph_1.getColors(g, g.mark2)[0]];
+    var thirdVertexKey = lodash_1.difference(Object.keys(g.vertices), [g.mark1, g.mark2])[0];
+    var okayColor = lodash_1.difference(planar_graph_1.getColors(g, thirdVertexKey), badColors)[0];
+    return updateColors(g, thirdVertexKey, [okayColor]);
+};
+var colorChordlessGraph = function (g) {
+    var boundaryVertices = planar_graph_1.getBoundaryVertexKeys(g, g.infiniteFace);
     return g;
 };
 var color = function (g) {
-    if (lodash_1.values(g.vertices).length <= 3) {
-        return colorSmallGraph(g);
-    }
-    var chord = findChordKey(g);
-    if (chord) {
+    if (lodash_1.values(g.vertices).length == 3) {
+        return colorTriangle(g);
     }
     else {
+        var chord = findChordKey(g);
+        if (chord) {
+            return g;
+        }
+        else {
+            return colorChordlessGraph(g);
+        }
     }
-    return g;
 };
 exports.fiveColor = function (graph) {
-    return color(triangulate(hullify(graph)));
+    return color(preColor(triangulate(hullify(graph))));
 };
 
 

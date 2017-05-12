@@ -37,6 +37,8 @@ interface HashMap<T> {
 
 export interface PlanarGraph {
   infiniteFace: string;
+  mark1?: string;
+  mark2?: string;
   vertices: HashMap<Vertex>;
   edges: HashMap<HalfEdge>;
   faces: HashMap<Face>;
@@ -274,7 +276,7 @@ const getAdjacentVertices = (graph: PlanarGraph, vertexKey: string): string[] =>
   graph.edges[graph.edges[eKey].next].origin);
 }
 
-const getBoundaryVertices = (graph: PlanarGraph, fKey: string): Vertex[] => {
+export const getBoundaryVertices = (graph: PlanarGraph, fKey: string): Vertex[] => {
   return getBoundaryVertexKeys(graph, fKey).map((vKey: string) => graph.vertices[vKey]);
 }
 
@@ -362,4 +364,14 @@ const removeLeafVertex = (graph: PlanarGraph, vertexKey: string): PlanarGraph =>
   } else {
     throw new Error("Not a leaf vertex!")
   }
+}
+
+export const getColors = (g: PlanarGraph, vKey: string): Color[] => {
+  return g.vertices[vKey].colors;
+}
+
+export const setColors = (g: PlanarGraph, vKey: string, newColors: Color[]): PlanarGraph => {
+  let newGraph = cloneDeep(g);
+  newGraph.vertices[vKey].colors = newColors;
+  return newGraph;
 }

@@ -1,7 +1,9 @@
 import { GraphDrawingWrapper } from './canvas_wrapper';
+import { Color } from './planar_graph';
 
 export enum AnimationType {
   DrawEdge,
+  UpdateColors
 }
 
 interface Animation {
@@ -17,10 +19,14 @@ export const addStep = (type: AnimationType, data: any) => {
 }
 
 export const animate = (canvas: GraphDrawingWrapper): void => {
-  const PAUSE = 500;
   animationSteps.forEach(a => {
-    if (a.type === AnimationType.DrawEdge) {
-      canvas.drawEdge(a.data[0], a.data[1], "blue");
+    switch (a.type) {
+      case AnimationType.DrawEdge:
+        canvas.drawEdge(a.data[0], a.data[1], "blue");
+        break;
+      case AnimationType.UpdateColors:
+        canvas.drawCircle(a.data.vertex, "none", a.data.colors)
+        break;
     }
-  })
+  });
 };

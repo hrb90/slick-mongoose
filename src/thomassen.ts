@@ -1,21 +1,26 @@
 import { Coord, eq, angle, getConsecutiveCoordPairs, convexHull, pointSegmentDistance } from './geom';
 import { Vertex, HalfEdge, Face, PlanarGraph, Color, ALL_COLORS,
   addEdge, safeAddEdge, removeEdge, removeVertex,
-  getBoundaryEdgeKeys, getBoundaryVertexKeys, getOutgoingEdgeKeys, getSplitFaceKey } from './planar_graph';
+  getBoundaryEdgeKeys, getBoundaryVertexKeys, getOutgoingEdgeKeys,
+  getSplitFaceKey, getColors, setColors } from './planar_graph';
 import { AnimationType, addStep } from './animation';
-import { values, forIn, includes, intersection } from 'lodash';
+import { values, forIn, includes, difference } from 'lodash';
 
 const minDist = (cList: Coord[], ep1: Coord, ep2: Coord): number => {
   let sansEndpoints = cList.filter(v => !(eq(v, ep1) || eq(v, ep2)));
   return Math.min(...sansEndpoints.map(v => pointSegmentDistance(v, ep1, ep2)));
 }
 
+const animAddEdge = (g: PlanarGraph, pair: Vertex[]) => {
+  addStep(AnimationType.DrawEdge, pair);
+  return addEdge(g, pair[0], pair[1]);
+}
+
 const hullify = (g: PlanarGraph): PlanarGraph => {
   let hullVertices = convexHull(values(g.vertices));
   hullVertices.map(getConsecutiveCoordPairs).forEach((pair: Vertex[]) => {
     if (safeAddEdge(g, pair[0], pair[1])) {
-      addStep(AnimationType.DrawEdge, pair);
-      g = addEdge(g, pair[0], pair[1]);
+      g = animAddEdge(g, pair);
     }
   });
   return g;
@@ -45,8 +50,7 @@ const splitFace = (g: PlanarGraph, faceKey: string): PlanarGraph => {
   let edges = getBoundaryEdgeKeys(g, faceKey);
   if (edges.length > 3 && g.infiniteFace !== faceKey) {
     let e = getBestSplittingEdge(g, edges, faceKey);
-    addStep(AnimationType.DrawEdge, e);
-    g = addEdge(g, e[0], e[1]);
+    g = animAddEdge(g, e);
   }
   return g;
 }
@@ -67,6 +71,17 @@ const triangulate = (g: PlanarGraph): PlanarGraph => {
   return g;
 }
 
+const preColor = (g: PlanarGraph): PlanarGraph => {
+  const boundingVertices = getBoundaryVertexKeys(g, g.infiniteFace);
+  g.mark1 = boundingVertices[0];
+  g.mark2 = boundingVertices[1];
+  g = updateColors(g, g.mark1, [Color.Red]);
+  g = updateColors(g, g.mark2, [Color.Blue]);
+  boundingVertices.slice(2).forEach(vKey =>
+    g = updateColors(g, vKey, getColors(g, vKey).slice(0, 3)))
+  return g;
+}
+
 const findChordKey = (graph: PlanarGraph): string | null => {
   let chordKey = null;
   let outerVertices = getBoundaryVertexKeys(graph, graph.infiniteFace);
@@ -82,28 +97,36 @@ const findChordKey = (graph: PlanarGraph): string | null => {
   return chordKey;
 }
 
-const colorSmallGraph = (g: PlanarGraph): PlanarGraph => {
-  let unused_colors = ALL_COLORS;
-  forIn(g.vertices, (v: Vertex, vKey: string) => {
-    let newColor = intersection(v.colors, unused_colors)[0]
-    v.colors = [newColor];
-    unused_colors = unused_colors.filter(c => c !== newColor)
-  });
-  return g
+const updateColors = (g: PlanarGraph, vKey: string, colors: Color[]) => {
+  addStep(AnimationType.UpdateColors, { vertex: g.vertices[vKey], colors });
+  return setColors(g, vKey, colors);
 }
 
-const color = (g: PlanarGraph): PlanarGraph => {
-  if (values(g.vertices).length <= 3) {
-    return colorSmallGraph(g);
-  }
-  let chord = findChordKey(g);
-  if (chord) {
+const colorTriangle = (g: PlanarGraph): PlanarGraph => {
+  let badColors = [getColors(g, g.mark1)[0], getColors(g, g.mark2)[0]]
+  let thirdVertexKey = difference(Object.keys(g.vertices), [g.mark1, g.mark2])[0];
+  let okayColor = difference(getColors(g, thirdVertexKey), badColors)[0];
+  return updateColors(g, thirdVertexKey, [okayColor]);
+}
 
-  } else {
+const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
+  let boundaryVertices = getBoundaryVertexKeys(g, g.infiniteFace);
 
-  }
   return g;
 }
 
+const color = (g: PlanarGraph): PlanarGraph => {
+  if (values(g.vertices).length == 3) {
+    return colorTriangle(g);
+  } else {
+    let chord = findChordKey(g);
+    if (chord) {
+      return g;
+    } else {
+      return colorChordlessGraph(g);
+    }
+  }
+}
+
 export const fiveColor = (graph: PlanarGraph): PlanarGraph =>
-  color(triangulate(hullify(graph)))
+  color(preColor(triangulate(hullify(graph))))
