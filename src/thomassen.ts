@@ -1,8 +1,9 @@
 import { Coord, eq, angle, getConsecutiveCoordPairs, convexHull, pointSegmentDistance } from './geom';
-import { Vertex, HalfEdge, Face, PlanarGraph,
+import { Vertex, HalfEdge, Face, PlanarGraph, Color, ALL_COLORS,
   addEdge, safeAddEdge, removeEdge, removeVertex,
   getBoundaryEdgeKeys, getBoundaryVertexKeys, getOutgoingEdgeKeys, getSplitFaceKey } from './planar_graph';
-import { values, forIn, includes } from 'lodash';
+import { AnimationType, addStep } from './animation';
+import { values, forIn, includes, intersection } from 'lodash';
 
 const minDist = (cList: Coord[], ep1: Coord, ep2: Coord): number => {
   let sansEndpoints = cList.filter(v => !(eq(v, ep1) || eq(v, ep2)));
@@ -12,7 +13,10 @@ const minDist = (cList: Coord[], ep1: Coord, ep2: Coord): number => {
 const hullify = (g: PlanarGraph): PlanarGraph => {
   let hullVertices = convexHull(values(g.vertices));
   hullVertices.map(getConsecutiveCoordPairs).forEach((pair: Vertex[]) => {
-    g = addEdge(g, pair[0], pair[1]);
+    if (safeAddEdge(g, pair[0], pair[1])) {
+      addStep(AnimationType.DrawEdge, pair);
+      g = addEdge(g, pair[0], pair[1]);
+    }
   });
   return g;
 }
@@ -41,6 +45,7 @@ const splitFace = (g: PlanarGraph, faceKey: string): PlanarGraph => {
   let edges = getBoundaryEdgeKeys(g, faceKey);
   if (edges.length > 3 && g.infiniteFace !== faceKey) {
     let e = getBestSplittingEdge(g, edges, faceKey);
+    addStep(AnimationType.DrawEdge, e);
     g = addEdge(g, e[0], e[1]);
   }
   return g;
@@ -77,7 +82,20 @@ const findChordKey = (graph: PlanarGraph): string | null => {
   return chordKey;
 }
 
+const colorSmallGraph = (g: PlanarGraph): PlanarGraph => {
+  let unused_colors = ALL_COLORS;
+  forIn(g.vertices, (v: Vertex, vKey: string) => {
+    let newColor = intersection(v.colors, unused_colors)[0]
+    v.colors = [newColor];
+    unused_colors = unused_colors.filter(c => c !== newColor)
+  });
+  return g
+}
+
 const color = (g: PlanarGraph): PlanarGraph => {
+  if (values(g.vertices).length <= 3) {
+    return colorSmallGraph(g);
+  }
   let chord = findChordKey(g);
   if (chord) {
 

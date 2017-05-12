@@ -17316,8 +17316,8 @@ var Color;
     Color[Color["Yellow"] = 2] = "Yellow";
     Color[Color["Green"] = 3] = "Green";
     Color[Color["Blue"] = 4] = "Blue";
-})(Color || (Color = {}));
-var ALL_COLORS = [Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue];
+})(Color = exports.Color || (exports.Color = {}));
+exports.ALL_COLORS = [Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue];
 // Effectful stuff
 var slugCounter = 0;
 var getSlug = function () {
@@ -17454,8 +17454,8 @@ var begin = function (c1, c2) {
     var v2Slug = getSlug();
     var e12Slug = getSlug();
     var e21Slug = getSlug();
-    var v1 = { x: c1.x, y: c1.y, incidentEdge: e12Slug, colors: ALL_COLORS };
-    var v2 = { x: c2.x, y: c2.y, incidentEdge: e21Slug, colors: ALL_COLORS };
+    var v1 = { x: c1.x, y: c1.y, incidentEdge: e12Slug, colors: exports.ALL_COLORS };
+    var v2 = { x: c2.x, y: c2.y, incidentEdge: e21Slug, colors: exports.ALL_COLORS };
     var e12 = { twin: e21Slug, next: e21Slug, prev: e21Slug, origin: v1Slug, incidentFace: 'infinite' };
     var e21 = { twin: e12Slug, next: e12Slug, prev: e12Slug, origin: v2Slug, incidentFace: 'infinite' };
     return {
@@ -17531,7 +17531,7 @@ var connectNewVertex = function (graph, vKey, newVertex) {
         oldInEdge.next = oldNewSlug;
         oldOutEdge.prev = newOldSlug;
         newGraph.vertices[newVertexSlug] = { x: newVertex.x, y: newVertex.y,
-            colors: ALL_COLORS, incidentEdge: newOldSlug };
+            colors: exports.ALL_COLORS, incidentEdge: newOldSlug };
         newGraph.edges[oldNewSlug] = oldNew;
         newGraph.edges[newOldSlug] = newOld;
         return newGraph;
@@ -17637,6 +17637,10 @@ var removeLeafVertex = function (graph, vertexKey) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+var AnimationType;
+(function (AnimationType) {
+    AnimationType[AnimationType["DrawEdge"] = 0] = "DrawEdge";
+})(AnimationType = exports.AnimationType || (exports.AnimationType = {}));
 var animationSteps = [];
 // A controlled effectful function to use in the thomassen algorithms.
 exports.addStep = function (type, data) {
@@ -17645,7 +17649,7 @@ exports.addStep = function (type, data) {
 exports.animate = function (canvas) {
     var PAUSE = 500;
     animationSteps.forEach(function (a) {
-        if (a.type === "DRAW_EDGE") {
+        if (a.type === AnimationType.DrawEdge) {
             canvas.drawEdge(a.data[0], a.data[1], "blue");
         }
     });
@@ -17766,6 +17770,7 @@ exports.GraphDrawingWrapper = GraphDrawingWrapper;
 Object.defineProperty(exports, "__esModule", { value: true });
 var geom_1 = __webpack_require__(0);
 var planar_graph_1 = __webpack_require__(2);
+var animation_1 = __webpack_require__(3);
 var lodash_1 = __webpack_require__(1);
 var minDist = function (cList, ep1, ep2) {
     var sansEndpoints = cList.filter(function (v) { return !(geom_1.eq(v, ep1) || geom_1.eq(v, ep2)); });
@@ -17774,7 +17779,10 @@ var minDist = function (cList, ep1, ep2) {
 var hullify = function (g) {
     var hullVertices = geom_1.convexHull(lodash_1.values(g.vertices));
     hullVertices.map(geom_1.getConsecutiveCoordPairs).forEach(function (pair) {
-        g = planar_graph_1.addEdge(g, pair[0], pair[1]);
+        if (planar_graph_1.safeAddEdge(g, pair[0], pair[1])) {
+            animation_1.addStep(animation_1.AnimationType.DrawEdge, pair);
+            g = planar_graph_1.addEdge(g, pair[0], pair[1]);
+        }
     });
     return g;
 };
@@ -17802,6 +17810,7 @@ var splitFace = function (g, faceKey) {
     var edges = planar_graph_1.getBoundaryEdgeKeys(g, faceKey);
     if (edges.length > 3 && g.infiniteFace !== faceKey) {
         var e = getBestSplittingEdge(g, edges, faceKey);
+        animation_1.addStep(animation_1.AnimationType.DrawEdge, e);
         g = planar_graph_1.addEdge(g, e[0], e[1]);
     }
     return g;
@@ -17835,7 +17844,19 @@ var findChordKey = function (graph) {
     });
     return chordKey;
 };
+var colorSmallGraph = function (g) {
+    var unused_colors = planar_graph_1.ALL_COLORS;
+    lodash_1.forIn(g.vertices, function (v, vKey) {
+        var newColor = lodash_1.intersection(v.colors, unused_colors)[0];
+        v.colors = [newColor];
+        unused_colors = unused_colors.filter(function (c) { return c !== newColor; });
+    });
+    return g;
+};
 var color = function (g) {
+    if (lodash_1.values(g.vertices).length <= 3) {
+        return colorSmallGraph(g);
+    }
     var chord = findChordKey(g);
     if (chord) {
     }

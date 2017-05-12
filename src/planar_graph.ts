@@ -21,7 +21,7 @@ export interface Vertex extends Coord {
   incidentEdge?: string;
 }
 
-enum Color {
+export enum Color {
   Red,
   Orange,
   Yellow,
@@ -29,7 +29,7 @@ enum Color {
   Blue
 }
 
-const ALL_COLORS = [Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue];
+export const ALL_COLORS = [Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue];
 
 interface HashMap<T> {
   [key: string]: T
