@@ -1,5 +1,5 @@
 import { Coord, eq, intersect, inInterior, isClockwise, angle } from './geom';
-import { intersection, find, uniq, forIn, values, cloneDeep } from 'lodash';
+import { intersection, find, uniq, forIn, values, cloneDeep, includes } from 'lodash';
 
 export interface Face {
   infinite: boolean;
@@ -16,6 +16,11 @@ export interface HalfEdge {
   incidentFace?: string;
 }
 
+export interface Vertex extends Coord {
+  colors?: Array<Color>;
+  incidentEdge?: string;
+}
+
 enum Color {
   Red,
   Orange,
@@ -25,11 +30,6 @@ enum Color {
 }
 
 const ALL_COLORS = [Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue];
-
-export interface Vertex extends Coord {
-  colors?: Array<Color>;
-  incidentEdge?: string;
-}
 
 interface HashMap<T> {
   [key: string]: T
@@ -41,6 +41,8 @@ export interface PlanarGraph {
   edges: HashMap<HalfEdge>;
   faces: HashMap<Face>;
 }
+
+// Effectful stuff
 
 let slugCounter: number = 0;
 
@@ -59,12 +61,121 @@ export const createEmptyPlanarGraph = (): PlanarGraph => {
   } as PlanarGraph;
 }
 
-const getVertexKey = (graph: PlanarGraph, c: Coord): string | null => {
-  let matchedVertexKey = null;
-  forIn(graph.vertices, (value: Vertex, key: String) => {
-    if (eq(value, c)) matchedVertexKey = key;
+export const addEdge = (graph: PlanarGraph, c1: Coord, c2: Coord): PlanarGraph => {
+  let vKey1 = getVertexKey(graph, c1);
+  let vKey2 = getVertexKey(graph, c2);
+  if (!vKey1 && !vKey2) {
+    if (values(graph.vertices).length > 0) throw new Error("Please keep the graph connected");
+    return begin(c1, c2);
+  } else if (!vKey1 && vKey2) {
+    return connectNewVertex(graph, vKey2, c1);
+  } else if (!vKey2 && vKey1) {
+    return connectNewVertex(graph, vKey1, c2);
+  } else {
+    return connect(graph, vKey1, vKey2);
+  }
+}
+
+export const removeEdge = (graph: PlanarGraph, edgeKey: string): PlanarGraph => {
+  let newGraph = cloneDeep(graph);
+  let twinEdgeKey = newGraph.edges[edgeKey].twin;
+  let keepFaceKey = newGraph.edges[edgeKey].incidentFace;
+  let delFaceKey = newGraph.edges[twinEdgeKey].incidentFace;
+  if (keepFaceKey !== delFaceKey) {
+    let newFaceEdges = getBoundaryEdgeKeys(newGraph, delFaceKey);
+    newGraph = removeEdgeFixOrigin(newGraph, edgeKey);
+    newGraph = removeEdgeFixOrigin(newGraph, twinEdgeKey);
+    delete newGraph.faces[delFaceKey];
+    newFaceEdges.forEach(eKey => newGraph.edges[eKey].incidentFace = keepFaceKey);
+    delete newGraph.edges[edgeKey];
+    delete newGraph.edges[twinEdgeKey];
+    return newGraph;
+  } else {
+    throw new Error("Please keep the graph connected");
+  }
+}
+
+export const removeEdgeByVertices = (graph: PlanarGraph, c1: Coord, c2: Coord) => {
+  let vKey1 = getVertexKey(graph, c1);
+  let vKey2 = getVertexKey(graph, c2);
+  let ourEdge = find(getOutgoingEdgeKeys(graph, vKey1), key =>
+    (graph.edges[graph.edges[key].twin].origin === vKey2));
+  if (ourEdge) {
+    return removeEdge(graph, ourEdge);
+  } else {
+    throw new Error("Can't connect already connected vertices");
+  }
+}
+
+export const removeVertex = (graph: PlanarGraph, vertexKey: string): PlanarGraph => {
+  let newGraph = cloneDeep(graph);
+  getOutgoingEdgeKeys(newGraph, vertexKey).forEach(eKey => {
+    try {
+      newGraph = removeEdge(newGraph, eKey);
+    } catch (e) {
+      newGraph = removeLeafVertex(newGraph, vertexKey)
+    }
   });
-  return matchedVertexKey;
+  return newGraph;
+}
+
+export const removeVertexByCoord = (graph: PlanarGraph, c: Coord) => {
+  return removeVertex(graph, getVertexKey(graph, c));
+}
+
+export const getBoundaryEdgeKeys = (graph: PlanarGraph, fKey: string): string[] => {
+  let face = graph.faces[fKey];
+  let boundaryEdgeKeys = [] as string[];
+  if (face.incidentEdge) {
+    let currentEdge = face.incidentEdge;
+    while (!includes(boundaryEdgeKeys, currentEdge)) {
+      boundaryEdgeKeys.push(currentEdge);
+      currentEdge = graph.edges[currentEdge].next;
+    }
+  }
+  return boundaryEdgeKeys;
+}
+
+export const getBoundaryVertexKeys = (graph: PlanarGraph, fKey: string): string[] => {
+  return getBoundaryEdgeKeys(graph, fKey).map((eKey: string) => graph.edges[eKey].origin);
+}
+
+export const getSplitFaceKey = (graph: PlanarGraph, c1: Coord, c2: Coord): string | null => {
+  let midpoint = { x: (c1.x + c2.x)/2, y: (c1.y + c2.y)/2 };
+  let possFaceKey = getBoundingFaceKey(graph, midpoint);
+  let commonFaces = intersection(getIncidentFaceKeys(graph, c1),
+    getIncidentFaceKeys(graph, c2));
+  if (includes(commonFaces, possFaceKey)) {
+    const nonIntersect = (edgeKey: string) => {
+      let firstVertex = graph.vertices[graph.edges[edgeKey].origin];
+      let secondVertex = graph.vertices[graph.edges[graph.edges[edgeKey].next].origin];
+      return !intersect(c1, c2, firstVertex, secondVertex);
+    }
+    return getBoundaryEdgeKeys(graph, possFaceKey).every(nonIntersect) ? possFaceKey : null;
+  } else {
+    return null;
+  }
+}
+
+export const getOutgoingEdgeKeys = (graph: PlanarGraph, vKey: string): string[] => {
+  let incidentEdgeKeys = [] as string[];
+  if (graph.vertices[vKey].incidentEdge) {
+    let currentEdgeKey = graph.vertices[vKey].incidentEdge;
+    while (!includes(incidentEdgeKeys, currentEdgeKey)) {
+      incidentEdgeKeys.push(currentEdgeKey);
+      currentEdgeKey = graph.edges[graph.edges[currentEdgeKey].twin].next;
+    }
+  }
+  return incidentEdgeKeys;
+}
+
+export const safeAddEdge = (graph: PlanarGraph, c1: Coord, c2: Coord): boolean => {
+  try {
+    addEdge(graph, c1, c2);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 const begin = (c1: Coord, c2: Coord): PlanarGraph => {
@@ -84,49 +195,9 @@ const begin = (c1: Coord, c2: Coord): PlanarGraph => {
   } as PlanarGraph
 }
 
-const connectNewVertex = (graph: PlanarGraph, vKey: string, newVertex: Coord): PlanarGraph => {
-  let boundingFaceKey: string | null = getSplitFaceKey(graph, graph.vertices[vKey], newVertex);
-  if (boundingFaceKey) {
-    let newGraph = cloneDeep(graph);
-    let newVertexSlug = getSlug();
-    let oldVertex = newGraph.vertices[vKey];
-    let oldOutEdgeKey = getNextClockwiseEdgeKey(newGraph, vKey, angle(oldVertex, newVertex));
-    let oldOutEdge = newGraph.edges[oldOutEdgeKey];
-    let oldInEdgeKey = oldOutEdge.prev;
-    let oldInEdge = newGraph.edges[oldInEdgeKey];
-    let oldNewSlug = getSlug();
-    let newOldSlug = getSlug();
-    let oldNew: HalfEdge = { origin: vKey, prev: oldInEdgeKey, twin: newOldSlug,
-      next: newOldSlug, incidentFace: boundingFaceKey };
-    let newOld: HalfEdge = { origin: newVertexSlug, prev: oldNewSlug,
-      next: oldOutEdgeKey, twin: oldNewSlug, incidentFace: boundingFaceKey };
-    oldInEdge.next = oldNewSlug;
-    oldOutEdge.prev = newOldSlug;
-    newGraph.vertices[newVertexSlug] = { x: newVertex.x, y: newVertex.y,
-      colors: ALL_COLORS, incidentEdge: newOldSlug }
-    newGraph.edges[oldNewSlug] = oldNew;
-    newGraph.edges[newOldSlug] = newOld;
-    return newGraph;
-  } else {
-    throw new Error("Can't connect those vertices");
-  }
-}
-
-const pickInfiniteEdge = (graph: PlanarGraph, eKey: string): string => {
-  let e = graph.edges[eKey];
-  let eTwin = graph.edges[e.twin];
-  let vertices = [graph.vertices[eTwin.origin]];
-  let currentEdge = graph.edges[eTwin.next];
-  while (currentEdge !== eTwin) {
-    vertices.push(graph.vertices[currentEdge.origin]);
-    currentEdge = graph.edges[currentEdge.next];
-  }
-  return isClockwise(vertices) ? eKey : e.twin;
-}
-
 const connect = (graph: PlanarGraph, vKey1: string, vKey2: string): PlanarGraph => {
   let newGraph = cloneDeep(graph);
-  if (getAdjacentVertices(newGraph, vKey1).includes(vKey2)) {
+  if (includes(getAdjacentVertices(newGraph, vKey1), vKey2)) {
     throw new Error("Can't connect already connected vertices");
   }
   let v1 = newGraph.vertices[vKey1];
@@ -170,110 +241,37 @@ const connect = (graph: PlanarGraph, vKey1: string, vKey2: string): PlanarGraph 
   }
 }
 
-export const addEdge = (graph: PlanarGraph, c1: Coord, c2: Coord): PlanarGraph => {
-  let vKey1 = getVertexKey(graph, c1);
-  let vKey2 = getVertexKey(graph, c2);
-  if (!vKey1 && !vKey2) {
-    if (values(graph.vertices).length > 0) throw new Error("Please keep the graph connected");
-    return begin(c1, c2);
-  } else if (!vKey1 && vKey2) {
-    return connectNewVertex(graph, vKey2, c1);
-  } else if (!vKey2 && vKey1) {
-    return connectNewVertex(graph, vKey1, c2);
-  } else {
-    return connect(graph, vKey1, vKey2);
-  }
-}
-
-const removeEdgeFixOrigin = (graph: PlanarGraph, edgeKey: string): PlanarGraph => {
-  let incomingEdgeKey = graph.edges[edgeKey].prev;
-  let newOutgoingEdgeKey = graph.edges[graph.edges[edgeKey].twin].next;
-  let faceKey = graph.edges[edgeKey].incidentFace;
-  graph.edges[incomingEdgeKey].next = newOutgoingEdgeKey;
-  graph.edges[newOutgoingEdgeKey].prev = incomingEdgeKey;
-  graph.faces[faceKey].incidentEdge = incomingEdgeKey;
-  graph.vertices[graph.edges[edgeKey].origin].incidentEdge = newOutgoingEdgeKey;
-  return graph;
-}
-
-export const removeEdge = (graph: PlanarGraph, edgeKey: string): PlanarGraph => {
-  let newGraph = cloneDeep(graph);
-  let twinEdgeKey = newGraph.edges[edgeKey].twin;
-  if (edgeKey !== twinEdgeKey) {
-    let keepFaceKey = newGraph.edges[edgeKey].incidentFace;
-    let delFaceKey = newGraph.edges[twinEdgeKey].incidentFace;
-    let newFaceEdges = getBoundaryEdgeKeys(newGraph, delFaceKey);
-    newGraph = removeEdgeFixOrigin(newGraph, edgeKey);
-    newGraph = removeEdgeFixOrigin(newGraph, twinEdgeKey);
-    delete newGraph.faces[delFaceKey];
-    newFaceEdges.forEach(eKey => newGraph.edges[eKey].incidentFace = keepFaceKey);
+const connectNewVertex = (graph: PlanarGraph, vKey: string, newVertex: Coord): PlanarGraph => {
+  let boundingFaceKey: string | null = getSplitFaceKey(graph, graph.vertices[vKey], newVertex);
+  if (boundingFaceKey) {
+    let newGraph = cloneDeep(graph);
+    let newVertexSlug = getSlug();
+    let oldVertex = newGraph.vertices[vKey];
+    let oldOutEdgeKey = getNextClockwiseEdgeKey(newGraph, vKey, angle(oldVertex, newVertex));
+    let oldOutEdge = newGraph.edges[oldOutEdgeKey];
+    let oldInEdgeKey = oldOutEdge.prev;
+    let oldInEdge = newGraph.edges[oldInEdgeKey];
+    let oldNewSlug = getSlug();
+    let newOldSlug = getSlug();
+    let oldNew: HalfEdge = { origin: vKey, prev: oldInEdgeKey, twin: newOldSlug,
+      next: newOldSlug, incidentFace: boundingFaceKey };
+    let newOld: HalfEdge = { origin: newVertexSlug, prev: oldNewSlug,
+      next: oldOutEdgeKey, twin: oldNewSlug, incidentFace: boundingFaceKey };
+    oldInEdge.next = oldNewSlug;
+    oldOutEdge.prev = newOldSlug;
+    newGraph.vertices[newVertexSlug] = { x: newVertex.x, y: newVertex.y,
+      colors: ALL_COLORS, incidentEdge: newOldSlug }
+    newGraph.edges[oldNewSlug] = oldNew;
+    newGraph.edges[newOldSlug] = newOld;
     return newGraph;
   } else {
-    throw new Error("Please keep the graph connected");
+    throw new Error("Can't connect those vertices");
   }
-}
-
-export const removeEdgeByVertices = (graph: PlanarGraph, c1: Coord, c2: Coord) => {
-  let vKey1 = getVertexKey(graph, c1);
-  let vKey2 = getVertexKey(graph, c2);
-  let ourEdge = find(getOutgoingEdgeKeys(graph, vKey1), key =>
-    (graph.edges[graph.edges[key].twin].origin === vKey2));
-  if (ourEdge) {
-    return removeEdge(graph, ourEdge);
-  } else {
-    throw new Error("Can't connect already connected vertices");
-  }
-}
-
-const removeLeafVertex = (graph: PlanarGraph, vertexKey: string): PlanarGraph => {
-  if (getOutgoingEdgeKeys(graph, vertexKey).length !== 1) {
-    let outgoingEdgeKey = graph.edges[graph.vertices[vertexKey].incidentEdge]
-    let twinEdgeKey = graph.edges[outgoingEdgeKey].twin
-    graph = removeEdgeFixOrigin(graph, twinEdgeKey);
-    delete graph.vertices[vertexKey];
-    delete graph.edges[outgoingEdgeKey];
-    delete graph.edges[twinEdgeKey];
-  } else {
-    throw new Error("Not a leaf vertex!")
-  }
-}
-
-export const removeVertex = (graph: PlanarGraph, vertexKey: string): PlanarGraph => {
-  let newGraph = cloneDeep(graph);
-  getOutgoingEdgeKeys(graph, vertexKey).forEach(eKey => {
-    try {
-      newGraph = removeEdge(newGraph, eKey);
-    } catch (e) {
-      newGraph = removeLeafVertex(newGraph, vertexKey)
-    }
-  });
-  return newGraph;
-}
-
-export const removeVertexByCoord = (graph: PlanarGraph, c: Coord) => {
-  return removeVertex(graph, getVertexKey(graph, c));
 }
 
 const getAdjacentVertices = (graph: PlanarGraph, vertexKey: string): string[] => {
   return getOutgoingEdgeKeys(graph, vertexKey).map((eKey: string) =>
-    graph.edges[graph.edges[eKey].next].origin);
-}
-
-export const getBoundaryEdgeKeys = (graph: PlanarGraph, fKey: string): string[] => {
-  let face = graph.faces[fKey];
-  let boundaryEdgeKeys = [] as string[];
-  if (face.incidentEdge) {
-    let currentEdge = face.incidentEdge;
-    while (!boundaryEdgeKeys.includes(currentEdge)) {
-      boundaryEdgeKeys.push(currentEdge);
-      currentEdge = graph.edges[currentEdge].next;
-    }
-  }
-  return boundaryEdgeKeys;
-}
-
-export const getBoundaryVertexKeys = (graph: PlanarGraph, fKey: string): string[] => {
-  return getBoundaryEdgeKeys(graph, fKey).map((eKey: string) => graph.edges[eKey].origin);
+  graph.edges[graph.edges[eKey].next].origin);
 }
 
 const getBoundaryVertices = (graph: PlanarGraph, fKey: string): Vertex[] => {
@@ -284,75 +282,84 @@ const getBoundingFaceKey = (graph: PlanarGraph, c: Coord): string => {
   let boundingFaceKey = graph.infiniteFace;
   Object.keys(graph.faces).forEach((fKey: string) => {
     if (graph.infiniteFace !== fKey &&
-        inInterior(getBoundaryVertices(graph, fKey), c)) {
-          boundingFaceKey = fKey;
+      inInterior(getBoundaryVertices(graph, fKey), c)) {
+        boundingFaceKey = fKey;
       }
-  });
-  return boundingFaceKey;
-}
-
-export const getSplitFaceKey = (graph: PlanarGraph, c1: Coord, c2: Coord): string | null => {
-  let midpoint = { x: (c1.x + c2.x)/2, y: (c1.y + c2.y)/2 };
-  let possFaceKey = getBoundingFaceKey(graph, midpoint);
-  let commonFaces = intersection(getIncidentFaceKeys(graph, c1),
-    getIncidentFaceKeys(graph, c2));
-  if (commonFaces.includes(possFaceKey)) {
-    const nonIntersect = (edgeKey: string) => {
-      let firstVertex = graph.vertices[graph.edges[edgeKey].origin];
-      let secondVertex = graph.vertices[graph.edges[graph.edges[edgeKey].next].origin];
-      return !intersect(c1, c2, firstVertex, secondVertex);
-    }
-    return getBoundaryEdgeKeys(graph, possFaceKey).every(nonIntersect) ? possFaceKey : null;
-  } else {
-    return null;
-  }
+    });
+    return boundingFaceKey;
 }
 
 const getIncidentFaceKeys = (graph: PlanarGraph, c: Coord): string[] => {
-  let vKey = getVertexKey(graph, c)
-  if (vKey) {
-    let edgeKeys = getOutgoingEdgeKeys(graph, vKey);
-    return edgeKeys.map(eKey => graph.edges[eKey].incidentFace);
-  } else {
-    return [getBoundingFaceKey(graph, c)];
-  }
-}
-
-export const getOutgoingEdgeKeys = (graph: PlanarGraph, vKey: string): string[] => {
-  let incidentEdgeKeys = [] as string[];
-  if (graph.vertices[vKey].incidentEdge) {
-    let currentEdgeKey = graph.vertices[vKey].incidentEdge;
-    while (!incidentEdgeKeys.includes(currentEdgeKey)) {
-      incidentEdgeKeys.push(currentEdgeKey);
-      currentEdgeKey = graph.edges[graph.edges[currentEdgeKey].twin].next;
+    let vKey = getVertexKey(graph, c)
+    if (vKey) {
+      let edgeKeys = getOutgoingEdgeKeys(graph, vKey);
+      return edgeKeys.map(eKey => graph.edges[eKey].incidentFace);
+    } else {
+      return [getBoundingFaceKey(graph, c)];
     }
-  }
-  return incidentEdgeKeys;
 }
 
 const getNextClockwiseEdgeKey = (graph: PlanarGraph, vKey: string, newAngle: number): string => {
-  let keysWithAngles: [string, number][] =
+    let keysWithAngles: [string, number][] =
     getOutgoingEdgeKeys(graph, vKey).map((eKey: string) => {
       let v1 = graph.vertices[graph.edges[eKey].origin];
       let v2 = graph.vertices[graph.edges[graph.edges[eKey].next].origin];
       return [eKey, angle(v1, v2)] as [string, number];
     });
-  let smallAngleEdges = keysWithAngles.filter((ea: [string, number]) => ea[1] < newAngle);
-  const sortByAngleDecreasing =
+    let smallAngleEdges = keysWithAngles.filter((ea: [string, number]) => ea[1] < newAngle);
+    const sortByAngleDecreasing =
     (e1: [string, number], e2: [string, number]): number => (e2[1] - e1[1]);
-  const getHighestAngleEdge =
+    const getHighestAngleEdge =
     (pairList: [string, number][]): string =>
-      (pairList.sort(sortByAngleDecreasing)[0][0]);
-  return (smallAngleEdges.length > 0) ?
+    (pairList.sort(sortByAngleDecreasing)[0][0]);
+    return (smallAngleEdges.length > 0) ?
     getHighestAngleEdge(smallAngleEdges) :
     getHighestAngleEdge(keysWithAngles);
 }
 
-export const safeAddEdge = (graph: PlanarGraph, c1: Coord, c2: Coord): boolean => {
-  try {
-    addEdge(graph, c1, c2);
-    return true;
-  } catch (e) {
-    return false;
+const getVertexKey = (graph: PlanarGraph, c: Coord): string | null => {
+  let matchedVertexKey = null;
+  forIn(graph.vertices, (value: Vertex, key: String) => {
+    if (eq(value, c)) matchedVertexKey = key;
+  });
+  return matchedVertexKey;
+}
+
+const pickInfiniteEdge = (graph: PlanarGraph, eKey: string): string => {
+  let e = graph.edges[eKey];
+  let eTwin = graph.edges[e.twin];
+  let vertices = [graph.vertices[eTwin.origin]];
+  let currentEdge = graph.edges[eTwin.next];
+  while (currentEdge !== eTwin) {
+    vertices.push(graph.vertices[currentEdge.origin]);
+    currentEdge = graph.edges[currentEdge.next];
+  }
+  return isClockwise(vertices) ? eKey : e.twin;
+}
+
+const removeEdgeFixOrigin = (graph: PlanarGraph, edgeKey: string): PlanarGraph => {
+  let newGraph = cloneDeep(graph);
+  let incomingEdgeKey = newGraph.edges[edgeKey].prev;
+  let newOutgoingEdgeKey = newGraph.edges[newGraph.edges[edgeKey].twin].next;
+  let faceKey = newGraph.edges[edgeKey].incidentFace;
+  newGraph.edges[incomingEdgeKey].next = newOutgoingEdgeKey;
+  newGraph.edges[newOutgoingEdgeKey].prev = incomingEdgeKey;
+  newGraph.faces[faceKey].incidentEdge = incomingEdgeKey;
+  newGraph.vertices[newGraph.edges[edgeKey].origin].incidentEdge = newOutgoingEdgeKey;
+  return newGraph;
+}
+
+const removeLeafVertex = (graph: PlanarGraph, vertexKey: string): PlanarGraph => {
+  let newGraph = cloneDeep(graph);
+  if (getOutgoingEdgeKeys(newGraph, vertexKey).length === 1) {
+    let outgoingEdgeKey = newGraph.vertices[vertexKey].incidentEdge
+    let twinEdgeKey = newGraph.edges[outgoingEdgeKey].twin
+    newGraph = removeEdgeFixOrigin(graph, twinEdgeKey);
+    delete newGraph.vertices[vertexKey];
+    delete newGraph.edges[outgoingEdgeKey];
+    delete newGraph.edges[twinEdgeKey];
+    return newGraph;
+  } else {
+    throw new Error("Not a leaf vertex!")
   }
 }

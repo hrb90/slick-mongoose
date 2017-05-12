@@ -1,5 +1,5 @@
 import { Coord, intersect, inInterior, isClockwise, convexHull, pointSegmentDistance } from '../src/geom';
-import { shuffle } from 'lodash';
+import { shuffle, includes } from 'lodash';
 
 const v = (x: number, y: number) => ({ x: x, y: y });
 
@@ -164,7 +164,7 @@ describe("convexHull", () => {
 
       it("returns a polygon containing every other vertex", () => {
         vertexSet.forEach((v: Coord) => {
-          expect(inInterior(polygon, v) || polygon.includes(v)).toBe(true);
+          expect(inInterior(polygon, v) || includes(polygon, v)).toBe(true);
         })
       });
 

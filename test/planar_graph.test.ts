@@ -188,6 +188,46 @@ describe("removeEdge", () => {
     expect(getBoundaryEdgeKeys(graph5, graph5.infiniteFace).length).toBe(4);
     expect(getBoundaryEdgeKeys(graph7, graph7.infiniteFace).length).toBe(5);
   });
+
+  describe("build a graph with intermediate steps with non-simple faces", () => {
+    let graph = createEmptyPlanarGraph();
+
+    let vertices = [
+      v(2, 2),
+      v(10, 15),
+      v(18, 2),
+      v(0, 0),
+      v(10, 17),
+      v(20, 0)
+    ];
+
+    let edges: [number, number][] = [
+      [0, 1],
+      [0, 2],
+      [1, 2],
+      [0, 3],
+      [3, 5],
+      [4, 5],
+      [3, 4],
+      [1, 4]
+    ]
+
+    edges.forEach(edge => {
+      graph = addEdge(graph, vertices[edge[0]], vertices[edge[1]]);
+    });
+
+    graph = removeEdgeByVertices(graph, vertices[0], vertices[3]);
+    graph = removeEdgeByVertices(graph, vertices[1], vertices[2]);
+
+    it("maintains the correct number of edges", () => {
+      expect(Object.keys(graph.edges).length/2).toBe(6);
+    })
+
+    it("maintains the correct number of faces", () => {
+      expect(Object.keys(graph.faces).length).toBe(2);
+    })
+  });
+
 })
 
 describe("removeVertex", () => {
@@ -219,8 +259,6 @@ describe("removeVertex", () => {
     });
 
     graph = removeVertexByCoord(graph, vertices[2]);
-
-    console.log(graph.edges);
 
     it("maintains the correct number of edges", () => {
       expect(Object.keys(graph.edges).length/2).toBe(6);
