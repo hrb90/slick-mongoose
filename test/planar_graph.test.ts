@@ -1,6 +1,7 @@
 import { PlanarGraph, createEmptyPlanarGraph,
   addEdge, safeAddEdge, removeEdgeByVertices, removeVertexByCoord,
-  getBoundaryEdgeKeys, getBoundaryVertexKeys, getOutgoingEdgeKeys } from '../src/planar_graph';
+  getBoundaryEdgeKeys, getBoundaryVertexKeys, getOutgoingEdgeKeys,
+  splitChordedGraph, findChordKey} from '../src/planar_graph';
 import { Coord } from '../src/geom';
 
 const v = (x: number, y: number) => ({ x: x, y: y });
@@ -269,3 +270,26 @@ describe("removeVertex", () => {
     })
   });
 })
+
+describe("splitChordedGraph", () => {
+  it("passes the simplest possible case", () => {
+    let graph = createEmptyPlanarGraph();
+    let a = v(0, 0);
+    let b = v(0, 1);
+    let c = v(1, 1);
+    let d = v(1, 0);
+    graph = addEdge(graph, a, b);
+    graph = addEdge(graph, b, c);
+    graph = addEdge(graph, c, d);
+    let square = addEdge(graph, d, a);
+    let diamond = addEdge(square, a, c);
+
+    let [t1, t2] = splitChordedGraph(diamond, findChordKey(diamond));
+    expect(Object.keys(t1.vertices).length).toBe(3);
+    expect(Object.keys(t2.vertices).length).toBe(3);
+    expect(Object.keys(t1.edges).length).toBe(6);
+    expect(Object.keys(t2.edges).length).toBe(6);
+    expect(Object.keys(t1.faces).length).toBe(2);
+    expect(Object.keys(t2.faces).length).toBe(2);
+  });
+});

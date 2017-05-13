@@ -418,6 +418,23 @@ const inducedInteriorSubgraph = (g: PlanarGraph, polygon: string[]): PlanarGraph
   return newGraph;
 }
 
+export const findChordKey = (graph: PlanarGraph): string | null => {
+  let chordKey = null;
+  let outerVertices = getBoundaryVertexKeys(graph, graph.infiniteFace);
+  outerVertices.forEach(vKey => {
+    let edgeKeys = getOutgoingEdgeKeys(graph, vKey);
+    edgeKeys.forEach(eKey => {
+      let e = graph.edges[eKey];
+      if (includes(outerVertices, graph.edges[e.next].origin)
+        && e.incidentFace !== graph.infiniteFace
+        && graph.edges[e.twin].incidentFace !== graph.infiniteFace) {
+        chordKey = eKey;
+      }
+    });
+  });
+  return chordKey;
+}
+
 export const splitChordedGraph = (g: PlanarGraph, chordKey: string): [PlanarGraph, PlanarGraph] => {
   let [vi, vj] = getEndpoints(g, chordKey);
   let outerVertices = getBoundaryVertexKeys(g, g.infiniteFace);
