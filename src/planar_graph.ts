@@ -53,6 +53,8 @@ const getSlug = () => {
   return slugCounter + "";
 }
 
+// Exports
+
 export const createEmptyPlanarGraph = (): PlanarGraph => {
   let infFace: Face = { infinite: true };
   return {
@@ -133,6 +135,28 @@ export const removeVertexByCoord = (graph: PlanarGraph, c: Coord) => {
   return removeVertex(graph, getVertexKey(graph, c));
 }
 
+export const findVp = (g: PlanarGraph): string => {
+  if (g.mark1 && g.mark2) {
+    let edges = getOutgoingEdgeKeys(g, g.mark1);
+    let adjVertices = getAdjacentVertices(g, g.mark1);
+    let idx = adjVertices.indexOf(g.mark2);
+    if (idx > -1) {
+      let ourEdge = g.edges[edges[idx]].incidentFace === g.infiniteFace ?
+      edges[idx] : g.edges[edges[idx]].twin;
+      return g.edges[g.edges[ourEdge].prev].origin;
+    } else {
+      throw new Error("Markers are non-adjacent");
+    }
+  } else {
+    throw new Error("Graph is unmarked");
+  }
+}
+
+export const getAdjacentVertices = (graph: PlanarGraph, vertexKey: string): string[] => {
+  return getOutgoingEdgeKeys(graph, vertexKey).map((eKey: string) =>
+  graph.edges[graph.edges[eKey].next].origin);
+}
+
 export const getBoundaryEdgeKeys = (graph: PlanarGraph, fKey: string): string[] => {
   let face = graph.faces[fKey];
   let boundaryEdgeKeys = [] as string[];
@@ -148,6 +172,10 @@ export const getBoundaryEdgeKeys = (graph: PlanarGraph, fKey: string): string[] 
 
 export const getBoundaryVertexKeys = (graph: PlanarGraph, fKey: string): string[] => {
   return getBoundaryEdgeKeys(graph, fKey).map((eKey: string) => graph.edges[eKey].origin);
+}
+
+export const getBoundaryVertices = (graph: PlanarGraph, fKey: string): Vertex[] => {
+  return getBoundaryVertexKeys(graph, fKey).map((vKey: string) => graph.vertices[vKey]);
 }
 
 export const getSplitFaceKey = (graph: PlanarGraph, c1: Coord, c2: Coord): string | null => {
@@ -179,6 +207,10 @@ export const getOutgoingEdgeKeys = (graph: PlanarGraph, vKey: string): string[] 
   return incidentEdgeKeys;
 }
 
+export const getColors = (g: PlanarGraph, vKey: string): Color[] => {
+  return g.vertices[vKey].colors;
+}
+
 export const safeAddEdge = (graph: PlanarGraph, c1: Coord, c2: Coord): boolean => {
   try {
     addEdge(graph, c1, c2);
@@ -186,6 +218,12 @@ export const safeAddEdge = (graph: PlanarGraph, c1: Coord, c2: Coord): boolean =
   } catch (e) {
     return false;
   }
+}
+
+export const setColors = (g: PlanarGraph, vKey: string, newColors: Color[]): PlanarGraph => {
+  let newGraph = cloneDeep(g);
+  newGraph.vertices[vKey].colors = newColors;
+  return newGraph;
 }
 
 const begin = (c1: Coord, c2: Coord): PlanarGraph => {
@@ -279,15 +317,6 @@ const connectNewVertex = (graph: PlanarGraph, vKey: string, newVertex: Coord): P
   }
 }
 
-export const getAdjacentVertices = (graph: PlanarGraph, vertexKey: string): string[] => {
-  return getOutgoingEdgeKeys(graph, vertexKey).map((eKey: string) =>
-  graph.edges[graph.edges[eKey].next].origin);
-}
-
-export const getBoundaryVertices = (graph: PlanarGraph, fKey: string): Vertex[] => {
-  return getBoundaryVertexKeys(graph, fKey).map((vKey: string) => graph.vertices[vKey]);
-}
-
 const getBoundingFaceKey = (graph: PlanarGraph, c: Coord): string => {
   let boundingFaceKey = graph.infiniteFace;
   Object.keys(graph.faces).forEach((fKey: string) => {
@@ -374,29 +403,28 @@ const removeLeafVertex = (graph: PlanarGraph, vertexKey: string): PlanarGraph =>
   }
 }
 
-export const getColors = (g: PlanarGraph, vKey: string): Color[] => {
-  return g.vertices[vKey].colors;
-}
-
-export const setColors = (g: PlanarGraph, vKey: string, newColors: Color[]): PlanarGraph => {
+const inducedInteriorSubgraph = (g: PlanarGraph, polygon: string[]): PlanarGraph => {
+  const outsidePolygon = (vKey: string) => ! (includes(polygon, vKey) ||
+          inInterior(polygon.map(x => g.vertices[x]), g.vertices[vKey]));
+  const outsideBoundaryVertices = (graph: PlanarGraph) => (
+    getBoundaryVertexKeys(graph, graph.infiniteFace).filter(outsidePolygon)
+  );
   let newGraph = cloneDeep(g);
-  newGraph.vertices[vKey].colors = newColors;
+  let toRemove = outsideBoundaryVertices(newGraph);
+  while (toRemove.length > 0) {
+    toRemove.forEach(v => newGraph = removeVertex(newGraph, v));
+    toRemove = outsideBoundaryVertices(newGraph);
+  }
   return newGraph;
 }
 
-export const findVp = (g: PlanarGraph): string => {
-  if (g.mark1 && g.mark2) {
-    let edges = getOutgoingEdgeKeys(g, g.mark1);
-    let adjVertices = getAdjacentVertices(g, g.mark1);
-    let idx = adjVertices.indexOf(g.mark2);
-    if (idx > -1) {
-      let ourEdge = g.edges[edges[idx]].incidentFace === g.infiniteFace ?
-                      edges[idx] : g.edges[edges[idx]].twin;
-      return g.edges[g.edges[ourEdge].prev].origin;
-    } else {
-      throw new Error("Markers are non-adjacent");
-    }
-  } else {
-    throw new Error("Graph is unmarked");
-  }
+export const splitChordedGraph = (g: PlanarGraph, chordKey: string): [PlanarGraph, PlanarGraph] => {
+  let [vi, vj] = getEndpoints(g, chordKey);
+  let outerVertices = getBoundaryVertexKeys(g, g.infiniteFace);
+  let [viIdx, vjIdx] = [vi, vj].map(x => outerVertices.indexOf(x)).sort();
+  let poly1 = outerVertices.slice(viIdx, vjIdx + 1);
+  let poly2 = outerVertices.slice(0, viIdx).concat(outerVertices.slice(vjIdx + 1));
+  let [firstPoly, secondPoly] = includes(poly1, g.mark1) && includes(poly1, g.mark2) ?
+                                    [poly1, poly2] : [poly2, poly1];
+  return [firstPoly, secondPoly].map(x => inducedInteriorSubgraph(g, x)) as [PlanarGraph, PlanarGraph];
 }

@@ -1,6 +1,6 @@
 import { Coord, eq, angle, getConsecutiveCoordPairs, convexHull, pointSegmentDistance } from './geom';
 import { Vertex, HalfEdge, Face, PlanarGraph, Color, ALL_COLORS,
-  addEdge, safeAddEdge, removeEdge, removeVertex, getAdjacentVertices,
+  addEdge, safeAddEdge, removeEdge, removeVertex, splitChordedGraph, getAdjacentVertices,
   getBoundaryEdgeKeys, getBoundaryVertexKeys, getOutgoingEdgeKeys,
   getSplitFaceKey, getColors, setColors, findVp, getEndpoints } from './planar_graph';
 import { AnimationType, addStep } from './animation';
@@ -140,10 +140,6 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
   return newGraph;
 }
 
-const splitChordedGraph = (g: PlanarGraph, chordKey: string): [PlanarGraph, PlanarGraph] => {
-  return [g, g] as [PlanarGraph, PlanarGraph];
-}
-
 const colorChordedGraph = (g: PlanarGraph, chordKey: string): PlanarGraph => {
   let [firstSubgraph, secondSubgraph] = splitChordedGraph(g, chordKey);
   firstSubgraph = color(firstSubgraph);
@@ -165,7 +161,7 @@ const color = (g: PlanarGraph): PlanarGraph => {
     let chord = findChordKey(g);
     if (chord) {
       console.log("chord found");
-      return g;
+      return colorChordedGraph(g, chord);
     } else {
       console.log("go ahead and color!");
       return colorChordlessGraph(g);
