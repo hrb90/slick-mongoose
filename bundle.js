@@ -212,6 +212,37 @@ exports.pointSegmentDistance = function (p, endPoint1, endPoint2) {
 /* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var AnimationType;
+(function (AnimationType) {
+    AnimationType[AnimationType["DrawEdge"] = 0] = "DrawEdge";
+    AnimationType[AnimationType["UpdateColors"] = 1] = "UpdateColors";
+})(AnimationType = exports.AnimationType || (exports.AnimationType = {}));
+var animationSteps = [];
+// A controlled effectful function to use in the thomassen algorithms.
+exports.addStep = function (type, data) {
+    animationSteps.push({ type: type, data: data });
+};
+exports.animate = function (canvas) {
+    animationSteps.forEach(function (a) {
+        switch (a.type) {
+            case AnimationType.DrawEdge:
+                canvas.drawEdge(a.data[0], a.data[1], "blue");
+                break;
+            case AnimationType.UpdateColors:
+                canvas.drawCircle(a.data.vertex, "none", a.data.colors);
+                break;
+        }
+    });
+};
+
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
  * @license
  * Lodash <https://lodash.com/>
@@ -17301,14 +17332,14 @@ exports.pointSegmentDistance = function (p, endPoint1, endPoint2) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(8)(module)))
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var geom_1 = __webpack_require__(0);
-var lodash_1 = __webpack_require__(1);
+var lodash_1 = __webpack_require__(2);
 var Color;
 (function (Color) {
     Color[Color["Red"] = 0] = "Red";
@@ -17351,12 +17382,19 @@ exports.addEdge = function (graph, c1, c2) {
         return connect(graph, vKey1, vKey2);
     }
 };
+exports.getEndpoints = function (graph, edgeKey) {
+    return [graph.edges[edgeKey].origin, graph.edges[graph.edges[edgeKey].twin].origin];
+};
 exports.removeEdge = function (graph, edgeKey) {
     var newGraph = lodash_1.cloneDeep(graph);
     var twinEdgeKey = newGraph.edges[edgeKey].twin;
     var keepFaceKey = newGraph.edges[edgeKey].incidentFace;
     var delFaceKey = newGraph.edges[twinEdgeKey].incidentFace;
     if (keepFaceKey !== delFaceKey) {
+        if (newGraph.faces[keepFaceKey].infinite || newGraph.faces[delFaceKey].infinite) {
+            newGraph.faces[keepFaceKey].infinite = true;
+            newGraph.infiniteFace = keepFaceKey;
+        }
         var newFaceEdges = exports.getBoundaryEdgeKeys(newGraph, delFaceKey);
         newGraph = removeEdgeFixOrigin(newGraph, edgeKey);
         newGraph = removeEdgeFixOrigin(newGraph, twinEdgeKey);
@@ -17468,7 +17506,7 @@ var begin = function (c1, c2) {
 };
 var connect = function (graph, vKey1, vKey2) {
     var newGraph = lodash_1.cloneDeep(graph);
-    if (lodash_1.includes(getAdjacentVertices(newGraph, vKey1), vKey2)) {
+    if (lodash_1.includes(exports.getAdjacentVertices(newGraph, vKey1), vKey2)) {
         throw new Error("Can't connect already connected vertices");
     }
     var v1 = newGraph.vertices[vKey1];
@@ -17540,7 +17578,7 @@ var connectNewVertex = function (graph, vKey, newVertex) {
         throw new Error("Can't connect those vertices");
     }
 };
-var getAdjacentVertices = function (graph, vertexKey) {
+exports.getAdjacentVertices = function (graph, vertexKey) {
     return exports.getOutgoingEdgeKeys(graph, vertexKey).map(function (eKey) {
         return graph.edges[graph.edges[eKey].next].origin;
     });
@@ -17636,36 +17674,23 @@ exports.setColors = function (g, vKey, newColors) {
     newGraph.vertices[vKey].colors = newColors;
     return newGraph;
 };
-
-
-/***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var AnimationType;
-(function (AnimationType) {
-    AnimationType[AnimationType["DrawEdge"] = 0] = "DrawEdge";
-    AnimationType[AnimationType["UpdateColors"] = 1] = "UpdateColors";
-})(AnimationType = exports.AnimationType || (exports.AnimationType = {}));
-var animationSteps = [];
-// A controlled effectful function to use in the thomassen algorithms.
-exports.addStep = function (type, data) {
-    animationSteps.push({ type: type, data: data });
-};
-exports.animate = function (canvas) {
-    animationSteps.forEach(function (a) {
-        switch (a.type) {
-            case AnimationType.DrawEdge:
-                canvas.drawEdge(a.data[0], a.data[1], "blue");
-                break;
-            case AnimationType.UpdateColors:
-                canvas.drawCircle(a.data.vertex, "none", a.data.colors);
-                break;
+exports.findVp = function (g) {
+    if (g.mark1 && g.mark2) {
+        var edges = exports.getOutgoingEdgeKeys(g, g.mark1);
+        var adjVertices = exports.getAdjacentVertices(g, g.mark1);
+        var idx = adjVertices.indexOf(g.mark2);
+        if (idx > -1) {
+            var ourEdge = g.edges[edges[idx]].incidentFace === g.infiniteFace ?
+                edges[idx] : g.edges[edges[idx]].twin;
+            return g.edges[g.edges[ourEdge].prev].origin;
         }
-    });
+        else {
+            throw new Error("Markers are non-adjacent");
+        }
+    }
+    else {
+        throw new Error("Graph is unmarked");
+    }
 };
 
 
@@ -17677,7 +17702,7 @@ exports.animate = function (canvas) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var geom_1 = __webpack_require__(0);
-var planar_graph_1 = __webpack_require__(2);
+var planar_graph_1 = __webpack_require__(3);
 var colorToString = function (c) {
     switch (c) {
         case planar_graph_1.Color.Red:
@@ -17694,7 +17719,7 @@ var colorToString = function (c) {
 };
 var GraphDrawingWrapper = (function () {
     function GraphDrawingWrapper(canvasId, radius) {
-        if (radius === void 0) { radius = 10; }
+        if (radius === void 0) { radius = 15; }
         this.radius = radius;
         this.vertices = [];
         this.canvasEl = document.getElementById(canvasId);
@@ -17810,9 +17835,9 @@ exports.GraphDrawingWrapper = GraphDrawingWrapper;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var geom_1 = __webpack_require__(0);
-var planar_graph_1 = __webpack_require__(2);
-var animation_1 = __webpack_require__(3);
-var lodash_1 = __webpack_require__(1);
+var planar_graph_1 = __webpack_require__(3);
+var animation_1 = __webpack_require__(1);
+var lodash_1 = __webpack_require__(2);
 var minDist = function (cList, ep1, ep2) {
     var sansEndpoints = cList.filter(function (v) { return !(geom_1.eq(v, ep1) || geom_1.eq(v, ep2)); });
     return Math.min.apply(Math, sansEndpoints.map(function (v) { return geom_1.pointSegmentDistance(v, ep1, ep2); }));
@@ -17891,7 +17916,9 @@ var findChordKey = function (graph) {
         var edgeKeys = planar_graph_1.getOutgoingEdgeKeys(graph, vKey);
         edgeKeys.forEach(function (eKey) {
             var e = graph.edges[eKey];
-            if (lodash_1.includes(outerVertices, graph.edges[e.next].origin) && e.incidentFace != graph.infiniteFace) {
+            if (lodash_1.includes(outerVertices, graph.edges[e.next].origin)
+                && e.incidentFace !== graph.infiniteFace
+                && graph.edges[e.twin].incidentFace !== graph.infiniteFace) {
                 chordKey = eKey;
             }
         });
@@ -17908,20 +17935,58 @@ var colorTriangle = function (g) {
     var okayColor = lodash_1.difference(planar_graph_1.getColors(g, thirdVertexKey), badColors)[0];
     return updateColors(g, thirdVertexKey, [okayColor]);
 };
+var transferColors = function (graph, subGraph) {
+    var newGraph = lodash_1.cloneDeep(graph);
+    Object.keys(subGraph.vertices).forEach(function (vKey) {
+        newGraph = planar_graph_1.setColors(newGraph, vKey, planar_graph_1.getColors(subGraph, vKey));
+    });
+    return newGraph;
+};
 var colorChordlessGraph = function (g) {
     var boundaryVertices = planar_graph_1.getBoundaryVertexKeys(g, g.infiniteFace);
-    return g;
+    var vp = planar_graph_1.findVp(g);
+    var twoColors = lodash_1.difference(planar_graph_1.getColors(g, vp), planar_graph_1.getColors(g, g.mark1)).slice(0, 2);
+    var subGraph = planar_graph_1.removeVertex(g, vp);
+    var vp1;
+    planar_graph_1.getAdjacentVertices(g, vp).forEach(function (vKey) {
+        if (!lodash_1.includes(boundaryVertices, vKey)) {
+            subGraph = updateColors(subGraph, vKey, lodash_1.difference(planar_graph_1.getColors(subGraph, vKey), twoColors).slice(0, 3));
+        }
+        else if (vKey !== g.mark1) {
+            vp1 = vKey;
+        }
+    });
+    subGraph = color(subGraph);
+    var newGraph = transferColors(g, subGraph);
+    newGraph = updateColors(newGraph, vp, lodash_1.difference(twoColors, planar_graph_1.getColors(subGraph, vp1)).slice(0, 1));
+    return newGraph;
+};
+var splitChordedGraph = function (g, chordKey) {
+    return [g, g];
+};
+var colorChordedGraph = function (g, chordKey) {
+    var _a = splitChordedGraph(g, chordKey), firstSubgraph = _a[0], secondSubgraph = _a[1];
+    firstSubgraph = color(firstSubgraph);
+    secondSubgraph = updateColors(secondSubgraph, secondSubgraph.mark1, planar_graph_1.getColors(firstSubgraph, secondSubgraph.mark1));
+    secondSubgraph = updateColors(secondSubgraph, secondSubgraph.mark2, planar_graph_1.getColors(firstSubgraph, secondSubgraph.mark2));
+    secondSubgraph = color(secondSubgraph);
+    var newGraph = transferColors(g, firstSubgraph);
+    newGraph = transferColors(newGraph, secondSubgraph);
+    return newGraph;
 };
 var color = function (g) {
     if (lodash_1.values(g.vertices).length == 3) {
+        console.log("hey, a triangle!");
         return colorTriangle(g);
     }
     else {
         var chord = findChordKey(g);
         if (chord) {
+            console.log("chord found");
             return g;
         }
         else {
+            console.log("go ahead and color!");
             return colorChordlessGraph(g);
         }
     }
@@ -17940,7 +18005,7 @@ exports.fiveColor = function (graph) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var canvas_wrapper_1 = __webpack_require__(4);
 var thomassen_1 = __webpack_require__(5);
-var animation_1 = __webpack_require__(3);
+var animation_1 = __webpack_require__(1);
 document.addEventListener('DOMContentLoaded', function () {
     var wrapper = new canvas_wrapper_1.GraphDrawingWrapper("canvas");
     document.getElementById('animate-button').addEventListener("click", function () {

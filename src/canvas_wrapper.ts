@@ -23,7 +23,7 @@ export class GraphDrawingWrapper {
   highlightedVertex: Coord | null;
   radius: number;
 
-  constructor(canvasId : string, radius: number = 10) {
+  constructor(canvasId : string, radius: number = 15) {
     this.radius = radius;
     this.vertices = [];
     this.canvasEl = (<HTMLCanvasElement>document.getElementById(canvasId));

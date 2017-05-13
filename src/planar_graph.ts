@@ -78,12 +78,20 @@ export const addEdge = (graph: PlanarGraph, c1: Coord, c2: Coord): PlanarGraph =
   }
 }
 
+export const getEndpoints = (graph: PlanarGraph, edgeKey: string): [string, string] => {
+  return [graph.edges[edgeKey].origin, graph.edges[graph.edges[edgeKey].twin].origin];
+}
+
 export const removeEdge = (graph: PlanarGraph, edgeKey: string): PlanarGraph => {
   let newGraph = cloneDeep(graph);
   let twinEdgeKey = newGraph.edges[edgeKey].twin;
   let keepFaceKey = newGraph.edges[edgeKey].incidentFace;
   let delFaceKey = newGraph.edges[twinEdgeKey].incidentFace;
   if (keepFaceKey !== delFaceKey) {
+    if (newGraph.faces[keepFaceKey].infinite || newGraph.faces[delFaceKey].infinite) {
+      newGraph.faces[keepFaceKey].infinite = true;
+      newGraph.infiniteFace = keepFaceKey;
+    }
     let newFaceEdges = getBoundaryEdgeKeys(newGraph, delFaceKey);
     newGraph = removeEdgeFixOrigin(newGraph, edgeKey);
     newGraph = removeEdgeFixOrigin(newGraph, twinEdgeKey);
@@ -271,7 +279,7 @@ const connectNewVertex = (graph: PlanarGraph, vKey: string, newVertex: Coord): P
   }
 }
 
-const getAdjacentVertices = (graph: PlanarGraph, vertexKey: string): string[] => {
+export const getAdjacentVertices = (graph: PlanarGraph, vertexKey: string): string[] => {
   return getOutgoingEdgeKeys(graph, vertexKey).map((eKey: string) =>
   graph.edges[graph.edges[eKey].next].origin);
 }
@@ -374,4 +382,21 @@ export const setColors = (g: PlanarGraph, vKey: string, newColors: Color[]): Pla
   let newGraph = cloneDeep(g);
   newGraph.vertices[vKey].colors = newColors;
   return newGraph;
+}
+
+export const findVp = (g: PlanarGraph): string => {
+  if (g.mark1 && g.mark2) {
+    let edges = getOutgoingEdgeKeys(g, g.mark1);
+    let adjVertices = getAdjacentVertices(g, g.mark1);
+    let idx = adjVertices.indexOf(g.mark2);
+    if (idx > -1) {
+      let ourEdge = g.edges[edges[idx]].incidentFace === g.infiniteFace ?
+                      edges[idx] : g.edges[edges[idx]].twin;
+      return g.edges[g.edges[ourEdge].prev].origin;
+    } else {
+      throw new Error("Markers are non-adjacent");
+    }
+  } else {
+    throw new Error("Graph is unmarked");
+  }
 }

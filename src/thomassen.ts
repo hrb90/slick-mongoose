@@ -1,10 +1,10 @@
 import { Coord, eq, angle, getConsecutiveCoordPairs, convexHull, pointSegmentDistance } from './geom';
 import { Vertex, HalfEdge, Face, PlanarGraph, Color, ALL_COLORS,
-  addEdge, safeAddEdge, removeEdge, removeVertex,
+  addEdge, safeAddEdge, removeEdge, removeVertex, getAdjacentVertices,
   getBoundaryEdgeKeys, getBoundaryVertexKeys, getOutgoingEdgeKeys,
-  getSplitFaceKey, getColors, setColors } from './planar_graph';
+  getSplitFaceKey, getColors, setColors, findVp, getEndpoints } from './planar_graph';
 import { AnimationType, addStep } from './animation';
-import { values, forIn, includes, difference } from 'lodash';
+import { values, forIn, includes, difference, cloneDeep } from 'lodash';
 
 const minDist = (cList: Coord[], ep1: Coord, ep2: Coord): number => {
   let sansEndpoints = cList.filter(v => !(eq(v, ep1) || eq(v, ep2)));
@@ -89,7 +89,9 @@ const findChordKey = (graph: PlanarGraph): string | null => {
     let edgeKeys = getOutgoingEdgeKeys(graph, vKey);
     edgeKeys.forEach(eKey => {
       let e = graph.edges[eKey];
-      if (includes(outerVertices, graph.edges[e.next].origin) && e.incidentFace != graph.infiniteFace) {
+      if (includes(outerVertices, graph.edges[e.next].origin)
+        && e.incidentFace !== graph.infiniteFace
+        && graph.edges[e.twin].incidentFace !== graph.infiniteFace) {
         chordKey = eKey;
       }
     });
@@ -109,20 +111,63 @@ const colorTriangle = (g: PlanarGraph): PlanarGraph => {
   return updateColors(g, thirdVertexKey, [okayColor]);
 }
 
+const transferColors = (graph: PlanarGraph, subGraph: PlanarGraph): PlanarGraph => {
+  let newGraph = cloneDeep(graph);
+  Object.keys(subGraph.vertices).forEach(vKey => {
+    newGraph = setColors(newGraph, vKey, getColors(subGraph, vKey))
+  });
+  return newGraph;
+};
+
 const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
   let boundaryVertices = getBoundaryVertexKeys(g, g.infiniteFace);
+  let vp = findVp(g);
+  let twoColors = difference(getColors(g, vp), getColors(g, g.mark1)).slice(0, 2);
+  let subGraph = removeVertex(g, vp);
+  let vp1: string;
+  getAdjacentVertices(g, vp).forEach(vKey => {
+    if (!includes(boundaryVertices, vKey)) {
+      subGraph = updateColors(subGraph, vKey,
+        difference(getColors(subGraph, vKey), twoColors).slice(0, 3));
+    } else if (vKey !== g.mark1) {
+        vp1 = vKey;
+    }
+  });
+  subGraph = color(subGraph);
+  let newGraph = transferColors(g, subGraph);
+  newGraph = updateColors(newGraph, vp,
+    difference(twoColors, getColors(subGraph, vp1)).slice(0, 1));
+  return newGraph;
+}
 
-  return g;
+const splitChordedGraph = (g: PlanarGraph, chordKey: string): [PlanarGraph, PlanarGraph] => {
+  return [g, g] as [PlanarGraph, PlanarGraph];
+}
+
+const colorChordedGraph = (g: PlanarGraph, chordKey: string): PlanarGraph => {
+  let [firstSubgraph, secondSubgraph] = splitChordedGraph(g, chordKey);
+  firstSubgraph = color(firstSubgraph);
+  secondSubgraph = updateColors(secondSubgraph, secondSubgraph.mark1,
+    getColors(firstSubgraph, secondSubgraph.mark1));
+  secondSubgraph = updateColors(secondSubgraph, secondSubgraph.mark2,
+    getColors(firstSubgraph, secondSubgraph.mark2));
+  secondSubgraph = color(secondSubgraph);
+  let newGraph = transferColors(g, firstSubgraph);
+  newGraph = transferColors(newGraph, secondSubgraph);
+  return newGraph;
 }
 
 const color = (g: PlanarGraph): PlanarGraph => {
   if (values(g.vertices).length == 3) {
+    console.log("hey, a triangle!")
     return colorTriangle(g);
   } else {
     let chord = findChordKey(g);
     if (chord) {
+      console.log("chord found");
       return g;
     } else {
+      console.log("go ahead and color!");
       return colorChordlessGraph(g);
     }
   }
