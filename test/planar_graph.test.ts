@@ -292,4 +292,9 @@ describe("splitChordedGraph", () => {
     expect(Object.keys(t1.faces).length).toBe(2);
     expect(Object.keys(t2.faces).length).toBe(2);
   });
+
+  it("splits a more complicated graph", () => {
+
+  });
+  
 });

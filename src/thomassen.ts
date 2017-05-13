@@ -1,7 +1,7 @@
 import { Coord, eq, angle, getConsecutiveCoordPairs, convexHull, pointSegmentDistance } from './geom';
 import { Vertex, HalfEdge, Face, PlanarGraph, Color, ALL_COLORS,
   addEdge, safeAddEdge, removeEdge, removeVertex, splitChordedGraph, getAdjacentVertices,
-  getBoundaryEdgeKeys, getBoundaryVertexKeys, getOutgoingEdgeKeys,
+  getBoundaryEdgeKeys, getBoundaryVertexKeys, getOutgoingEdgeKeys, findChordKey,
   getSplitFaceKey, getColors, setColors, findVp, getEndpoints } from './planar_graph';
 import { AnimationType, addStep } from './animation';
 import { values, forIn, includes, difference, cloneDeep } from 'lodash';

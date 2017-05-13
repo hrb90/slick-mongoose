@@ -152,6 +152,19 @@ export const findVp = (g: PlanarGraph): string => {
   }
 }
 
+export const getEdgeKeyByCoordss = (graph: PlanarGraph, c1: Coord, c2: Coord): string | null => {
+  let v1 = getVertexKey(graph, c1);
+  let v2 = getVertexKey(graph, c2);
+  let outgoingEdgeKeys = getOutgoingEdgeKeys(graph, v1);
+  let adjacentVertices = getAdjacentVertices(graph, v1);
+  let v2Idx = adjacentVertices.indexOf(v2);
+  if (v2Idx >= 0) {
+    return outgoingEdgeKeys[v2Idx];
+  } else {
+    return null;
+  }
+}
+
 export const getAdjacentVertices = (graph: PlanarGraph, vertexKey: string): string[] => {
   return getOutgoingEdgeKeys(graph, vertexKey).map((eKey: string) =>
   graph.edges[graph.edges[eKey].next].origin);
@@ -404,11 +417,11 @@ const removeLeafVertex = (graph: PlanarGraph, vertexKey: string): PlanarGraph =>
 }
 
 const inducedInteriorSubgraph = (g: PlanarGraph, polygon: string[]): PlanarGraph => {
-  const outsidePolygon = (vKey: string) => ! (includes(polygon, vKey) ||
+  const outsidePolygon = (vKey: string) => !(includes(polygon, vKey) ||
           inInterior(polygon.map(x => g.vertices[x]), g.vertices[vKey]));
-  const outsideBoundaryVertices = (graph: PlanarGraph) => (
-    getBoundaryVertexKeys(graph, graph.infiniteFace).filter(outsidePolygon)
-  );
+  const outsideBoundaryVertices = (graph: PlanarGraph) => {
+    return getBoundaryVertexKeys(graph, graph.infiniteFace).filter(outsidePolygon);
+  };
   let newGraph = cloneDeep(g);
   let toRemove = outsideBoundaryVertices(newGraph);
   while (toRemove.length > 0) {
@@ -440,8 +453,12 @@ export const splitChordedGraph = (g: PlanarGraph, chordKey: string): [PlanarGrap
   let outerVertices = getBoundaryVertexKeys(g, g.infiniteFace);
   let [viIdx, vjIdx] = [vi, vj].map(x => outerVertices.indexOf(x)).sort();
   let poly1 = outerVertices.slice(viIdx, vjIdx + 1);
-  let poly2 = outerVertices.slice(0, viIdx).concat(outerVertices.slice(vjIdx + 1));
+  let poly2 = outerVertices.slice(0, viIdx + 1).concat(outerVertices.slice(vjIdx));
   let [firstPoly, secondPoly] = includes(poly1, g.mark1) && includes(poly1, g.mark2) ?
                                     [poly1, poly2] : [poly2, poly1];
-  return [firstPoly, secondPoly].map(x => inducedInteriorSubgraph(g, x)) as [PlanarGraph, PlanarGraph];
+  let [firstSubgraph, secondSubgraph] = [firstPoly, secondPoly].map(x =>
+      inducedInteriorSubgraph(g, x));
+  secondSubgraph.mark1 = vi;
+  secondSubgraph.mark2 = vj;
+  return [firstSubgraph, secondSubgraph];
 }
