@@ -1,7 +1,7 @@
-import { PlanarGraph, createEmptyPlanarGraph,
+import { PlanarGraph, createEmptyPlanarGraph, getVertexKey,
   addEdge, safeAddEdge, removeEdgeByVertices, removeVertexByCoord,
   getBoundaryEdgeKeys, getBoundaryVertexKeys, getOutgoingEdgeKeys,
-  splitChordedGraph, findChordKey} from '../src/planar_graph';
+  splitChordedGraph, findChordKey, inducedInteriorSubgraph } from '../src/planar_graph';
 import { Coord } from '../src/geom';
 
 const v = (x: number, y: number) => ({ x: x, y: y });
@@ -293,8 +293,55 @@ describe("splitChordedGraph", () => {
     expect(Object.keys(t2.faces).length).toBe(2);
   });
 
-  it("splits a more complicated graph", () => {
+});
 
+describe("inducedInteriorSubgraph", () => {
+  it("deconstructs the graph without blowing up", () => {
+    let graph = createEmptyPlanarGraph();
+
+    let vertices = [
+      v(0, 0),
+      v(0, 10),
+      v(5, 15),
+      v(10, 10),
+      v(10, 0),
+      v(5, -5),
+      v(5, -2),
+      v(7, 3),
+      v(5, 12)
+    ];
+
+    let edges = [
+      [0, 1],
+      [0, 3],
+      [0, 4],
+      [0, 5],
+      [0, 6],
+      [0, 7],
+      [1, 2],
+      [1, 3],
+      [1, 8],
+      [2, 3],
+      [2, 8],
+      [3, 4],
+      [3, 7],
+      [3, 8],
+      [4, 5],
+      [4, 6],
+      [4, 7],
+      [5, 6],
+    ];
+
+    edges.forEach(edge => {
+      graph = addEdge(graph, vertices[edge[0]], vertices[edge[1]]);
+    });
+
+    let triangle = vertices.slice(1, 4).map(c => getVertexKey(graph, c));
+
+    let subgraph = inducedInteriorSubgraph(graph, triangle);
+
+    expect(Object.keys(subgraph.faces).length).toBe(4);
+    expect(Object.keys(subgraph.edges).length).toBe(12);
+    expect(Object.keys(subgraph.vertices).length).toBe(4);
   });
-  
 });

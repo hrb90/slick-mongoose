@@ -152,7 +152,7 @@ export const findVp = (g: PlanarGraph): string => {
   }
 }
 
-export const getEdgeKeyByCoordss = (graph: PlanarGraph, c1: Coord, c2: Coord): string | null => {
+export const getEdgeKeyByCoords = (graph: PlanarGraph, c1: Coord, c2: Coord): string | null => {
   let v1 = getVertexKey(graph, c1);
   let v2 = getVertexKey(graph, c2);
   let outgoingEdgeKeys = getOutgoingEdgeKeys(graph, v1);
@@ -369,7 +369,7 @@ const getNextClockwiseEdgeKey = (graph: PlanarGraph, vKey: string, newAngle: num
     getHighestAngleEdge(keysWithAngles);
 }
 
-const getVertexKey = (graph: PlanarGraph, c: Coord): string | null => {
+export const getVertexKey = (graph: PlanarGraph, c: Coord): string | null => {
   let matchedVertexKey = null;
   forIn(graph.vertices, (value: Vertex, key: String) => {
     if (eq(value, c)) matchedVertexKey = key;
@@ -416,17 +416,38 @@ const removeLeafVertex = (graph: PlanarGraph, vertexKey: string): PlanarGraph =>
   }
 }
 
-const inducedInteriorSubgraph = (g: PlanarGraph, polygon: string[]): PlanarGraph => {
-  const outsidePolygon = (vKey: string) => !(includes(polygon, vKey) ||
+const isBridge = (g: PlanarGraph, eKey: string): boolean => {
+  let twinEdgeKey = g.edges[eKey].twin
+  return (g.edges[eKey].incidentFace === g.edges[twinEdgeKey].incidentFace);
+}
+
+export const inducedInteriorSubgraph = (g: PlanarGraph, polygon: string[]): PlanarGraph => {
+  console.log(g);
+  console.log(polygon);
+  const vertexOutsidePolygon = (vKey: string) => !(includes(polygon, vKey) ||
           inInterior(polygon.map(x => g.vertices[x]), g.vertices[vKey]));
-  const outsideBoundaryVertices = (graph: PlanarGraph) => {
-    return getBoundaryVertexKeys(graph, graph.infiniteFace).filter(outsidePolygon);
+  const edgeOutsidePolygon = (eKey: string) =>
+    getEndpoints(g, eKey).some(vertexOutsidePolygon);
+  const removableVertices = (graph: PlanarGraph) => {
+    return Object.keys(graph.vertices).filter(vertexOutsidePolygon)
+      .filter(v => (getOutgoingEdgeKeys(graph, v).length === 1));
+  };
+  const removableEdges = (graph: PlanarGraph) => {
+    return Object.keys(graph.edges).filter(edgeOutsidePolygon)
+      .filter(x => !isBridge(graph, x));
   };
   let newGraph = cloneDeep(g);
-  let toRemove = outsideBoundaryVertices(newGraph);
-  while (toRemove.length > 0) {
-    toRemove.forEach(v => newGraph = removeVertex(newGraph, v));
-    toRemove = outsideBoundaryVertices(newGraph);
+  // First we remove non-bridge edges until we have a spanning tree
+  let edgesToRemove = removableEdges(newGraph);
+  while (edgesToRemove.length > 0) {
+    newGraph = removeEdge(newGraph, edgesToRemove[0]);
+    edgesToRemove = removableEdges(newGraph);
+  }
+  // Then we remove leaf vertices until we arrive at the subgraph :)
+  let verticesToRemove = removableVertices(newGraph);
+  while (verticesToRemove.length > 0) {
+    newGraph = removeVertex(newGraph, verticesToRemove[0]);
+    verticesToRemove = removableVertices(newGraph);
   }
   return newGraph;
 }

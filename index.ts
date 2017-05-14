@@ -3,7 +3,7 @@ import { fiveColor } from './src/thomassen';
 import { animate } from './src/animation';
 
 document.addEventListener('DOMContentLoaded', () => {
-  let wrapper = new GraphDrawingWrapper("canvas");
+  let wrapper = new GraphDrawingWrapper("canvas", 10);
 
   document.getElementById('animate-button').addEventListener("click", () => {
     fiveColor(wrapper.graph);

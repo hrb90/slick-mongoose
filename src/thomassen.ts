@@ -79,6 +79,9 @@ const preColor = (g: PlanarGraph): PlanarGraph => {
   g = updateColors(g, g.mark2, [Color.Blue]);
   boundingVertices.slice(2).forEach(vKey =>
     g = updateColors(g, vKey, getColors(g, vKey).slice(0, 3)))
+  difference(Object.keys(g.vertices), boundingVertices).forEach(vKey => {
+    g = updateColors(g, vKey, ALL_COLORS);
+  })
   return g;
 }
 
