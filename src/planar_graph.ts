@@ -48,10 +48,15 @@ export interface PlanarGraph {
 
 let slugCounter: number = 0;
 
-const getSlug = () => {
+const getFaceSlug = () => {
   slugCounter = slugCounter + 1;
   return slugCounter + "";
 }
+
+const getVertexSlug = (c: Coord) => (`${c.x},${c.y}`);
+
+const getEdgeSlug = (c1: Coord, c2: Coord) =>
+  (`${getVertexSlug(c1)};${getVertexSlug(c2)}`);
 
 // Exports
 
@@ -240,10 +245,10 @@ export const setColors = (g: PlanarGraph, vKey: string, newColors: Color[]): Pla
 }
 
 const begin = (c1: Coord, c2: Coord): PlanarGraph => {
-  let v1Slug = getSlug();
-  let v2Slug = getSlug();
-  let e12Slug = getSlug();
-  let e21Slug = getSlug();
+  let v1Slug = getVertexSlug(c1);
+  let v2Slug = getVertexSlug(c2);
+  let e12Slug = getEdgeSlug(c1, c2);
+  let e21Slug = getEdgeSlug(c2, c1);
   let v1: Vertex = { x: c1.x, y: c1.y, incidentEdge: e12Slug, colors: ALL_COLORS };
   let v2: Vertex = { x: c2.x, y: c2.y, incidentEdge: e21Slug, colors: ALL_COLORS };
   let e12: HalfEdge = { twin: e21Slug, next: e21Slug, prev: e21Slug, origin: v1Slug, incidentFace: 'infinite'};
@@ -270,8 +275,8 @@ const connect = (graph: PlanarGraph, vKey1: string, vKey2: string): PlanarGraph 
     let e1 = newGraph.edges[e1Key];
     let e2Key = getNextClockwiseEdgeKey(newGraph, vKey2, angle(v2, v1));
     let e2 = newGraph.edges[e2Key];
-    let v1v2Slug = getSlug();
-    let v2v1Slug = getSlug();
+    let v1v2Slug = getEdgeSlug(v1, v2);
+    let v2v1Slug = getEdgeSlug(v2, v1);
     // The incidentFace pointers will be fixed later on...
     let v1v2 = { origin: vKey1, next: e2Key, prev: e1.prev, twin: v2v1Slug,
       incidentFace: boundingFace };
@@ -286,7 +291,7 @@ const connect = (graph: PlanarGraph, vKey1: string, vKey2: string): PlanarGraph 
     // Now we create a new face
     let newFaceEdge = newGraph.faces[boundingFace].infinite ? pickInfiniteEdge(newGraph, v1v2Slug) : v1v2Slug;
     newGraph.faces[boundingFace].incidentEdge = newGraph.edges[newFaceEdge].twin;
-    let newFaceSlug = getSlug();
+    let newFaceSlug = getFaceSlug();
     let newFace = { infinite: false, incidentEdge: newFaceEdge };
     newGraph.edges[newGraph.edges[newFaceEdge].twin].incidentFace = boundingFace;
     newGraph.edges[newFaceEdge].incidentFace = newFaceSlug;
@@ -306,14 +311,14 @@ const connectNewVertex = (graph: PlanarGraph, vKey: string, newVertex: Coord): P
   let boundingFaceKey: string | null = getSplitFaceKey(graph, graph.vertices[vKey], newVertex);
   if (boundingFaceKey) {
     let newGraph = cloneDeep(graph);
-    let newVertexSlug = getSlug();
+    let newVertexSlug = getVertexSlug(newVertex);
     let oldVertex = newGraph.vertices[vKey];
     let oldOutEdgeKey = getNextClockwiseEdgeKey(newGraph, vKey, angle(oldVertex, newVertex));
     let oldOutEdge = newGraph.edges[oldOutEdgeKey];
     let oldInEdgeKey = oldOutEdge.prev;
     let oldInEdge = newGraph.edges[oldInEdgeKey];
-    let oldNewSlug = getSlug();
-    let newOldSlug = getSlug();
+    let oldNewSlug = getEdgeSlug(oldVertex, newVertex);
+    let newOldSlug = getEdgeSlug(newVertex, oldVertex);
     let oldNew: HalfEdge = { origin: vKey, prev: oldInEdgeKey, twin: newOldSlug,
       next: newOldSlug, incidentFace: boundingFaceKey };
     let newOld: HalfEdge = { origin: newVertexSlug, prev: oldNewSlug,
@@ -422,8 +427,7 @@ const isBridge = (g: PlanarGraph, eKey: string): boolean => {
 }
 
 export const inducedInteriorSubgraph = (g: PlanarGraph, polygon: string[]): PlanarGraph => {
-  console.log(g);
-  console.log(polygon);
+  console.log(`Computing subgraph inside ${polygon}`);
   const vertexOutsidePolygon = (vKey: string) => !(includes(polygon, vKey) ||
           inInterior(polygon.map(x => g.vertices[x]), g.vertices[vKey]));
   const edgeOutsidePolygon = (eKey: string) =>
@@ -472,9 +476,12 @@ export const findChordKey = (graph: PlanarGraph): string | null => {
 export const splitChordedGraph = (g: PlanarGraph, chordKey: string): [PlanarGraph, PlanarGraph] => {
   let [vi, vj] = getEndpoints(g, chordKey);
   let outerVertices = getBoundaryVertexKeys(g, g.infiniteFace);
-  let [viIdx, vjIdx] = [vi, vj].map(x => outerVertices.indexOf(x)).sort();
-  let poly1 = outerVertices.slice(viIdx, vjIdx + 1);
-  let poly2 = outerVertices.slice(0, viIdx + 1).concat(outerVertices.slice(vjIdx));
+  console.log(`Chord endpoints: ${vi}, ${vj}`);
+  console.log(`Outer vertices: ${outerVertices}`);
+  let [viIdx, vjIdx] = [vi, vj].map(x => outerVertices.indexOf(x));
+  let [lsIdx, gtIdx] = viIdx < vjIdx ? [viIdx, vjIdx] : [vjIdx, viIdx]
+  let poly1 = outerVertices.slice(lsIdx, gtIdx + 1);
+  let poly2 = outerVertices.slice(0, lsIdx + 1).concat(outerVertices.slice(gtIdx));
   let [firstPoly, secondPoly] = includes(poly1, g.mark1) && includes(poly1, g.mark2) ?
                                     [poly1, poly2] : [poly2, poly1];
   let [firstSubgraph, secondSubgraph] = [firstPoly, secondPoly].map(x =>
