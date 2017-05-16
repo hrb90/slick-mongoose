@@ -219,8 +219,10 @@ var AnimationType;
 (function (AnimationType) {
     AnimationType[AnimationType["DrawEdge"] = 0] = "DrawEdge";
     AnimationType[AnimationType["UpdateColors"] = 1] = "UpdateColors";
+    AnimationType[AnimationType["RestrictGraph"] = 2] = "RestrictGraph";
 })(AnimationType = exports.AnimationType || (exports.AnimationType = {}));
 var animationSteps = [];
+window.animationSteps = animationSteps;
 // A controlled effectful function to use in the thomassen algorithms.
 exports.addStep = function (type, data) {
     animationSteps.push({ type: type, data: data });
@@ -233,6 +235,8 @@ exports.animate = function (canvas) {
                 break;
             case AnimationType.UpdateColors:
                 canvas.drawCircle(a.data.vertex, "none", a.data.colors);
+                break;
+            case AnimationType.RestrictGraph:
                 break;
         }
     });
@@ -17351,10 +17355,15 @@ var Color;
 exports.ALL_COLORS = [Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue];
 // Effectful stuff
 var slugCounter = 0;
-var getSlug = function () {
+var getFaceSlug = function () {
     slugCounter = slugCounter + 1;
     return slugCounter + "";
 };
+var getVertexSlug = function (c) { return (c.x + "," + c.y); };
+var getEdgeSlug = function (c1, c2) {
+    return (getVertexSlug(c1) + ";" + getVertexSlug(c2));
+};
+// Exports
 exports.createEmptyPlanarGraph = function () {
     var infFace = { infinite: true };
     return {
@@ -17365,8 +17374,8 @@ exports.createEmptyPlanarGraph = function () {
     };
 };
 exports.addEdge = function (graph, c1, c2) {
-    var vKey1 = getVertexKey(graph, c1);
-    var vKey2 = getVertexKey(graph, c2);
+    var vKey1 = exports.getVertexKey(graph, c1);
+    var vKey2 = exports.getVertexKey(graph, c2);
     if (!vKey1 && !vKey2) {
         if (lodash_1.values(graph.vertices).length > 0)
             throw new Error("Please keep the graph connected");
@@ -17409,8 +17418,8 @@ exports.removeEdge = function (graph, edgeKey) {
     }
 };
 exports.removeEdgeByVertices = function (graph, c1, c2) {
-    var vKey1 = getVertexKey(graph, c1);
-    var vKey2 = getVertexKey(graph, c2);
+    var vKey1 = exports.getVertexKey(graph, c1);
+    var vKey2 = exports.getVertexKey(graph, c2);
     var ourEdge = lodash_1.find(exports.getOutgoingEdgeKeys(graph, vKey1), function (key) {
         return (graph.edges[graph.edges[key].twin].origin === vKey2);
     });
@@ -17434,7 +17443,43 @@ exports.removeVertex = function (graph, vertexKey) {
     return newGraph;
 };
 exports.removeVertexByCoord = function (graph, c) {
-    return exports.removeVertex(graph, getVertexKey(graph, c));
+    return exports.removeVertex(graph, exports.getVertexKey(graph, c));
+};
+exports.findVp = function (g) {
+    if (g.mark1 && g.mark2) {
+        var edges = exports.getOutgoingEdgeKeys(g, g.mark1);
+        var adjVertices = exports.getAdjacentVertices(g, g.mark1);
+        var idx = adjVertices.indexOf(g.mark2);
+        if (idx > -1) {
+            var ourEdge = g.edges[edges[idx]].incidentFace === g.infiniteFace ?
+                edges[idx] : g.edges[edges[idx]].twin;
+            return g.edges[g.edges[ourEdge].prev].origin;
+        }
+        else {
+            throw new Error("Markers are non-adjacent");
+        }
+    }
+    else {
+        throw new Error("Graph is unmarked");
+    }
+};
+exports.getEdgeKeyByCoords = function (graph, c1, c2) {
+    var v1 = exports.getVertexKey(graph, c1);
+    var v2 = exports.getVertexKey(graph, c2);
+    var outgoingEdgeKeys = exports.getOutgoingEdgeKeys(graph, v1);
+    var adjacentVertices = exports.getAdjacentVertices(graph, v1);
+    var v2Idx = adjacentVertices.indexOf(v2);
+    if (v2Idx >= 0) {
+        return outgoingEdgeKeys[v2Idx];
+    }
+    else {
+        return null;
+    }
+};
+exports.getAdjacentVertices = function (graph, vertexKey) {
+    return exports.getOutgoingEdgeKeys(graph, vertexKey).map(function (eKey) {
+        return graph.edges[graph.edges[eKey].next].origin;
+    });
 };
 exports.getBoundaryEdgeKeys = function (graph, fKey) {
     var face = graph.faces[fKey];
@@ -17450,6 +17495,9 @@ exports.getBoundaryEdgeKeys = function (graph, fKey) {
 };
 exports.getBoundaryVertexKeys = function (graph, fKey) {
     return exports.getBoundaryEdgeKeys(graph, fKey).map(function (eKey) { return graph.edges[eKey].origin; });
+};
+exports.getBoundaryVertices = function (graph, fKey) {
+    return exports.getBoundaryVertexKeys(graph, fKey).map(function (vKey) { return graph.vertices[vKey]; });
 };
 exports.getSplitFaceKey = function (graph, c1, c2) {
     var midpoint = { x: (c1.x + c2.x) / 2, y: (c1.y + c2.y) / 2 };
@@ -17478,6 +17526,9 @@ exports.getOutgoingEdgeKeys = function (graph, vKey) {
     }
     return incidentEdgeKeys;
 };
+exports.getColors = function (g, vKey) {
+    return g.vertices[vKey].colors;
+};
 exports.safeAddEdge = function (graph, c1, c2) {
     try {
         exports.addEdge(graph, c1, c2);
@@ -17487,11 +17538,16 @@ exports.safeAddEdge = function (graph, c1, c2) {
         return false;
     }
 };
+exports.setColors = function (g, vKey, newColors) {
+    var newGraph = lodash_1.cloneDeep(g);
+    newGraph.vertices[vKey].colors = newColors;
+    return newGraph;
+};
 var begin = function (c1, c2) {
-    var v1Slug = getSlug();
-    var v2Slug = getSlug();
-    var e12Slug = getSlug();
-    var e21Slug = getSlug();
+    var v1Slug = getVertexSlug(c1);
+    var v2Slug = getVertexSlug(c2);
+    var e12Slug = getEdgeSlug(c1, c2);
+    var e21Slug = getEdgeSlug(c2, c1);
     var v1 = { x: c1.x, y: c1.y, incidentEdge: e12Slug, colors: exports.ALL_COLORS };
     var v2 = { x: c2.x, y: c2.y, incidentEdge: e21Slug, colors: exports.ALL_COLORS };
     var e12 = { twin: e21Slug, next: e21Slug, prev: e21Slug, origin: v1Slug, incidentFace: 'infinite' };
@@ -17518,8 +17574,8 @@ var connect = function (graph, vKey1, vKey2) {
         var e1 = newGraph.edges[e1Key];
         var e2Key = getNextClockwiseEdgeKey(newGraph, vKey2, geom_1.angle(v2, v1));
         var e2 = newGraph.edges[e2Key];
-        var v1v2Slug = getSlug();
-        var v2v1Slug = getSlug();
+        var v1v2Slug = getEdgeSlug(v1, v2);
+        var v2v1Slug = getEdgeSlug(v2, v1);
         // The incidentFace pointers will be fixed later on...
         var v1v2 = { origin: vKey1, next: e2Key, prev: e1.prev, twin: v2v1Slug,
             incidentFace: boundingFace };
@@ -17534,7 +17590,7 @@ var connect = function (graph, vKey1, vKey2) {
         // Now we create a new face
         var newFaceEdge = newGraph.faces[boundingFace].infinite ? pickInfiniteEdge(newGraph, v1v2Slug) : v1v2Slug;
         newGraph.faces[boundingFace].incidentEdge = newGraph.edges[newFaceEdge].twin;
-        var newFaceSlug = getSlug();
+        var newFaceSlug = getFaceSlug();
         var newFace = { infinite: false, incidentEdge: newFaceEdge };
         newGraph.edges[newGraph.edges[newFaceEdge].twin].incidentFace = boundingFace;
         newGraph.edges[newFaceEdge].incidentFace = newFaceSlug;
@@ -17554,14 +17610,14 @@ var connectNewVertex = function (graph, vKey, newVertex) {
     var boundingFaceKey = exports.getSplitFaceKey(graph, graph.vertices[vKey], newVertex);
     if (boundingFaceKey) {
         var newGraph = lodash_1.cloneDeep(graph);
-        var newVertexSlug = getSlug();
+        var newVertexSlug = getVertexSlug(newVertex);
         var oldVertex = newGraph.vertices[vKey];
         var oldOutEdgeKey = getNextClockwiseEdgeKey(newGraph, vKey, geom_1.angle(oldVertex, newVertex));
         var oldOutEdge = newGraph.edges[oldOutEdgeKey];
         var oldInEdgeKey = oldOutEdge.prev;
         var oldInEdge = newGraph.edges[oldInEdgeKey];
-        var oldNewSlug = getSlug();
-        var newOldSlug = getSlug();
+        var oldNewSlug = getEdgeSlug(oldVertex, newVertex);
+        var newOldSlug = getEdgeSlug(newVertex, oldVertex);
         var oldNew = { origin: vKey, prev: oldInEdgeKey, twin: newOldSlug,
             next: newOldSlug, incidentFace: boundingFaceKey };
         var newOld = { origin: newVertexSlug, prev: oldNewSlug,
@@ -17578,14 +17634,6 @@ var connectNewVertex = function (graph, vKey, newVertex) {
         throw new Error("Can't connect those vertices");
     }
 };
-exports.getAdjacentVertices = function (graph, vertexKey) {
-    return exports.getOutgoingEdgeKeys(graph, vertexKey).map(function (eKey) {
-        return graph.edges[graph.edges[eKey].next].origin;
-    });
-};
-exports.getBoundaryVertices = function (graph, fKey) {
-    return exports.getBoundaryVertexKeys(graph, fKey).map(function (vKey) { return graph.vertices[vKey]; });
-};
 var getBoundingFaceKey = function (graph, c) {
     var boundingFaceKey = graph.infiniteFace;
     Object.keys(graph.faces).forEach(function (fKey) {
@@ -17597,7 +17645,7 @@ var getBoundingFaceKey = function (graph, c) {
     return boundingFaceKey;
 };
 var getIncidentFaceKeys = function (graph, c) {
-    var vKey = getVertexKey(graph, c);
+    var vKey = exports.getVertexKey(graph, c);
     if (vKey) {
         var edgeKeys = exports.getOutgoingEdgeKeys(graph, vKey);
         return edgeKeys.map(function (eKey) { return graph.edges[eKey].incidentFace; });
@@ -17621,7 +17669,7 @@ var getNextClockwiseEdgeKey = function (graph, vKey, newAngle) {
         getHighestAngleEdge(smallAngleEdges) :
         getHighestAngleEdge(keysWithAngles);
 };
-var getVertexKey = function (graph, c) {
+exports.getVertexKey = function (graph, c) {
     var matchedVertexKey = null;
     lodash_1.forIn(graph.vertices, function (value, key) {
         if (geom_1.eq(value, c))
@@ -17666,31 +17714,73 @@ var removeLeafVertex = function (graph, vertexKey) {
         throw new Error("Not a leaf vertex!");
     }
 };
-exports.getColors = function (g, vKey) {
-    return g.vertices[vKey].colors;
+var isBridge = function (g, eKey) {
+    var twinEdgeKey = g.edges[eKey].twin;
+    return (g.edges[eKey].incidentFace === g.edges[twinEdgeKey].incidentFace);
 };
-exports.setColors = function (g, vKey, newColors) {
+exports.inducedInteriorSubgraph = function (g, polygon) {
+    console.log("Computing subgraph inside " + polygon);
+    var vertexOutsidePolygon = function (vKey) { return !(lodash_1.includes(polygon, vKey) ||
+        geom_1.inInterior(polygon.map(function (x) { return g.vertices[x]; }), g.vertices[vKey])); };
+    var edgeOutsidePolygon = function (eKey) {
+        return exports.getEndpoints(g, eKey).some(vertexOutsidePolygon);
+    };
+    var removableVertices = function (graph) {
+        return Object.keys(graph.vertices).filter(vertexOutsidePolygon)
+            .filter(function (v) { return (exports.getOutgoingEdgeKeys(graph, v).length === 1); });
+    };
+    var removableEdges = function (graph) {
+        return Object.keys(graph.edges).filter(edgeOutsidePolygon)
+            .filter(function (x) { return !isBridge(graph, x); });
+    };
     var newGraph = lodash_1.cloneDeep(g);
-    newGraph.vertices[vKey].colors = newColors;
+    // First we remove non-bridge edges until we have a spanning tree
+    var edgesToRemove = removableEdges(newGraph);
+    while (edgesToRemove.length > 0) {
+        newGraph = exports.removeEdge(newGraph, edgesToRemove[0]);
+        edgesToRemove = removableEdges(newGraph);
+    }
+    // Then we remove leaf vertices until we arrive at the subgraph :)
+    var verticesToRemove = removableVertices(newGraph);
+    while (verticesToRemove.length > 0) {
+        newGraph = exports.removeVertex(newGraph, verticesToRemove[0]);
+        verticesToRemove = removableVertices(newGraph);
+    }
     return newGraph;
 };
-exports.findVp = function (g) {
-    if (g.mark1 && g.mark2) {
-        var edges = exports.getOutgoingEdgeKeys(g, g.mark1);
-        var adjVertices = exports.getAdjacentVertices(g, g.mark1);
-        var idx = adjVertices.indexOf(g.mark2);
-        if (idx > -1) {
-            var ourEdge = g.edges[edges[idx]].incidentFace === g.infiniteFace ?
-                edges[idx] : g.edges[edges[idx]].twin;
-            return g.edges[g.edges[ourEdge].prev].origin;
-        }
-        else {
-            throw new Error("Markers are non-adjacent");
-        }
-    }
-    else {
-        throw new Error("Graph is unmarked");
-    }
+exports.findChordKey = function (graph) {
+    var chordKey = null;
+    var outerVertices = exports.getBoundaryVertexKeys(graph, graph.infiniteFace);
+    outerVertices.forEach(function (vKey) {
+        var edgeKeys = exports.getOutgoingEdgeKeys(graph, vKey);
+        edgeKeys.forEach(function (eKey) {
+            var e = graph.edges[eKey];
+            if (lodash_1.includes(outerVertices, graph.edges[e.next].origin)
+                && e.incidentFace !== graph.infiniteFace
+                && graph.edges[e.twin].incidentFace !== graph.infiniteFace) {
+                chordKey = eKey;
+            }
+        });
+    });
+    return chordKey;
+};
+exports.splitChordedGraph = function (g, chordKey) {
+    var _a = exports.getEndpoints(g, chordKey), vi = _a[0], vj = _a[1];
+    var outerVertices = exports.getBoundaryVertexKeys(g, g.infiniteFace);
+    console.log("Chord endpoints: " + vi + ", " + vj);
+    console.log("Outer vertices: " + outerVertices);
+    var _b = [vi, vj].map(function (x) { return outerVertices.indexOf(x); }), viIdx = _b[0], vjIdx = _b[1];
+    var _c = viIdx < vjIdx ? [viIdx, vjIdx] : [vjIdx, viIdx], lsIdx = _c[0], gtIdx = _c[1];
+    var poly1 = outerVertices.slice(lsIdx, gtIdx + 1);
+    var poly2 = outerVertices.slice(0, lsIdx + 1).concat(outerVertices.slice(gtIdx));
+    var _d = lodash_1.includes(poly1, g.mark1) && lodash_1.includes(poly1, g.mark2) ?
+        [poly1, poly2] : [poly2, poly1], firstPoly = _d[0], secondPoly = _d[1];
+    var _e = [firstPoly, secondPoly].map(function (x) {
+        return exports.inducedInteriorSubgraph(g, x);
+    }), firstSubgraph = _e[0], secondSubgraph = _e[1];
+    secondSubgraph.mark1 = vi;
+    secondSubgraph.mark2 = vj;
+    return [firstSubgraph, secondSubgraph];
 };
 
 
@@ -17907,23 +17997,10 @@ var preColor = function (g) {
     boundingVertices.slice(2).forEach(function (vKey) {
         return g = updateColors(g, vKey, planar_graph_1.getColors(g, vKey).slice(0, 3));
     });
-    return g;
-};
-var findChordKey = function (graph) {
-    var chordKey = null;
-    var outerVertices = planar_graph_1.getBoundaryVertexKeys(graph, graph.infiniteFace);
-    outerVertices.forEach(function (vKey) {
-        var edgeKeys = planar_graph_1.getOutgoingEdgeKeys(graph, vKey);
-        edgeKeys.forEach(function (eKey) {
-            var e = graph.edges[eKey];
-            if (lodash_1.includes(outerVertices, graph.edges[e.next].origin)
-                && e.incidentFace !== graph.infiniteFace
-                && graph.edges[e.twin].incidentFace !== graph.infiniteFace) {
-                chordKey = eKey;
-            }
-        });
+    lodash_1.difference(Object.keys(g.vertices), boundingVertices).forEach(function (vKey) {
+        g = updateColors(g, vKey, planar_graph_1.ALL_COLORS);
     });
-    return chordKey;
+    return g;
 };
 var updateColors = function (g, vKey, colors) {
     animation_1.addStep(animation_1.AnimationType.UpdateColors, { vertex: g.vertices[vKey], colors: colors });
@@ -17961,11 +18038,8 @@ var colorChordlessGraph = function (g) {
     newGraph = updateColors(newGraph, vp, lodash_1.difference(twoColors, planar_graph_1.getColors(subGraph, vp1)).slice(0, 1));
     return newGraph;
 };
-var splitChordedGraph = function (g, chordKey) {
-    return [g, g];
-};
 var colorChordedGraph = function (g, chordKey) {
-    var _a = splitChordedGraph(g, chordKey), firstSubgraph = _a[0], secondSubgraph = _a[1];
+    var _a = planar_graph_1.splitChordedGraph(g, chordKey), firstSubgraph = _a[0], secondSubgraph = _a[1];
     firstSubgraph = color(firstSubgraph);
     secondSubgraph = updateColors(secondSubgraph, secondSubgraph.mark1, planar_graph_1.getColors(firstSubgraph, secondSubgraph.mark1));
     secondSubgraph = updateColors(secondSubgraph, secondSubgraph.mark2, planar_graph_1.getColors(firstSubgraph, secondSubgraph.mark2));
@@ -17975,18 +18049,16 @@ var colorChordedGraph = function (g, chordKey) {
     return newGraph;
 };
 var color = function (g) {
+    animation_1.addStep(animation_1.AnimationType.RestrictGraph, { graph: g });
     if (lodash_1.values(g.vertices).length == 3) {
-        console.log("hey, a triangle!");
         return colorTriangle(g);
     }
     else {
-        var chord = findChordKey(g);
+        var chord = planar_graph_1.findChordKey(g);
         if (chord) {
-            console.log("chord found");
-            return g;
+            return colorChordedGraph(g, chord);
         }
         else {
-            console.log("go ahead and color!");
             return colorChordlessGraph(g);
         }
     }
@@ -18007,7 +18079,7 @@ var canvas_wrapper_1 = __webpack_require__(4);
 var thomassen_1 = __webpack_require__(5);
 var animation_1 = __webpack_require__(1);
 document.addEventListener('DOMContentLoaded', function () {
-    var wrapper = new canvas_wrapper_1.GraphDrawingWrapper("canvas");
+    var wrapper = new canvas_wrapper_1.GraphDrawingWrapper("canvas", 10);
     document.getElementById('animate-button').addEventListener("click", function () {
         thomassen_1.fiveColor(wrapper.graph);
         animation_1.animate(wrapper);

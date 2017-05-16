@@ -140,16 +140,14 @@ const colorChordedGraph = (g: PlanarGraph, chordKey: string): PlanarGraph => {
 }
 
 const color = (g: PlanarGraph): PlanarGraph => {
+  addStep(AnimationType.RestrictGraph, { graph: g });
   if (values(g.vertices).length == 3) {
-    console.log("hey, a triangle!")
     return colorTriangle(g);
   } else {
     let chord = findChordKey(g);
     if (chord) {
-      console.log("chord found");
       return colorChordedGraph(g, chord);
     } else {
-      console.log("go ahead and color!");
       return colorChordlessGraph(g);
     }
   }

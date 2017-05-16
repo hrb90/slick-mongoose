@@ -3,7 +3,8 @@ import { Color } from './planar_graph';
 
 export enum AnimationType {
   DrawEdge,
-  UpdateColors
+  UpdateColors,
+  RestrictGraph
 }
 
 interface Animation {
@@ -12,6 +13,8 @@ interface Animation {
 }
 
 let animationSteps: Animation[] = [];
+
+window.animationSteps = animationSteps;
 
 // A controlled effectful function to use in the thomassen algorithms.
 export const addStep = (type: AnimationType, data: any) => {
@@ -26,6 +29,8 @@ export const animate = (canvas: GraphDrawingWrapper): void => {
         break;
       case AnimationType.UpdateColors:
         canvas.drawCircle(a.data.vertex, "none", a.data.colors)
+        break;
+      case AnimationType.RestrictGraph:
         break;
     }
   });
