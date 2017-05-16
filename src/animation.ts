@@ -14,11 +14,15 @@ interface Animation {
 
 let animationSteps: Animation[] = [];
 
-window.animationSteps = animationSteps;
+window.getAnimString = () => JSON.stringify(animationSteps);
 
 // A controlled effectful function to use in the thomassen algorithms.
 export const addStep = (type: AnimationType, data: any) => {
   animationSteps.push({type, data})
+}
+
+export const resetAnimation = (): void => {
+  animationSteps = [];
 }
 
 export const animate = (canvas: GraphDrawingWrapper): void => {

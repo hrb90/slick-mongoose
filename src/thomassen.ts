@@ -3,7 +3,7 @@ import { Vertex, HalfEdge, Face, PlanarGraph, Color, ALL_COLORS,
   addEdge, safeAddEdge, removeEdge, removeVertex, splitChordedGraph, getAdjacentVertices,
   getBoundaryEdgeKeys, getBoundaryVertexKeys, getOutgoingEdgeKeys, findChordKey,
   getSplitFaceKey, getColors, setColors, findVp, getEndpoints } from './planar_graph';
-import { AnimationType, addStep } from './animation';
+import { AnimationType, addStep, resetAnimation } from './animation';
 import { values, forIn, includes, difference, cloneDeep } from 'lodash';
 
 const minDist = (cList: Coord[], ep1: Coord, ep2: Coord): number => {
@@ -153,5 +153,7 @@ const color = (g: PlanarGraph): PlanarGraph => {
   }
 }
 
-export const fiveColor = (graph: PlanarGraph): PlanarGraph =>
-  color(preColor(triangulate(hullify(graph))))
+export const fiveColor = (graph: PlanarGraph): PlanarGraph => {
+  resetAnimation();
+  color(preColor(triangulate(hullify(graph))));
+}

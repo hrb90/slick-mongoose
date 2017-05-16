@@ -222,10 +222,13 @@ var AnimationType;
     AnimationType[AnimationType["RestrictGraph"] = 2] = "RestrictGraph";
 })(AnimationType = exports.AnimationType || (exports.AnimationType = {}));
 var animationSteps = [];
-window.animationSteps = animationSteps;
+window.getAnimString = function () { return JSON.stringify(animationSteps); };
 // A controlled effectful function to use in the thomassen algorithms.
 exports.addStep = function (type, data) {
     animationSteps.push({ type: type, data: data });
+};
+exports.resetAnimation = function () {
+    animationSteps = [];
 };
 exports.animate = function (canvas) {
     animationSteps.forEach(function (a) {
@@ -18064,7 +18067,8 @@ var color = function (g) {
     }
 };
 exports.fiveColor = function (graph) {
-    return color(preColor(triangulate(hullify(graph))));
+    animation_1.resetAnimation();
+    color(preColor(triangulate(hullify(graph))));
 };
 
 
