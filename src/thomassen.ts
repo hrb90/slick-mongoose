@@ -139,7 +139,7 @@ const colorChordedGraph = (g: PlanarGraph, chordKey: string): PlanarGraph => {
   return newGraph;
 }
 
-const color = (g: PlanarGraph): PlanarGraph => {
+ const color = (g: PlanarGraph): PlanarGraph => {
   addStep(AnimationType.RestrictGraph, { graph: g });
   if (values(g.vertices).length == 3) {
     return colorTriangle(g);
@@ -155,5 +155,5 @@ const color = (g: PlanarGraph): PlanarGraph => {
 
 export const fiveColor = (graph: PlanarGraph): PlanarGraph => {
   resetAnimation();
-  color(preColor(triangulate(hullify(graph))));
+  return color(preColor(triangulate(hullify(graph))));
 }
