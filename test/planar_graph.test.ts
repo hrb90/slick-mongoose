@@ -1,7 +1,7 @@
 import { PlanarGraph, createEmptyPlanarGraph, getVertexKey,
   addEdge, safeAddEdge, removeEdgeByVertices, removeVertexByCoord,
   getBoundaryEdgeKeys, getBoundaryVertexKeys, getOutgoingEdgeKeys,
-  splitChordedGraph, findChordKey, inducedInteriorSubgraph } from '../src/planar_graph';
+  splitChordedGraph, findChordKey, inducedInteriorSubgraph, findVp } from '../src/planar_graph';
 import { Coord } from '../src/geom';
 
 const v = (x: number, y: number) => ({ x: x, y: y });
@@ -343,5 +343,32 @@ describe("inducedInteriorSubgraph", () => {
     expect(Object.keys(subgraph.faces).length).toBe(4);
     expect(Object.keys(subgraph.edges).length).toBe(12);
     expect(Object.keys(subgraph.vertices).length).toBe(4);
+  });
+});
+
+describe("findVp", () => {
+  it("finds the right point on a 5-cycle", () => {
+    let vertices = [
+      v(0, 0),
+      v(5, 0),
+      v(5, 5),
+      v(3, 7),
+      v(0, 5)
+    ];
+
+    let g = createEmptyPlanarGraph();
+    g = addEdge(g, v(0, 0), v(5, 0));
+    g = addEdge(g, v(5, 0), v(5, 5));
+    g = addEdge(g, v(5, 5), v(3, 7));
+    g = addEdge(g, v(3, 7), v(0, 5));
+    g = addEdge(g, v(0, 5), v(0, 0));
+
+    g.mark1 = getVertexKey(g, v(0, 0));
+    g.mark2 = getVertexKey(g, v(5, 0));
+
+    let a = g.vertices[findVp(g)]
+
+    expect(a.x).toBe(0);
+    expect(a.y).toBe(5);
   });
 });
