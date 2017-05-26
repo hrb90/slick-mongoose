@@ -70,186 +70,6 @@
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-// coordinate equality
-exports.eq = function (a, b) { return (a.x === b.x && a.y === b.y); };
-// 2-dimensional cross product
-exports.xProd = function (v1, v2) { return (v1.x * v2.y - v1.y * v2.x); };
-// dot product
-var dot = function (v1, v2) { return (v1.x * v2.x + v1.y * v2.y); };
-var scale = function (scalar, v) { return ({
-    x: scalar * v.x,
-    y: scalar * v.y
-}); };
-var plus = function (a, b) { return ({
-    x: a.x + b.x,
-    y: a.y + b.y
-}); };
-var minus = function (a, b) { return plus(a, scale(-1, b)); };
-exports.angle = function (v1, v2) {
-    return Math.atan2(v1.y - v2.y, v1.x - v2.x);
-};
-exports.getConsecutiveCoordPairs = function (v, i, p) { return ([v, p[(i + 1) % p.length]]); };
-// Do the line segments from v1-v2 and v3-v4 intersect?
-exports.intersect = function (v1, v2, v3, v4, halfOpen) {
-    if (halfOpen === void 0) { halfOpen = false; }
-    var r = minus(v2, v1);
-    var s = minus(v4, v3);
-    var diff = minus(v3, v1);
-    var det = exports.xProd(r, s);
-    if (det !== 0) {
-        var t = exports.xProd(diff, r) / det;
-        var u = exports.xProd(diff, s) / det;
-        var interior = function (x) { return (0 < x && x < 1); };
-        var boundary = function (x) { return (x === 0 || x === 1); };
-        if (interior(t) && interior(u)) {
-            // the segments intersect
-            return true;
-        }
-        else if (boundary(t) || boundary(u)) {
-            // three points are collinear
-            return (interior(t) || interior(u)) && (!halfOpen || t === 0 || u === 0);
-        }
-        else {
-            return false;
-        }
-    }
-    else {
-        if (exports.xProd(diff, r) !== 0) {
-            // parallel, non-collinear
-            return false;
-        }
-        else {
-            // all 4 points collinear
-            var t0 = dot(diff, r) / dot(r, r);
-            var t1 = t0 + dot(s, r) / dot(r, r);
-            return (Math.max(t0, t1) > 0 && Math.min(t0, t1) < 1);
-        }
-    }
-};
-// Is v in the interior of polygon?
-exports.inInterior = function (polygon, v) {
-    if (polygon.length < 3 || polygon.some(function (u) { return exports.eq(u, v); }))
-        return false;
-    var maxX = Math.max.apply(Math, polygon.map(function (v) { return v.x; }));
-    var maxY = Math.max.apply(Math, polygon.map(function (v) { return v.y; }));
-    var outerCoord = { x: maxX + 1, y: maxY + 1 };
-    while (polygon.some(function (u) { return exports.collinear3([u, v, outerCoord]); })) {
-        outerCoord.x = outerCoord.x + 1;
-    }
-    var crossingNum = 0;
-    polygon.map(exports.getConsecutiveCoordPairs).forEach(function (pair) {
-        if (exports.intersect(v, outerCoord, pair[0], pair[1], true))
-            crossingNum += 1;
-    });
-    return crossingNum % 2 === 1;
-};
-exports.signedArea = function (polygon) {
-    var signedAreaSum = 0;
-    polygon.map(exports.getConsecutiveCoordPairs).forEach(function (pair) {
-        signedAreaSum += (pair[1].x - pair[0].x) * (pair[1].y + pair[0].y);
-    });
-    return signedAreaSum;
-};
-exports.isClockwise = function (polygon) { return (exports.signedArea(polygon) > 0); };
-exports.collinear3 = function (polygon) { return (exports.signedArea(polygon) === 0); };
-// Helper method for convex hull
-var lexSortYX = function (a, b) {
-    if (a.y - b.y !== 0) {
-        return a.y - b.y;
-    }
-    else {
-        return a.x - b.x;
-    }
-};
-// Graham scan
-exports.convexHull = function (vertices) {
-    var stack = [];
-    // Don't mutate the input
-    var verticesCopy = vertices.slice(0);
-    // 1. Find lowest y-value
-    var firstCoord = verticesCopy.sort(lexSortYX)[0];
-    stack.unshift(firstCoord);
-    var otherVertices = verticesCopy.slice(1);
-    // 2. Sort vertices by angle
-    otherVertices.sort(function (v1, v2) { return (exports.isClockwise([firstCoord, v1, v2]) ? -1 : 1); });
-    // 3. Do the scan
-    otherVertices.forEach(function (nextCoord) {
-        while (stack.length > 1 && !exports.isClockwise([stack[1], stack[0], nextCoord])) {
-            stack.shift();
-        }
-        stack.unshift(nextCoord);
-    });
-    return stack;
-};
-var dist2 = function (v1, v2) {
-    var diff = minus(v2, v1);
-    return dot(diff, diff);
-};
-exports.distance = function (v1, v2) {
-    return Math.sqrt(dist2(v1, v2));
-};
-exports.unitVector = function (v1, v2) {
-    var d = exports.distance(v1, v2);
-    return { x: (v1.x - v2.x) / d, y: (v1.y - v2.y) / d };
-};
-exports.pointSegmentDistance = function (p, endPoint1, endPoint2) {
-    if (exports.eq(endPoint1, endPoint2)) {
-        return exports.distance(p, endPoint1);
-    }
-    else {
-        var l2 = dist2(endPoint2, endPoint1);
-        var t = dot(minus(p, endPoint1), minus(endPoint2, endPoint1)) / l2;
-        t = Math.max(0, Math.min(1, t));
-        return exports.distance(p, plus(endPoint1, scale(t, minus(endPoint2, endPoint1))));
-    }
-};
-
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var AnimationType;
-(function (AnimationType) {
-    AnimationType[AnimationType["DrawEdge"] = 0] = "DrawEdge";
-    AnimationType[AnimationType["UpdateColors"] = 1] = "UpdateColors";
-    AnimationType[AnimationType["RestrictGraph"] = 2] = "RestrictGraph";
-})(AnimationType = exports.AnimationType || (exports.AnimationType = {}));
-var animationSteps = [];
-window.getAnimString = function () { return JSON.stringify(animationSteps); };
-// A controlled effectful function to use in the thomassen algorithms.
-exports.addStep = function (type, data) {
-    animationSteps.push({ type: type, data: data });
-};
-exports.resetAnimation = function () {
-    animationSteps = [];
-};
-exports.animate = function (canvas) {
-    animationSteps.forEach(function (a) {
-        switch (a.type) {
-            case AnimationType.DrawEdge:
-                canvas.drawEdge(a.data[0], a.data[1], "blue");
-                break;
-            case AnimationType.UpdateColors:
-                canvas.drawCircle(a.data.vertex, "none", a.data.colors);
-                break;
-            case AnimationType.RestrictGraph:
-                break;
-        }
-    });
-};
-
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
  * @license
  * Lodash <https://lodash.com/>
@@ -17339,14 +17159,205 @@ exports.animate = function (canvas) {
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(8)(module)))
 
 /***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+// coordinate equality
+exports.eq = function (a, b) { return (a.x === b.x && a.y === b.y); };
+// 2-dimensional cross product
+exports.xProd = function (v1, v2) { return (v1.x * v2.y - v1.y * v2.x); };
+// dot product
+var dot = function (v1, v2) { return (v1.x * v2.x + v1.y * v2.y); };
+var scale = function (scalar, v) { return ({
+    x: scalar * v.x,
+    y: scalar * v.y
+}); };
+var plus = function (a, b) { return ({
+    x: a.x + b.x,
+    y: a.y + b.y
+}); };
+var minus = function (a, b) { return plus(a, scale(-1, b)); };
+exports.angle = function (v1, v2) {
+    return Math.atan2(v1.y - v2.y, v1.x - v2.x);
+};
+exports.getConsecutiveCoordPairs = function (v, i, p) { return ([v, p[(i + 1) % p.length]]); };
+// Do the line segments from v1-v2 and v3-v4 intersect?
+exports.intersect = function (v1, v2, v3, v4, halfOpen) {
+    if (halfOpen === void 0) { halfOpen = false; }
+    var r = minus(v2, v1);
+    var s = minus(v4, v3);
+    var diff = minus(v3, v1);
+    var det = exports.xProd(r, s);
+    if (det !== 0) {
+        var t = exports.xProd(diff, r) / det;
+        var u = exports.xProd(diff, s) / det;
+        var interior = function (x) { return (0 < x && x < 1); };
+        var boundary = function (x) { return (x === 0 || x === 1); };
+        if (interior(t) && interior(u)) {
+            // the segments intersect
+            return true;
+        }
+        else if (boundary(t) || boundary(u)) {
+            // three points are collinear
+            return (interior(t) || interior(u)) && (!halfOpen || t === 0 || u === 0);
+        }
+        else {
+            return false;
+        }
+    }
+    else {
+        if (exports.xProd(diff, r) !== 0) {
+            // parallel, non-collinear
+            return false;
+        }
+        else {
+            // all 4 points collinear
+            var t0 = dot(diff, r) / dot(r, r);
+            var t1 = t0 + dot(s, r) / dot(r, r);
+            return (Math.max(t0, t1) > 0 && Math.min(t0, t1) < 1);
+        }
+    }
+};
+// Is v in the interior of polygon?
+exports.inInterior = function (polygon, v) {
+    if (polygon.length < 3 || polygon.some(function (u) { return exports.eq(u, v); }))
+        return false;
+    var maxX = Math.max.apply(Math, polygon.map(function (v) { return v.x; }));
+    var maxY = Math.max.apply(Math, polygon.map(function (v) { return v.y; }));
+    var outerCoord = { x: maxX + 1, y: maxY + 1 };
+    while (polygon.some(function (u) { return exports.collinear3([u, v, outerCoord]); })) {
+        outerCoord.x = outerCoord.x + 1;
+    }
+    var crossingNum = 0;
+    polygon.map(exports.getConsecutiveCoordPairs).forEach(function (pair) {
+        if (exports.intersect(v, outerCoord, pair[0], pair[1], true))
+            crossingNum += 1;
+    });
+    return crossingNum % 2 === 1;
+};
+exports.signedArea = function (polygon) {
+    var signedAreaSum = 0;
+    polygon.map(exports.getConsecutiveCoordPairs).forEach(function (pair) {
+        signedAreaSum += (pair[1].x - pair[0].x) * (pair[1].y + pair[0].y);
+    });
+    return signedAreaSum;
+};
+exports.isClockwise = function (polygon) { return (exports.signedArea(polygon) > 0); };
+exports.collinear3 = function (polygon) { return (exports.signedArea(polygon) === 0); };
+// Helper method for convex hull
+var lexSortYX = function (a, b) {
+    if (a.y - b.y !== 0) {
+        return a.y - b.y;
+    }
+    else {
+        return a.x - b.x;
+    }
+};
+// Graham scan
+exports.convexHull = function (vertices) {
+    var stack = [];
+    // Don't mutate the input
+    var verticesCopy = vertices.slice(0);
+    // 1. Find lowest y-value
+    var firstCoord = verticesCopy.sort(lexSortYX)[0];
+    stack.unshift(firstCoord);
+    var otherVertices = verticesCopy.slice(1);
+    // 2. Sort vertices by angle
+    otherVertices.sort(function (v1, v2) { return (exports.isClockwise([firstCoord, v1, v2]) ? -1 : 1); });
+    // 3. Do the scan
+    otherVertices.forEach(function (nextCoord) {
+        while (stack.length > 1 && !exports.isClockwise([stack[1], stack[0], nextCoord])) {
+            stack.shift();
+        }
+        stack.unshift(nextCoord);
+    });
+    return stack;
+};
+var dist2 = function (v1, v2) {
+    var diff = minus(v2, v1);
+    return dot(diff, diff);
+};
+exports.distance = function (v1, v2) {
+    return Math.sqrt(dist2(v1, v2));
+};
+exports.unitVector = function (v1, v2) {
+    var d = exports.distance(v1, v2);
+    return { x: (v1.x - v2.x) / d, y: (v1.y - v2.y) / d };
+};
+exports.pointSegmentDistance = function (p, endPoint1, endPoint2) {
+    if (exports.eq(endPoint1, endPoint2)) {
+        return exports.distance(p, endPoint1);
+    }
+    else {
+        var l2 = dist2(endPoint2, endPoint1);
+        var t = dot(minus(p, endPoint1), minus(endPoint2, endPoint1)) / l2;
+        t = Math.max(0, Math.min(1, t));
+        return exports.distance(p, plus(endPoint1, scale(t, minus(endPoint2, endPoint1))));
+    }
+};
+
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var AnimationType;
+(function (AnimationType) {
+    AnimationType[AnimationType["DrawEdge"] = 0] = "DrawEdge";
+    AnimationType[AnimationType["UpdateColors"] = 1] = "UpdateColors";
+    AnimationType[AnimationType["RestrictGraph"] = 2] = "RestrictGraph";
+})(AnimationType = exports.AnimationType || (exports.AnimationType = {}));
+var updateDescription = function (text) {
+    document.getElementById("description").textContent = text;
+};
+var animationSteps = [];
+// A controlled effectful function to use in the thomassen algorithms.
+exports.addStep = function (type, data) {
+    animationSteps.push({ type: type, data: data });
+};
+exports.resetAnimation = function () {
+    animationSteps = [];
+};
+exports.drawStep = function (canvas) {
+    var a = animationSteps.shift();
+    switch (a.type) {
+        case AnimationType.DrawEdge:
+            canvas.drawEdge(a.data[0], a.data[1], "blue");
+            updateDescription("Adding edges to triangulate the graph");
+            break;
+        case AnimationType.UpdateColors:
+            canvas.drawCircle(a.data.vertex, "none", a.data.colors);
+            updateDescription("Updating vertex at " + a.data.vertex.x + ", " + a.data.vertex.y);
+            break;
+        case AnimationType.RestrictGraph:
+            canvas.drawNewGraph(a.data.graph);
+            updateDescription("Restricting the graph");
+            break;
+    }
+};
+exports.animate = function (canvas) {
+    exports.drawStep(canvas);
+    if (animationSteps.length > 0) {
+        setTimeout(function () { return exports.animate(canvas); }, 1000);
+    }
+};
+
+
+/***/ }),
 /* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var geom_1 = __webpack_require__(0);
-var lodash_1 = __webpack_require__(2);
+var geom_1 = __webpack_require__(1);
+var lodash_1 = __webpack_require__(0);
 var Color;
 (function (Color) {
     Color[Color["Red"] = 0] = "Red";
@@ -17450,22 +17461,41 @@ exports.removeVertexByCoord = function (graph, c) {
 };
 exports.findVp = function (g) {
     if (g.mark1 && g.mark2) {
-        var edges = exports.getOutgoingEdgeKeys(g, g.mark1);
-        var adjVertices = exports.getAdjacentVertices(g, g.mark1);
-        var idx = adjVertices.indexOf(g.mark2);
+        var boundaryVertices = exports.getBoundaryVertexKeys(g, g.infiniteFace);
+        var n = boundaryVertices.length;
+        var idx = boundaryVertices.indexOf(g.mark1);
         if (idx > -1) {
-            var ourEdge = g.edges[edges[idx]].incidentFace === g.infiniteFace ?
-                edges[idx] : g.edges[edges[idx]].twin;
-            return g.edges[g.edges[ourEdge].prev].origin;
+            if (boundaryVertices[(idx + n - 1) % n] !== g.mark2) {
+                return boundaryVertices[(idx + n - 1) % n];
+            }
+            else {
+                return boundaryVertices[(idx + 1) % n];
+            }
         }
         else {
-            throw new Error("Markers are non-adjacent");
+            throw new Error("Marked vertices not on boundary");
         }
     }
     else {
         throw new Error("Graph is unmarked");
     }
 };
+// export const findVp = (g: PlanarGraph): string => {
+//   if (g.mark1 && g.mark2) {
+//     let edges = getOutgoingEdgeKeys(g, g.mark1);
+//     let adjVertices = getAdjacentVertices(g, g.mark1);
+//     let idx = adjVertices.indexOf(g.mark2);
+//     if (idx > -1) {
+//       let ourEdge = g.edges[edges[idx]].incidentFace === g.infiniteFace ?
+//       edges[idx] : g.edges[edges[idx]].twin;
+//       return g.edges[g.edges[ourEdge].prev].origin;
+//     } else {
+//       throw new Error("Markers are non-adjacent");
+//     }
+//   } else {
+//     throw new Error("Graph is unmarked");
+//   }
+// }
 exports.getEdgeKeyByCoords = function (graph, c1, c2) {
     var v1 = exports.getVertexKey(graph, c1);
     var v2 = exports.getVertexKey(graph, c2);
@@ -17722,7 +17752,6 @@ var isBridge = function (g, eKey) {
     return (g.edges[eKey].incidentFace === g.edges[twinEdgeKey].incidentFace);
 };
 exports.inducedInteriorSubgraph = function (g, polygon) {
-    console.log("Computing subgraph inside " + polygon);
     var vertexOutsidePolygon = function (vKey) { return !(lodash_1.includes(polygon, vKey) ||
         geom_1.inInterior(polygon.map(function (x) { return g.vertices[x]; }), g.vertices[vKey])); };
     var edgeOutsidePolygon = function (eKey) {
@@ -17770,8 +17799,6 @@ exports.findChordKey = function (graph) {
 exports.splitChordedGraph = function (g, chordKey) {
     var _a = exports.getEndpoints(g, chordKey), vi = _a[0], vj = _a[1];
     var outerVertices = exports.getBoundaryVertexKeys(g, g.infiniteFace);
-    console.log("Chord endpoints: " + vi + ", " + vj);
-    console.log("Outer vertices: " + outerVertices);
     var _b = [vi, vj].map(function (x) { return outerVertices.indexOf(x); }), viIdx = _b[0], vjIdx = _b[1];
     var _c = viIdx < vjIdx ? [viIdx, vjIdx] : [vjIdx, viIdx], lsIdx = _c[0], gtIdx = _c[1];
     var poly1 = outerVertices.slice(lsIdx, gtIdx + 1);
@@ -17794,8 +17821,9 @@ exports.splitChordedGraph = function (g, chordKey) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var geom_1 = __webpack_require__(0);
+var geom_1 = __webpack_require__(1);
 var planar_graph_1 = __webpack_require__(3);
+var lodash_1 = __webpack_require__(0);
 var colorToString = function (c) {
     switch (c) {
         case planar_graph_1.Color.Red:
@@ -17822,6 +17850,10 @@ var GraphDrawingWrapper = (function () {
         this.graph = planar_graph_1.createEmptyPlanarGraph();
         this.highlightedVertex = null;
     }
+    GraphDrawingWrapper.prototype.clear = function () {
+        var context = this.canvasEl.getContext('2d');
+        context.clearRect(0, 0, this.canvasEl.width, this.canvasEl.height);
+    };
     GraphDrawingWrapper.prototype.clickVertex = function (v) {
         if (this.highlightedVertex) {
             if (v !== this.highlightedVertex) {
@@ -17858,15 +17890,20 @@ var GraphDrawingWrapper = (function () {
     };
     GraphDrawingWrapper.prototype.drawEdge = function (v1, v2, strokeColor) {
         if (strokeColor === void 0) { strokeColor = "black"; }
-        if (this.doesAddEdge(v1, v2)) {
-            var context = this.canvasEl.getContext('2d');
-            var unit = geom_1.unitVector(v1, v2);
-            context.strokeStyle = strokeColor;
-            context.beginPath();
-            context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
-            context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
-            context.stroke();
-        }
+        if (this.doesAddEdge(v1, v2))
+            this.unsafeDrawEdge(v1, v2, strokeColor);
+    };
+    GraphDrawingWrapper.prototype.drawNewGraph = function (g) {
+        var _this = this;
+        this.clear();
+        lodash_1.values(g.vertices).forEach(function (v) {
+            _this.drawCircle(v, "black", v.colors);
+        });
+        Object.keys(g.edges).forEach(function (e) {
+            var _a = planar_graph_1.getEndpoints(g, e).map(function (vKey) { return g.vertices[vKey]; }), v1 = _a[0], v2 = _a[1];
+            _this.unsafeDrawEdge(v1, v2, "black");
+        });
+        this.graph = g;
     };
     GraphDrawingWrapper.prototype.fillCircle = function (v, fillColors) {
         var _this = this;
@@ -17915,6 +17952,15 @@ var GraphDrawingWrapper = (function () {
         this.drawCircle(this.highlightedVertex);
         this.highlightedVertex = null;
     };
+    GraphDrawingWrapper.prototype.unsafeDrawEdge = function (v1, v2, strokeColor) {
+        var context = this.canvasEl.getContext('2d');
+        var unit = geom_1.unitVector(v1, v2);
+        context.strokeStyle = strokeColor;
+        context.beginPath();
+        context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
+        context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
+        context.stroke();
+    };
     return GraphDrawingWrapper;
 }());
 exports.GraphDrawingWrapper = GraphDrawingWrapper;
@@ -17927,10 +17973,10 @@ exports.GraphDrawingWrapper = GraphDrawingWrapper;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var geom_1 = __webpack_require__(0);
+var geom_1 = __webpack_require__(1);
 var planar_graph_1 = __webpack_require__(3);
-var animation_1 = __webpack_require__(1);
-var lodash_1 = __webpack_require__(2);
+var animation_1 = __webpack_require__(2);
+var lodash_1 = __webpack_require__(0);
 var minDist = function (cList, ep1, ep2) {
     var sansEndpoints = cList.filter(function (v) { return !(geom_1.eq(v, ep1) || geom_1.eq(v, ep2)); });
     return Math.min.apply(Math, sansEndpoints.map(function (v) { return geom_1.pointSegmentDistance(v, ep1, ep2); }));
@@ -17998,7 +18044,7 @@ var preColor = function (g) {
     g = updateColors(g, g.mark1, [planar_graph_1.Color.Red]);
     g = updateColors(g, g.mark2, [planar_graph_1.Color.Blue]);
     boundingVertices.slice(2).forEach(function (vKey) {
-        return g = updateColors(g, vKey, planar_graph_1.getColors(g, vKey).slice(0, 3));
+        return g = updateColors(g, vKey, planar_graph_1.ALL_COLORS.slice(0, 3));
     });
     lodash_1.difference(Object.keys(g.vertices), boundingVertices).forEach(function (vKey) {
         g = updateColors(g, vKey, planar_graph_1.ALL_COLORS);
@@ -18026,7 +18072,8 @@ var colorChordlessGraph = function (g) {
     var boundaryVertices = planar_graph_1.getBoundaryVertexKeys(g, g.infiniteFace);
     var vp = planar_graph_1.findVp(g);
     var twoColors = lodash_1.difference(planar_graph_1.getColors(g, vp), planar_graph_1.getColors(g, g.mark1)).slice(0, 2);
-    var subGraph = planar_graph_1.removeVertex(g, vp);
+    var updatedGraph = updateColors(g, vp, twoColors);
+    var subGraph = planar_graph_1.removeVertex(updatedGraph, vp);
     var vp1;
     planar_graph_1.getAdjacentVertices(g, vp).forEach(function (vKey) {
         if (!lodash_1.includes(boundaryVertices, vKey)) {
@@ -18037,8 +18084,9 @@ var colorChordlessGraph = function (g) {
         }
     });
     subGraph = color(subGraph);
-    var newGraph = transferColors(g, subGraph);
-    newGraph = updateColors(newGraph, vp, lodash_1.difference(twoColors, planar_graph_1.getColors(subGraph, vp1)).slice(0, 1));
+    var newGraph = transferColors(updatedGraph, subGraph);
+    animation_1.addStep(animation_1.AnimationType.RestrictGraph, { graph: newGraph });
+    newGraph = updateColors(newGraph, vp, lodash_1.difference(twoColors, planar_graph_1.getColors(newGraph, vp1)).slice(0, 1));
     return newGraph;
 };
 var colorChordedGraph = function (g, chordKey) {
@@ -18068,7 +18116,9 @@ var color = function (g) {
 };
 exports.fiveColor = function (graph) {
     animation_1.resetAnimation();
-    color(preColor(triangulate(hullify(graph))));
+    var coloredGraph = color(preColor(triangulate(hullify(graph))));
+    animation_1.addStep(animation_1.AnimationType.RestrictGraph, { graph: coloredGraph });
+    return coloredGraph;
 };
 
 
@@ -18081,7 +18131,7 @@ exports.fiveColor = function (graph) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var canvas_wrapper_1 = __webpack_require__(4);
 var thomassen_1 = __webpack_require__(5);
-var animation_1 = __webpack_require__(1);
+var animation_1 = __webpack_require__(2);
 document.addEventListener('DOMContentLoaded', function () {
     var wrapper = new canvas_wrapper_1.GraphDrawingWrapper("canvas", 10);
     document.getElementById('animate-button').addEventListener("click", function () {

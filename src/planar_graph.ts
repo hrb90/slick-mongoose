@@ -1,5 +1,5 @@
 import { Coord, eq, intersect, inInterior, isClockwise, angle } from './geom';
-import { intersection, find, uniq, forIn, values, cloneDeep, includes } from 'lodash';
+import { intersection, find, uniq, forIn, values, cloneDeep, includes, difference } from 'lodash';
 
 export interface Face {
   infinite: boolean;
@@ -142,20 +142,39 @@ export const removeVertexByCoord = (graph: PlanarGraph, c: Coord) => {
 
 export const findVp = (g: PlanarGraph): string => {
   if (g.mark1 && g.mark2) {
-    let edges = getOutgoingEdgeKeys(g, g.mark1);
-    let adjVertices = getAdjacentVertices(g, g.mark1);
-    let idx = adjVertices.indexOf(g.mark2);
+    let boundaryVertices = getBoundaryVertexKeys(g, g.infiniteFace);
+    let n = boundaryVertices.length;
+    let idx = boundaryVertices.indexOf(g.mark1);
     if (idx > -1) {
-      let ourEdge = g.edges[edges[idx]].incidentFace === g.infiniteFace ?
-      edges[idx] : g.edges[edges[idx]].twin;
-      return g.edges[g.edges[ourEdge].prev].origin;
+      if (boundaryVertices[(idx + n - 1) % n] !== g.mark2) {
+        return boundaryVertices[(idx + n - 1) % n];
+      } else {
+        return boundaryVertices[(idx + 1) % n];
+      }
     } else {
-      throw new Error("Markers are non-adjacent");
+      throw new Error("Marked vertices not on boundary");
     }
   } else {
     throw new Error("Graph is unmarked");
   }
 }
+
+// export const findVp = (g: PlanarGraph): string => {
+//   if (g.mark1 && g.mark2) {
+//     let edges = getOutgoingEdgeKeys(g, g.mark1);
+//     let adjVertices = getAdjacentVertices(g, g.mark1);
+//     let idx = adjVertices.indexOf(g.mark2);
+//     if (idx > -1) {
+//       let ourEdge = g.edges[edges[idx]].incidentFace === g.infiniteFace ?
+//       edges[idx] : g.edges[edges[idx]].twin;
+//       return g.edges[g.edges[ourEdge].prev].origin;
+//     } else {
+//       throw new Error("Markers are non-adjacent");
+//     }
+//   } else {
+//     throw new Error("Graph is unmarked");
+//   }
+// }
 
 export const getEdgeKeyByCoords = (graph: PlanarGraph, c1: Coord, c2: Coord): string | null => {
   let v1 = getVertexKey(graph, c1);

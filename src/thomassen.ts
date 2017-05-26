@@ -78,7 +78,7 @@ const preColor = (g: PlanarGraph): PlanarGraph => {
   g = updateColors(g, g.mark1, [Color.Red]);
   g = updateColors(g, g.mark2, [Color.Blue]);
   boundingVertices.slice(2).forEach(vKey =>
-    g = updateColors(g, vKey, getColors(g, vKey).slice(0, 3)))
+    g = updateColors(g, vKey, ALL_COLORS.slice(0, 3)))
   difference(Object.keys(g.vertices), boundingVertices).forEach(vKey => {
     g = updateColors(g, vKey, ALL_COLORS);
   })
@@ -109,7 +109,8 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
   let boundaryVertices = getBoundaryVertexKeys(g, g.infiniteFace);
   let vp = findVp(g);
   let twoColors = difference(getColors(g, vp), getColors(g, g.mark1)).slice(0, 2);
-  let subGraph = removeVertex(g, vp);
+  let updatedGraph = updateColors(g, vp, twoColors);
+  let subGraph = removeVertex(updatedGraph, vp);
   let vp1: string;
   getAdjacentVertices(g, vp).forEach(vKey => {
     if (!includes(boundaryVertices, vKey)) {
@@ -120,9 +121,10 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
     }
   });
   subGraph = color(subGraph);
-  let newGraph = transferColors(g, subGraph);
+  let newGraph = transferColors(updatedGraph, subGraph);
+  addStep(AnimationType.RestrictGraph, { graph: newGraph });
   newGraph = updateColors(newGraph, vp,
-    difference(twoColors, getColors(subGraph, vp1)).slice(0, 1));
+    difference(twoColors, getColors(newGraph, vp1)).slice(0, 1));
   return newGraph;
 }
 
