@@ -12,9 +12,11 @@ interface Animation {
   data: any
 }
 
-let animationSteps: Animation[] = [];
+const updateDescription = (text: string) => {
+  document.getElementById("description").textContent = text;
+};
 
-window.getAnimString = () => JSON.stringify(animationSteps);
+let animationSteps: Animation[] = [];
 
 // A controlled effectful function to use in the thomassen algorithms.
 export const addStep = (type: AnimationType, data: any) => {
@@ -25,20 +27,27 @@ export const resetAnimation = (): void => {
   animationSteps = [];
 }
 
+export const drawStep = (canvas: GraphDrawingWrapper): void => {
+  let a = animationSteps.shift();
+  switch (a.type) {
+    case AnimationType.DrawEdge:
+      canvas.drawEdge(a.data[0], a.data[1], "blue");
+      updateDescription("Adding edges to triangulate the graph");
+      break;
+    case AnimationType.UpdateColors:
+      canvas.drawCircle(a.data.vertex, "none", a.data.colors)
+      updateDescription(`Updating vertex at ${a.data.vertex.x}, ${a.data.vertex.y}`);
+      break;
+    case AnimationType.RestrictGraph:
+      canvas.drawNewGraph(a.data.graph);
+      updateDescription(`Restricting the graph`);
+      break;
+  }
+}
+
 export const animate = (canvas: GraphDrawingWrapper): void => {
+  drawStep(canvas);
   if (animationSteps.length > 0) {
-    let a = animationSteps.shift();
-    switch (a.type) {
-      case AnimationType.DrawEdge:
-        canvas.drawEdge(a.data[0], a.data[1], "blue");
-        break;
-      case AnimationType.UpdateColors:
-        canvas.drawCircle(a.data.vertex, "none", a.data.colors)
-        break;
-      case AnimationType.RestrictGraph:
-        canvas.drawNewGraph(a.data.graph);
-        break;
-    }
     setTimeout(() => animate(canvas), 1000);
   }
 };

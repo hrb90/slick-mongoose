@@ -427,7 +427,6 @@ const isBridge = (g: PlanarGraph, eKey: string): boolean => {
 }
 
 export const inducedInteriorSubgraph = (g: PlanarGraph, polygon: string[]): PlanarGraph => {
-  console.log(`Computing subgraph inside ${polygon}`);
   const vertexOutsidePolygon = (vKey: string) => !(includes(polygon, vKey) ||
           inInterior(polygon.map(x => g.vertices[x]), g.vertices[vKey]));
   const edgeOutsidePolygon = (eKey: string) =>
@@ -476,8 +475,6 @@ export const findChordKey = (graph: PlanarGraph): string | null => {
 export const splitChordedGraph = (g: PlanarGraph, chordKey: string): [PlanarGraph, PlanarGraph] => {
   let [vi, vj] = getEndpoints(g, chordKey);
   let outerVertices = getBoundaryVertexKeys(g, g.infiniteFace);
-  console.log(`Chord endpoints: ${vi}, ${vj}`);
-  console.log(`Outer vertices: ${outerVertices}`);
   let [viIdx, vjIdx] = [vi, vj].map(x => outerVertices.indexOf(x));
   let [lsIdx, gtIdx] = viIdx < vjIdx ? [viIdx, vjIdx] : [vjIdx, viIdx]
   let poly1 = outerVertices.slice(lsIdx, gtIdx + 1);
