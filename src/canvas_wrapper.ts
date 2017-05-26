@@ -1,5 +1,6 @@
 import { Coord, isClockwise, distance, unitVector } from './geom'
-import { PlanarGraph, Color, ALL_COLORS, createEmptyPlanarGraph, addEdge } from './planar_graph';
+import { PlanarGraph, Color, ALL_COLORS, createEmptyPlanarGraph, addEdge, getEndpoints } from './planar_graph';
+import { values } from 'lodash';
 
 const colorToString = (c: Color) => {
   switch(c) {
@@ -32,6 +33,11 @@ export class GraphDrawingWrapper {
     this.canvasEl.addEventListener("click", this.handleClick);
     this.graph = createEmptyPlanarGraph();
     this.highlightedVertex = null;
+  }
+
+  clear() {
+    let context = this.canvasEl.getContext('2d');
+    context.clearRect(0, 0, this.canvasEl.width, this.canvasEl.height);
   }
 
   clickVertex(v: Coord) {
@@ -68,15 +74,19 @@ export class GraphDrawingWrapper {
   }
 
   drawEdge(v1: Coord, v2: Coord, strokeColor: string = "black") {
-    if (this.doesAddEdge(v1, v2)) {
-      let context = this.canvasEl.getContext('2d');
-      let unit = unitVector(v1, v2);
-      context.strokeStyle = strokeColor;
-      context.beginPath();
-      context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
-      context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
-      context.stroke();
-    }
+    if (this.doesAddEdge(v1, v2)) this.unsafeDrawEdge(v1, v2, strokeColor);
+  }
+
+  drawNewGraph(g: PlanarGraph) {
+    this.clear();
+    values(g.vertices).forEach((v) => {
+      this.drawCircle(v, "black", v.colors);
+    });
+    Object.keys(g.edges).forEach(e => {
+      let [v1, v2] = getEndpoints(g, e).map(vKey => g.vertices[vKey]);
+      this.unsafeDrawEdge(v1, v2, "black");
+    })
+    this.graph = g;
   }
 
   fillCircle(v: Coord, fillColors: Color[]) {
@@ -122,5 +132,15 @@ export class GraphDrawingWrapper {
   unhighlight() {
     this.drawCircle(this.highlightedVertex);
     this.highlightedVertex = null;
+  }
+
+  unsafeDrawEdge(v1: Coord, v2: Coord, strokeColor: string) {
+    let context = this.canvasEl.getContext('2d');
+    let unit = unitVector(v1, v2);
+    context.strokeStyle = strokeColor;
+    context.beginPath();
+    context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
+    context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
+    context.stroke();
   }
 }

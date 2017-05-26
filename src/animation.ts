@@ -26,7 +26,8 @@ export const resetAnimation = (): void => {
 }
 
 export const animate = (canvas: GraphDrawingWrapper): void => {
-  animationSteps.forEach(a => {
+  if (animationSteps.length > 0) {
+    let a = animationSteps.shift();
     switch (a.type) {
       case AnimationType.DrawEdge:
         canvas.drawEdge(a.data[0], a.data[1], "blue");
@@ -35,7 +36,9 @@ export const animate = (canvas: GraphDrawingWrapper): void => {
         canvas.drawCircle(a.data.vertex, "none", a.data.colors)
         break;
       case AnimationType.RestrictGraph:
+        canvas.drawNewGraph(a.data.graph);
         break;
     }
-  });
+    setTimeout(() => animate(canvas), 1000);
+  }
 };
