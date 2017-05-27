@@ -29,7 +29,7 @@ export enum Color {
   Blue
 }
 
-export const ALL_COLORS = [Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Blue];
+export const ALL_COLORS = [Color.Red, Color.Blue, Color.Yellow, Color.Green, Color.Orange];
 
 interface HashMap<T> {
   [key: string]: T
@@ -158,23 +158,6 @@ export const findVp = (g: PlanarGraph): string => {
     throw new Error("Graph is unmarked");
   }
 }
-
-// export const findVp = (g: PlanarGraph): string => {
-//   if (g.mark1 && g.mark2) {
-//     let edges = getOutgoingEdgeKeys(g, g.mark1);
-//     let adjVertices = getAdjacentVertices(g, g.mark1);
-//     let idx = adjVertices.indexOf(g.mark2);
-//     if (idx > -1) {
-//       let ourEdge = g.edges[edges[idx]].incidentFace === g.infiniteFace ?
-//       edges[idx] : g.edges[edges[idx]].twin;
-//       return g.edges[g.edges[ourEdge].prev].origin;
-//     } else {
-//       throw new Error("Markers are non-adjacent");
-//     }
-//   } else {
-//     throw new Error("Graph is unmarked");
-//   }
-// }
 
 export const getEdgeKeyByCoords = (graph: PlanarGraph, c1: Coord, c2: Coord): string | null => {
   let v1 = getVertexKey(graph, c1);
