@@ -1,6 +1,12 @@
 body, html {
-  display: flex;
+  display: block;
+  flex-direction: column;
   margin: 0;
+}
+
+#top {
+  display: flex;
+  margin-bottom: 5px;
 }
 
 #canvas {

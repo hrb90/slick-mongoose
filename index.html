@@ -7,25 +7,12 @@
     <title>Slick Mongoose</title>
   </head>
   <body>
-    <canvas id="canvas" width="600" height="600" style="border:1px solid black;"></canvas>
-    <section id="sidebar">
-      <p>Thanks for helping me test my sekrit math project!</p>
-      <p>
-        You can draw a <a target="_blank" href="https://en.wikipedia.org/wiki/Planar_graph">planar graph</a> on the canvas.
-        Draw a new vertex by clicking an empty part of the graph; draw an edge by clicking two existing vertices.
-        Try to keep all the edges connected.
-      </p>
-      <p>
-        If you draw a graph and then click the "Color" button, it will (likely) add some extra, blue edges to the graph, and then color the graph with five colors so no vertices connected by an edge have the same color.
-      </p>
-      <p>
-        If the graph is miscolored (i.e. two vertices connected by an edge are the same color) please add a comment to <a target="_blank" href="https://github.com/hrb90/slick-mongoose/issues/3">this issue</a>. Please include the output of getAnimString() in the console.
-      </p>
-      <p>
-        If there is a graph that the page won't color, please <a target="_blank" href="https://github.com/hrb90/slick-mongoose/issues/new">open a new issue</a> and include the exception in the console, if any, and preferably a screenshot of the graph. Thanks again! :)
-      </p>
-      <p id="description">Description</p>
-      <button id="animate-button">Color</button>
-    </section>
+    <div id="top">
+      <canvas id="canvas" width="1000" height="600" style="border:1px solid black;"></canvas>
+      <section id="sidebar">
+        <p id="description">Description</p>
+      </section>
+    </div>
+    <button id="animate-button">Color</button>
   </body>
 </html>
