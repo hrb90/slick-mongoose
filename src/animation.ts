@@ -37,16 +37,18 @@ export const drawStep = (a: Animation, canvas: GraphDrawingWrapper): void => {
       canvas.drawEdge(a.data[0], a.data[1], "blue");
       break;
     case AnimationType.UpdateColors:
-      canvas.drawCircle(a.data.vertex, "none", a.data.colors)
+      canvas.updateColors(a.data.vertex, a.data.colors);
       break;
     case AnimationType.RestrictGraph:
-      canvas.drawNewGraph(a.data.graph);
+      canvas.highlightGraph(a.data.graph);
+      canvas.redraw();
       break;
     case AnimationType.HighlightEdge:
       canvas.unsafeDrawEdge(a.data[0], a.data[1], "red");
       break;
     case AnimationType.Describe:
       updateDescription(a.data);
+      break;
     case AnimationType.Pause:
       break;
   }

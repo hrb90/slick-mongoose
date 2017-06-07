@@ -78,15 +78,19 @@ const preColor = (g: PlanarGraph): PlanarGraph => {
   const boundingVertices = getBoundaryVertexKeys(g, g.infiniteFace);
   g.mark1 = boundingVertices[0];
   g.mark2 = boundingVertices[1];
-  g = updateColors(g, g.mark1, [Color.Red], 0);
-  g = updateColors(g, g.mark2, [Color.Blue], 0);
-  boundingVertices.slice(2).forEach(vKey =>
-    g = updateColors(g, vKey, ALL_COLORS.slice(0, 3), 0))
-  addStep(AnimationType.Pause, 3000, {});
-  difference(Object.keys(g.vertices), boundingVertices).forEach(vKey => {
+  addStep(AnimationType.Describe, 2000, "Begin with vertices having five possible colors");
+  Object.keys(g.vertices).forEach(vKey => {
     g = updateColors(g, vKey, ALL_COLORS, 0);
   })
-  addStep(AnimationType.Pause, 3000, {});
+  addStep(AnimationType.Pause, 1000, {});
+  addStep(AnimationType.Describe, 2000, "Restrict outer vertices to three possible colors");
+  boundingVertices.forEach(vKey =>
+    g = updateColors(g, vKey, ALL_COLORS.slice(0, 3), 0))
+    addStep(AnimationType.Pause, 1000, {});
+  addStep(AnimationType.Describe, 2000, "Color two adjacent outer vertices red and blue");
+  g = updateColors(g, g.mark1, [Color.Red], 0);
+  g = updateColors(g, g.mark2, [Color.Blue], 0);
+  addStep(AnimationType.Pause, 1000, {});
   return g;
 }
 
@@ -99,6 +103,7 @@ const colorTriangle = (g: PlanarGraph): PlanarGraph => {
   let badColors = [getColors(g, g.mark1)[0], getColors(g, g.mark2)[0]]
   let thirdVertexKey = difference(Object.keys(g.vertices), [g.mark1, g.mark2])[0];
   let okayColor = difference(getColors(g, thirdVertexKey), badColors)[0];
+  addStep(AnimationType.Describe, 1000, "Color the triangle");
   return updateColors(g, thirdVertexKey, [okayColor], 1000);
 }
 
@@ -114,9 +119,11 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
   let boundaryVertices = getBoundaryVertexKeys(g, g.infiniteFace);
   let vp = findVp(g);
   let twoColors = difference(getColors(g, vp), getColors(g, g.mark1)).slice(0, 2);
+  addStep(AnimationType.Describe, 3000, "Restrict the vertex next to one of the colored vertices to two possible colors, not including the color of the colored vertex");
   let updatedGraph = updateColors(g, vp, twoColors, 1000);
   let subGraph = removeVertex(updatedGraph, vp);
   let vp1: string;
+  addStep(AnimationType.Describe, 3000, "Ensure that the neighbors of the vertex in the interior of the graph can't be colored with those two colors");
   getAdjacentVertices(g, vp).forEach(vKey => {
     if (!includes(boundaryVertices, vKey)) {
       subGraph = updateColors(subGraph, vKey,
@@ -125,9 +132,11 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
         vp1 = vKey;
     }
   });
+  addStep(AnimationType.Describe, 3000, "Recursively color the graph with the vertex removed");
   subGraph = color(subGraph);
   let newGraph = transferColors(updatedGraph, subGraph);
-  addStep(AnimationType.RestrictGraph, 1000, { graph: newGraph });
+  addStep(AnimationType.RestrictGraph, 0, { graph: newGraph });
+  addStep(AnimationType.Describe, 2000, "Color the vertex we removed")
   newGraph = updateColors(newGraph, vp,
     difference(twoColors, getColors(newGraph, vp1)).slice(0, 1), 1000);
   return newGraph;
@@ -147,14 +156,14 @@ const colorChordedGraph = (g: PlanarGraph, chordKey: string): PlanarGraph => {
 }
 
  const color = (g: PlanarGraph): PlanarGraph => {
-  addStep(AnimationType.RestrictGraph, 1000, { graph: g });
+  addStep(AnimationType.RestrictGraph, 0, { graph: g });
   if (values(g.vertices).length == 3) {
     return colorTriangle(g);
   } else {
     let chord = findChordKey(g);
     if (chord) {
       addStep(AnimationType.Describe, 2000,
-        "There is a chord; split the graph and recursively color the subgraphs");
+        "There is a chord; split the graph and recursively color the subgraphs");-
       addStep(AnimationType.HighlightEdge, 1000, getEndpoints(g, chord));
       return colorChordedGraph(g, chord);
     } else {
@@ -169,5 +178,6 @@ export const fiveColor = (graph: PlanarGraph): PlanarGraph => {
   resetAnimation();
   let coloredGraph = color(preColor(triangulate(hullify(graph))));
   addStep(AnimationType.RestrictGraph, 0, { graph: coloredGraph });
+  addStep(AnimationType.Describe, 0, "We're done!")
   return coloredGraph;
 }
