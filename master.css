@@ -1,7 +1,11 @@
 body, html {
   display: block;
   flex-direction: column;
-  margin: 0;
+  margin: 0 10px 0 0;
+}
+
+button {
+  display: block;
 }
 
 #top {

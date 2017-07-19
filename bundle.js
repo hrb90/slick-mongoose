@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 5);
+/******/ 	return __webpack_require__(__webpack_require__.s = 6);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -17307,6 +17307,7 @@ exports.pointSegmentDistance = function (p, endPoint1, endPoint2) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+var lodash_1 = __webpack_require__(0);
 var AnimationType;
 (function (AnimationType) {
     AnimationType[AnimationType["AddEdge"] = 0] = "AddEdge";
@@ -17315,17 +17316,42 @@ var AnimationType;
     AnimationType[AnimationType["HighlightEdge"] = 3] = "HighlightEdge";
     AnimationType[AnimationType["Pause"] = 4] = "Pause";
     AnimationType[AnimationType["Describe"] = 5] = "Describe";
+    AnimationType[AnimationType["DescribeChordlessOne"] = 6] = "DescribeChordlessOne";
+    AnimationType[AnimationType["DescribeChordlessTwo"] = 7] = "DescribeChordlessTwo";
+    AnimationType[AnimationType["DescribeChordlessThree"] = 8] = "DescribeChordlessThree";
+    AnimationType[AnimationType["DescribeChordlessFour"] = 9] = "DescribeChordlessFour";
+    AnimationType[AnimationType["DescribeChorded"] = 10] = "DescribeChorded";
+    AnimationType[AnimationType["DescribePreColor"] = 11] = "DescribePreColor";
+    AnimationType[AnimationType["DescribeTriangle"] = 12] = "DescribeTriangle";
 })(AnimationType = exports.AnimationType || (exports.AnimationType = {}));
 var updateDescription = function (text) {
     document.getElementById("description").textContent = text;
 };
+var addContinueButton = function (callback) {
+    var continueButton = document.createElement("button");
+    continueButton.innerText = "Continue";
+    continueButton.onclick = callback;
+    document.getElementById("description").appendChild(continueButton);
+};
 var animationSteps = [];
 // A controlled effectful function to use in the thomassen algorithms.
 exports.addStep = function (type, pause, data) {
-    animationSteps.push({ type: type, pause: pause, data: data });
+    animationSteps.push({ type: type, pause: pause, data: data, addButton: false });
 };
 exports.resetAnimation = function () {
     animationSteps = [];
+};
+exports.postProcessAnimation = function () {
+    [AnimationType.DescribeChorded, AnimationType.DescribeTriangle,
+        AnimationType.DescribeChordlessOne, AnimationType.DescribeChordlessTwo,
+        AnimationType.DescribeChordlessThree, AnimationType.DescribeChordlessFour,
+        AnimationType.DescribePreColor].forEach(function (type) {
+        var firstIndexOfType = lodash_1.findIndex(animationSteps, function (a) { return a.type === type; });
+        if (firstIndexOfType >= 0) {
+            animationSteps[firstIndexOfType].addButton = true;
+        }
+    });
+    console.log(animationSteps);
 };
 exports.drawStep = function (a, canvas) {
     switch (a.type) {
@@ -17343,6 +17369,13 @@ exports.drawStep = function (a, canvas) {
             canvas.unsafeDrawEdge(a.data[0], a.data[1], "red");
             break;
         case AnimationType.Describe:
+        case AnimationType.DescribeChorded:
+        case AnimationType.DescribeTriangle:
+        case AnimationType.DescribeChordlessOne:
+        case AnimationType.DescribeChordlessTwo:
+        case AnimationType.DescribeChordlessThree:
+        case AnimationType.DescribeChordlessFour:
+        case AnimationType.DescribePreColor:
             updateDescription(a.data);
             break;
         case AnimationType.Pause:
@@ -17353,379 +17386,18 @@ exports.animate = function (canvas) {
     if (animationSteps.length > 0) {
         var step = animationSteps.shift();
         exports.drawStep(step, canvas);
-        setTimeout(function () { return exports.animate(canvas); }, step.pause);
+        if (step.addButton) {
+            addContinueButton(function () { return exports.animate(canvas); });
+        }
+        else {
+            setTimeout(function () { return exports.animate(canvas); }, step.pause);
+        }
     }
 };
 
 
 /***/ }),
 /* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var geom_1 = __webpack_require__(1);
-var planar_graph_1 = __webpack_require__(6);
-var lodash_1 = __webpack_require__(0);
-var colorToString = function (c, faded) {
-    switch (c) {
-        case planar_graph_1.Color.Red:
-            return faded ? "#ff8080" : "red";
-        case planar_graph_1.Color.Blue:
-            return faded ? "#8080ff" : "blue";
-        case planar_graph_1.Color.Green:
-            return faded ? "#80ff80" : "green";
-        case planar_graph_1.Color.Orange:
-            return faded ? "#ffe080" : "orange";
-        case planar_graph_1.Color.Yellow:
-            return faded ? "#ffff80" : "yellow";
-    }
-};
-var GraphDrawingWrapper = (function () {
-    function GraphDrawingWrapper(canvasId, radius) {
-        if (radius === void 0) { radius = 15; }
-        this.radius = radius;
-        this.vertices = [];
-        this.canvasEl = document.getElementById(canvasId);
-        this.drawCircle = this.drawCircle.bind(this);
-        this.handleClick = this.handleClick.bind(this);
-        this.canvasEl.addEventListener("click", this.handleClick);
-        this.graph = planar_graph_1.createEmptyPlanarGraph();
-        this.highlightedGraph = this.graph;
-        this.highlightedVertex = null;
-    }
-    GraphDrawingWrapper.prototype.clear = function () {
-        var context = this.canvasEl.getContext('2d');
-        context.clearRect(0, 0, this.canvasEl.width, this.canvasEl.height);
-    };
-    GraphDrawingWrapper.prototype.clickVertex = function (v) {
-        if (this.highlightedVertex) {
-            if (v !== this.highlightedVertex) {
-                this.drawEdge(v, this.highlightedVertex);
-            }
-            this.unhighlightVertex();
-        }
-        else {
-            this.highlightVertex(v);
-        }
-    };
-    GraphDrawingWrapper.prototype.doesAddEdge = function (v1, v2) {
-        try {
-            this.graph = planar_graph_1.addEdge(this.graph, v1, v2);
-            this.highlightedGraph = this.graph;
-            return true;
-        }
-        catch (e) {
-            return false;
-        }
-    };
-    GraphDrawingWrapper.prototype.drawCircle = function (v, faded, fillColors) {
-        if (faded === void 0) { faded = false; }
-        if (fillColors === void 0) { fillColors = planar_graph_1.ALL_COLORS; }
-        this.vertices.push(v);
-        var context = this.canvasEl.getContext('2d');
-        context.strokeStyle = v === this.highlightedVertex ? "red" : (faded ? "lightgrey" : "black");
-        context.fillStyle = "none";
-        context.beginPath();
-        context.arc(v.x, v.y, this.radius, 0, 2 * Math.PI);
-        context.stroke();
-        if (fillColors.length > 0) {
-            this.fillCircle(v, faded, fillColors);
-        }
-    };
-    GraphDrawingWrapper.prototype.drawEdge = function (v1, v2, strokeColor) {
-        if (strokeColor === void 0) { strokeColor = "black"; }
-        if (this.doesAddEdge(v1, v2))
-            this.unsafeDrawEdge(v1, v2, strokeColor);
-    };
-    GraphDrawingWrapper.prototype.fillCircle = function (v, faded, fillColors) {
-        var _this = this;
-        var n = fillColors.length;
-        fillColors.forEach(function (color, idx) {
-            var context = _this.canvasEl.getContext('2d');
-            context.fillStyle = colorToString(color, faded);
-            context.beginPath();
-            context.arc(v.x, v.y, _this.radius, 2 * idx * Math.PI / n, 2 * (idx + 1) * Math.PI / n);
-            context.lineTo(v.x, v.y);
-            context.closePath();
-            context.fill();
-        });
-    };
-    GraphDrawingWrapper.prototype.handleClick = function (e) {
-        var _this = this;
-        try {
-            var newVertex_1 = { x: e.x, y: e.y, colors: [] };
-            var clickedVertex_1;
-            var overlappingVertex_1;
-            this.vertices.forEach(function (v) {
-                var dist = geom_1.distance(v, newVertex_1);
-                if (dist <= _this.radius)
-                    clickedVertex_1 = v;
-                if (dist <= 2 * _this.radius)
-                    overlappingVertex_1 = v;
-            });
-            if (clickedVertex_1) {
-                this.clickVertex(clickedVertex_1);
-            }
-            else if (!overlappingVertex_1) {
-                this.drawCircle(newVertex_1);
-            }
-        }
-        catch (err) {
-            alert(err.message);
-        }
-    };
-    GraphDrawingWrapper.prototype.highlightGraph = function (g) {
-        this.highlightedGraph = g;
-    };
-    GraphDrawingWrapper.prototype.highlightVertex = function (v) {
-        if (this.highlightedVertex) {
-            this.unhighlightVertex();
-        }
-        else {
-            this.highlightedVertex = v;
-        }
-    };
-    GraphDrawingWrapper.prototype.redraw = function () {
-        var _this = this;
-        this.clear();
-        var strongVertexKeys = Object.keys(this.highlightedGraph.vertices);
-        var fadedVertexKeys = lodash_1.difference(Object.keys(this.graph.vertices), strongVertexKeys);
-        var g = this.graph;
-        strongVertexKeys.forEach(function (vKey) {
-            var v = g.vertices[vKey];
-            _this.drawCircle(v, false, v.colors);
-        });
-        fadedVertexKeys.forEach(function (vKey) {
-            var v = g.vertices[vKey];
-            _this.drawCircle(v, true, v.colors);
-        });
-        Object.keys(g.edges).forEach(function (e) {
-            var _a = planar_graph_1.getEndpoints(g, e), v1 = _a[0], v2 = _a[1];
-            var edgeColor;
-            edgeColor = lodash_1.includes(strongVertexKeys, v1) && lodash_1.includes(strongVertexKeys, v2) ? "black" : "lightgrey";
-            _this.unsafeDrawEdge(g.vertices[v1], g.vertices[v2], edgeColor);
-        });
-        this.graph = g;
-    };
-    GraphDrawingWrapper.prototype.unhighlightVertex = function () {
-        this.highlightedVertex = null;
-    };
-    GraphDrawingWrapper.prototype.unsafeDrawEdge = function (v1, v2, strokeColor) {
-        var context = this.canvasEl.getContext('2d');
-        var unit = geom_1.unitVector(v1, v2);
-        context.strokeStyle = strokeColor;
-        context.beginPath();
-        context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
-        context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
-        context.stroke();
-    };
-    GraphDrawingWrapper.prototype.updateColors = function (v, colors) {
-        var vKey = planar_graph_1.getVertexKey(this.graph, v);
-        this.graph = planar_graph_1.setColors(this.graph, vKey, colors);
-        this.highlightVertex(v);
-        this.redraw();
-    };
-    return GraphDrawingWrapper;
-}());
-exports.GraphDrawingWrapper = GraphDrawingWrapper;
-
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var geom_1 = __webpack_require__(1);
-var planar_graph_1 = __webpack_require__(6);
-var animation_1 = __webpack_require__(2);
-var lodash_1 = __webpack_require__(0);
-var minDist = function (cList, ep1, ep2) {
-    var sansEndpoints = cList.filter(function (v) { return !(geom_1.eq(v, ep1) || geom_1.eq(v, ep2)); });
-    return Math.min.apply(Math, sansEndpoints.map(function (v) { return geom_1.pointSegmentDistance(v, ep1, ep2); }));
-};
-var animAddEdge = function (g, pair) {
-    animation_1.addStep(animation_1.AnimationType.AddEdge, 0, pair);
-    return planar_graph_1.addEdge(g, pair[0], pair[1]);
-};
-var hullify = function (g) {
-    animation_1.addStep(animation_1.AnimationType.Describe, 1000, "Add edges so that the graph is triangulated and 2-connected. A coloring of the new graph will work as a coloring of the original graph.");
-    var hullVertices = geom_1.convexHull(lodash_1.values(g.vertices));
-    hullVertices.map(geom_1.getConsecutiveCoordPairs).forEach(function (pair) {
-        if (planar_graph_1.safeAddEdge(g, pair[0], pair[1])) {
-            g = animAddEdge(g, pair);
-        }
-    });
-    return g;
-};
-var getBestSplittingEdge = function (g, edgeKeys, faceKey) {
-    var mostDist = -1;
-    var bestPair = [];
-    var potentialEdges = edgeKeys.map(function (eKey) {
-        return [g.edges[eKey].origin, g.edges[g.edges[g.edges[eKey].next].next].origin];
-    });
-    var faceVertices = edgeKeys.map(function (eKey) { return g.vertices[g.edges[eKey].origin]; });
-    for (var i = 0; i < potentialEdges.length; i++) {
-        var v1 = g.vertices[potentialEdges[i][0]];
-        var v2 = g.vertices[potentialEdges[i][1]];
-        if (planar_graph_1.getSplitFaceKey(g, v1, v2) === faceKey) {
-            var dist = minDist(faceVertices, v1, v2);
-            if (dist > mostDist) {
-                mostDist = dist;
-                bestPair = [v1, v2];
-            }
-        }
-    }
-    return bestPair;
-};
-var splitFace = function (g, faceKey) {
-    var edges = planar_graph_1.getBoundaryEdgeKeys(g, faceKey);
-    if (edges.length > 3 && g.infiniteFace !== faceKey) {
-        var e = getBestSplittingEdge(g, edges, faceKey);
-        g = animAddEdge(g, e);
-    }
-    return g;
-};
-var isTriangulated = function (g) {
-    return Object.keys(g.faces).every(function (fKey) {
-        return (g.infiniteFace === fKey || planar_graph_1.getBoundaryEdgeKeys(g, fKey).length === 3);
-    });
-};
-var triangulate = function (g) {
-    while (!isTriangulated(g)) {
-        lodash_1.forIn(g.faces, function (f, fKey) {
-            if (planar_graph_1.getBoundaryEdgeKeys(g, fKey).length > 3) {
-                g = splitFace(g, fKey);
-            }
-        });
-    }
-    animation_1.addStep(animation_1.AnimationType.Pause, 3000, {});
-    return g;
-};
-var preColor = function (g) {
-    var boundingVertices = planar_graph_1.getBoundaryVertexKeys(g, g.infiniteFace);
-    g.mark1 = boundingVertices[0];
-    g.mark2 = boundingVertices[1];
-    animation_1.addStep(animation_1.AnimationType.Describe, 2000, "Begin with vertices having five possible colors");
-    Object.keys(g.vertices).forEach(function (vKey) {
-        g = updateColors(g, vKey, planar_graph_1.ALL_COLORS, 0);
-    });
-    animation_1.addStep(animation_1.AnimationType.Pause, 1000, {});
-    animation_1.addStep(animation_1.AnimationType.Describe, 2000, "Restrict outer vertices to three possible colors");
-    boundingVertices.forEach(function (vKey) {
-        return g = updateColors(g, vKey, planar_graph_1.ALL_COLORS.slice(0, 3), 0);
-    });
-    animation_1.addStep(animation_1.AnimationType.Pause, 1000, {});
-    animation_1.addStep(animation_1.AnimationType.Describe, 2000, "Color two adjacent outer vertices red and blue");
-    g = updateColors(g, g.mark1, [planar_graph_1.Color.Red], 0);
-    g = updateColors(g, g.mark2, [planar_graph_1.Color.Blue], 0);
-    animation_1.addStep(animation_1.AnimationType.Pause, 1000, {});
-    return g;
-};
-var updateColors = function (g, vKey, colors, time) {
-    animation_1.addStep(animation_1.AnimationType.UpdateColors, time, { vertex: g.vertices[vKey], colors: colors });
-    return planar_graph_1.setColors(g, vKey, colors);
-};
-var colorTriangle = function (g) {
-    var badColors = [planar_graph_1.getColors(g, g.mark1)[0], planar_graph_1.getColors(g, g.mark2)[0]];
-    var thirdVertexKey = lodash_1.difference(Object.keys(g.vertices), [g.mark1, g.mark2])[0];
-    var okayColor = lodash_1.difference(planar_graph_1.getColors(g, thirdVertexKey), badColors)[0];
-    animation_1.addStep(animation_1.AnimationType.Describe, 1000, "Color the triangle");
-    return updateColors(g, thirdVertexKey, [okayColor], 1000);
-};
-var transferColors = function (graph, subGraph) {
-    var newGraph = lodash_1.cloneDeep(graph);
-    Object.keys(subGraph.vertices).forEach(function (vKey) {
-        newGraph = planar_graph_1.setColors(newGraph, vKey, planar_graph_1.getColors(subGraph, vKey));
-    });
-    return newGraph;
-};
-var colorChordlessGraph = function (g) {
-    var boundaryVertices = planar_graph_1.getBoundaryVertexKeys(g, g.infiniteFace);
-    var vp = planar_graph_1.findVp(g);
-    var twoColors = lodash_1.difference(planar_graph_1.getColors(g, vp), planar_graph_1.getColors(g, g.mark1)).slice(0, 2);
-    animation_1.addStep(animation_1.AnimationType.Describe, 3000, "Restrict the vertex next to one of the colored vertices to two possible colors, not including the color of the colored vertex");
-    var updatedGraph = updateColors(g, vp, twoColors, 1000);
-    var subGraph = planar_graph_1.removeVertex(updatedGraph, vp);
-    var vp1;
-    animation_1.addStep(animation_1.AnimationType.Describe, 3000, "Ensure that the neighbors of the vertex in the interior of the graph can't be colored with those two colors");
-    planar_graph_1.getAdjacentVertices(g, vp).forEach(function (vKey) {
-        if (!lodash_1.includes(boundaryVertices, vKey)) {
-            subGraph = updateColors(subGraph, vKey, lodash_1.difference(planar_graph_1.getColors(subGraph, vKey), twoColors).slice(0, 3), 300);
-        }
-        else if (vKey !== g.mark1) {
-            vp1 = vKey;
-        }
-    });
-    animation_1.addStep(animation_1.AnimationType.Describe, 3000, "Recursively color the graph with the vertex removed");
-    subGraph = color(subGraph);
-    var newGraph = transferColors(updatedGraph, subGraph);
-    animation_1.addStep(animation_1.AnimationType.RestrictGraph, 0, { graph: newGraph });
-    animation_1.addStep(animation_1.AnimationType.Describe, 2000, "Color the vertex we removed");
-    newGraph = updateColors(newGraph, vp, lodash_1.difference(twoColors, planar_graph_1.getColors(newGraph, vp1)).slice(0, 1), 1000);
-    return newGraph;
-};
-var colorChordedGraph = function (g, chordKey) {
-    var _a = planar_graph_1.splitChordedGraph(g, chordKey), firstSubgraph = _a[0], secondSubgraph = _a[1];
-    firstSubgraph = color(firstSubgraph);
-    secondSubgraph = updateColors(secondSubgraph, secondSubgraph.mark1, planar_graph_1.getColors(firstSubgraph, secondSubgraph.mark1), 1000);
-    secondSubgraph = updateColors(secondSubgraph, secondSubgraph.mark2, planar_graph_1.getColors(firstSubgraph, secondSubgraph.mark2), 1000);
-    secondSubgraph = color(secondSubgraph);
-    var newGraph = transferColors(g, firstSubgraph);
-    newGraph = transferColors(newGraph, secondSubgraph);
-    return newGraph;
-};
-var color = function (g) {
-    animation_1.addStep(animation_1.AnimationType.RestrictGraph, 0, { graph: g });
-    if (lodash_1.values(g.vertices).length == 3) {
-        return colorTriangle(g);
-    }
-    else {
-        var chord = planar_graph_1.findChordKey(g);
-        if (chord) {
-            animation_1.addStep(animation_1.AnimationType.Describe, 2000, "There is a chord; split the graph and recursively color the subgraphs");
-            -animation_1.addStep(animation_1.AnimationType.HighlightEdge, 1000, planar_graph_1.getEndpoints(g, chord));
-            return colorChordedGraph(g, chord);
-        }
-        else {
-            animation_1.addStep(animation_1.AnimationType.Describe, 2000, "There is no chord...");
-            return colorChordlessGraph(g);
-        }
-    }
-};
-exports.fiveColor = function (graph) {
-    animation_1.resetAnimation();
-    var coloredGraph = color(preColor(triangulate(hullify(graph))));
-    animation_1.addStep(animation_1.AnimationType.RestrictGraph, 0, { graph: coloredGraph });
-    animation_1.addStep(animation_1.AnimationType.Describe, 0, "We're done!");
-    return coloredGraph;
-};
-
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var canvas_wrapper_1 = __webpack_require__(3);
-var thomassen_1 = __webpack_require__(4);
-var animation_1 = __webpack_require__(2);
-document.addEventListener('DOMContentLoaded', function () {
-    var wrapper = new canvas_wrapper_1.GraphDrawingWrapper("canvas", 10);
-    document.getElementById('animate-button').addEventListener("click", function () {
-        thomassen_1.fiveColor(wrapper.graph);
-        animation_1.animate(wrapper);
-    });
-});
-
-
-/***/ }),
-/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18171,6 +17843,371 @@ exports.splitChordedGraph = function (g, chordKey) {
     secondSubgraph.mark2 = vj;
     return [firstSubgraph, secondSubgraph];
 };
+
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var geom_1 = __webpack_require__(1);
+var planar_graph_1 = __webpack_require__(3);
+var lodash_1 = __webpack_require__(0);
+var colorToString = function (c, faded) {
+    switch (c) {
+        case planar_graph_1.Color.Red:
+            return faded ? "#ff8080" : "red";
+        case planar_graph_1.Color.Blue:
+            return faded ? "#8080ff" : "blue";
+        case planar_graph_1.Color.Green:
+            return faded ? "#80ff80" : "green";
+        case planar_graph_1.Color.Orange:
+            return faded ? "#ffe080" : "orange";
+        case planar_graph_1.Color.Yellow:
+            return faded ? "#ffff80" : "yellow";
+    }
+};
+var GraphDrawingWrapper = (function () {
+    function GraphDrawingWrapper(canvasId, radius) {
+        if (radius === void 0) { radius = 15; }
+        this.radius = radius;
+        this.vertices = [];
+        this.canvasEl = document.getElementById(canvasId);
+        this.drawCircle = this.drawCircle.bind(this);
+        this.handleClick = this.handleClick.bind(this);
+        this.canvasEl.addEventListener("click", this.handleClick);
+        this.graph = planar_graph_1.createEmptyPlanarGraph();
+        this.highlightedGraph = this.graph;
+        this.highlightedVertex = null;
+    }
+    GraphDrawingWrapper.prototype.clear = function () {
+        var context = this.canvasEl.getContext('2d');
+        context.clearRect(0, 0, this.canvasEl.width, this.canvasEl.height);
+    };
+    GraphDrawingWrapper.prototype.clickVertex = function (v) {
+        if (this.highlightedVertex) {
+            if (v !== this.highlightedVertex) {
+                this.drawEdge(v, this.highlightedVertex);
+            }
+            this.unhighlightVertex();
+        }
+        else {
+            this.highlightVertex(v);
+        }
+    };
+    GraphDrawingWrapper.prototype.doesAddEdge = function (v1, v2) {
+        try {
+            this.graph = planar_graph_1.addEdge(this.graph, v1, v2);
+            this.highlightedGraph = this.graph;
+            return true;
+        }
+        catch (e) {
+            return false;
+        }
+    };
+    GraphDrawingWrapper.prototype.drawCircle = function (v, faded, fillColors) {
+        if (faded === void 0) { faded = false; }
+        if (fillColors === void 0) { fillColors = planar_graph_1.ALL_COLORS; }
+        this.vertices.push(v);
+        var context = this.canvasEl.getContext('2d');
+        context.strokeStyle = v === this.highlightedVertex ? "red" : (faded ? "lightgrey" : "black");
+        context.fillStyle = "none";
+        context.beginPath();
+        context.arc(v.x, v.y, this.radius, 0, 2 * Math.PI);
+        context.stroke();
+        if (fillColors.length > 0) {
+            this.fillCircle(v, faded, fillColors);
+        }
+    };
+    GraphDrawingWrapper.prototype.drawEdge = function (v1, v2, strokeColor) {
+        if (strokeColor === void 0) { strokeColor = "black"; }
+        if (this.doesAddEdge(v1, v2))
+            this.unsafeDrawEdge(v1, v2, strokeColor);
+    };
+    GraphDrawingWrapper.prototype.fillCircle = function (v, faded, fillColors) {
+        var _this = this;
+        var n = fillColors.length;
+        fillColors.forEach(function (color, idx) {
+            var context = _this.canvasEl.getContext('2d');
+            context.fillStyle = colorToString(color, faded);
+            context.beginPath();
+            context.arc(v.x, v.y, _this.radius, 2 * idx * Math.PI / n, 2 * (idx + 1) * Math.PI / n);
+            context.lineTo(v.x, v.y);
+            context.closePath();
+            context.fill();
+        });
+    };
+    GraphDrawingWrapper.prototype.handleClick = function (e) {
+        var _this = this;
+        try {
+            var newVertex_1 = { x: e.x, y: e.y, colors: [] };
+            var clickedVertex_1;
+            var overlappingVertex_1;
+            this.vertices.forEach(function (v) {
+                var dist = geom_1.distance(v, newVertex_1);
+                if (dist <= _this.radius)
+                    clickedVertex_1 = v;
+                if (dist <= 2 * _this.radius)
+                    overlappingVertex_1 = v;
+            });
+            if (clickedVertex_1) {
+                this.clickVertex(clickedVertex_1);
+            }
+            else if (!overlappingVertex_1) {
+                this.drawCircle(newVertex_1);
+            }
+        }
+        catch (err) {
+            alert(err.message);
+        }
+    };
+    GraphDrawingWrapper.prototype.highlightGraph = function (g) {
+        this.highlightedGraph = g;
+    };
+    GraphDrawingWrapper.prototype.highlightVertex = function (v) {
+        if (this.highlightedVertex) {
+            this.unhighlightVertex();
+        }
+        else {
+            this.highlightedVertex = v;
+        }
+    };
+    GraphDrawingWrapper.prototype.redraw = function () {
+        var _this = this;
+        this.clear();
+        var strongVertexKeys = Object.keys(this.highlightedGraph.vertices);
+        var fadedVertexKeys = lodash_1.difference(Object.keys(this.graph.vertices), strongVertexKeys);
+        var g = this.graph;
+        strongVertexKeys.forEach(function (vKey) {
+            var v = g.vertices[vKey];
+            _this.drawCircle(v, false, v.colors);
+        });
+        fadedVertexKeys.forEach(function (vKey) {
+            var v = g.vertices[vKey];
+            _this.drawCircle(v, true, v.colors);
+        });
+        Object.keys(g.edges).forEach(function (e) {
+            var _a = planar_graph_1.getEndpoints(g, e), v1 = _a[0], v2 = _a[1];
+            var edgeColor;
+            edgeColor = lodash_1.includes(strongVertexKeys, v1) && lodash_1.includes(strongVertexKeys, v2) ? "black" : "lightgrey";
+            _this.unsafeDrawEdge(g.vertices[v1], g.vertices[v2], edgeColor);
+        });
+        this.graph = g;
+    };
+    GraphDrawingWrapper.prototype.unhighlightVertex = function () {
+        this.highlightedVertex = null;
+    };
+    GraphDrawingWrapper.prototype.unsafeDrawEdge = function (v1, v2, strokeColor) {
+        var context = this.canvasEl.getContext('2d');
+        var unit = geom_1.unitVector(v1, v2);
+        context.strokeStyle = strokeColor;
+        context.beginPath();
+        context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
+        context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
+        context.stroke();
+    };
+    GraphDrawingWrapper.prototype.updateColors = function (v, colors) {
+        var vKey = planar_graph_1.getVertexKey(this.graph, v);
+        this.graph = planar_graph_1.setColors(this.graph, vKey, colors);
+        this.highlightVertex(v);
+        this.redraw();
+    };
+    return GraphDrawingWrapper;
+}());
+exports.GraphDrawingWrapper = GraphDrawingWrapper;
+
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var geom_1 = __webpack_require__(1);
+var planar_graph_1 = __webpack_require__(3);
+var animation_1 = __webpack_require__(2);
+var lodash_1 = __webpack_require__(0);
+var minDist = function (cList, ep1, ep2) {
+    var sansEndpoints = cList.filter(function (v) { return !(geom_1.eq(v, ep1) || geom_1.eq(v, ep2)); });
+    return Math.min.apply(Math, sansEndpoints.map(function (v) { return geom_1.pointSegmentDistance(v, ep1, ep2); }));
+};
+var animAddEdge = function (g, pair) {
+    animation_1.addStep(animation_1.AnimationType.AddEdge, 0, pair);
+    return planar_graph_1.addEdge(g, pair[0], pair[1]);
+};
+var hullify = function (g) {
+    animation_1.addStep(animation_1.AnimationType.Describe, 1000, "Add edges so that the graph is triangulated and 2-connected. A coloring of the new graph will work as a coloring of the original graph.");
+    var hullVertices = geom_1.convexHull(lodash_1.values(g.vertices));
+    hullVertices.map(geom_1.getConsecutiveCoordPairs).forEach(function (pair) {
+        if (planar_graph_1.safeAddEdge(g, pair[0], pair[1])) {
+            g = animAddEdge(g, pair);
+        }
+    });
+    return g;
+};
+var getBestSplittingEdge = function (g, edgeKeys, faceKey) {
+    var mostDist = -1;
+    var bestPair = [];
+    var potentialEdges = edgeKeys.map(function (eKey) {
+        return [g.edges[eKey].origin, g.edges[g.edges[g.edges[eKey].next].next].origin];
+    });
+    var faceVertices = edgeKeys.map(function (eKey) { return g.vertices[g.edges[eKey].origin]; });
+    for (var i = 0; i < potentialEdges.length; i++) {
+        var v1 = g.vertices[potentialEdges[i][0]];
+        var v2 = g.vertices[potentialEdges[i][1]];
+        if (planar_graph_1.getSplitFaceKey(g, v1, v2) === faceKey) {
+            var dist = minDist(faceVertices, v1, v2);
+            if (dist > mostDist) {
+                mostDist = dist;
+                bestPair = [v1, v2];
+            }
+        }
+    }
+    return bestPair;
+};
+var splitFace = function (g, faceKey) {
+    var edges = planar_graph_1.getBoundaryEdgeKeys(g, faceKey);
+    if (edges.length > 3 && g.infiniteFace !== faceKey) {
+        var e = getBestSplittingEdge(g, edges, faceKey);
+        g = animAddEdge(g, e);
+    }
+    return g;
+};
+var isTriangulated = function (g) {
+    return Object.keys(g.faces).every(function (fKey) {
+        return (g.infiniteFace === fKey || planar_graph_1.getBoundaryEdgeKeys(g, fKey).length === 3);
+    });
+};
+var triangulate = function (g) {
+    while (!isTriangulated(g)) {
+        lodash_1.forIn(g.faces, function (f, fKey) {
+            if (planar_graph_1.getBoundaryEdgeKeys(g, fKey).length > 3) {
+                g = splitFace(g, fKey);
+            }
+        });
+    }
+    animation_1.addStep(animation_1.AnimationType.Pause, 3000, {});
+    return g;
+};
+var preColor = function (g) {
+    var boundingVertices = planar_graph_1.getBoundaryVertexKeys(g, g.infiniteFace);
+    g.mark1 = boundingVertices[0];
+    g.mark2 = boundingVertices[1];
+    animation_1.addStep(animation_1.AnimationType.Describe, 2000, "Begin with vertices having five possible colors");
+    Object.keys(g.vertices).forEach(function (vKey) {
+        g = updateColors(g, vKey, planar_graph_1.ALL_COLORS, 0);
+    });
+    animation_1.addStep(animation_1.AnimationType.Pause, 1000, {});
+    animation_1.addStep(animation_1.AnimationType.Describe, 2000, "Restrict outer vertices to three possible colors");
+    boundingVertices.forEach(function (vKey) {
+        return g = updateColors(g, vKey, planar_graph_1.ALL_COLORS.slice(0, 3), 0);
+    });
+    animation_1.addStep(animation_1.AnimationType.Pause, 1000, {});
+    g = updateColors(g, g.mark1, [planar_graph_1.Color.Red], 0);
+    g = updateColors(g, g.mark2, [planar_graph_1.Color.Blue], 0);
+    animation_1.addStep(animation_1.AnimationType.DescribePreColor, 2000, "Color two adjacent outer vertices red and blue. Note that the interior vertices have five possible colors, two outer vertices are colored, and the rest of the outer vertices have three possible colors. This will be an invariant throughout the recursive algorithm.");
+    return g;
+};
+var updateColors = function (g, vKey, colors, time) {
+    animation_1.addStep(animation_1.AnimationType.UpdateColors, time, { vertex: g.vertices[vKey], colors: colors });
+    return planar_graph_1.setColors(g, vKey, colors);
+};
+var colorTriangle = function (g) {
+    var badColors = [planar_graph_1.getColors(g, g.mark1)[0], planar_graph_1.getColors(g, g.mark2)[0]];
+    var thirdVertexKey = lodash_1.difference(Object.keys(g.vertices), [g.mark1, g.mark2])[0];
+    var okayColor = lodash_1.difference(planar_graph_1.getColors(g, thirdVertexKey), badColors)[0];
+    animation_1.addStep(animation_1.AnimationType.DescribeTriangle, 1000, "The triangle has two colored vertices and one vertex with three choices. So we can always color the third vertex");
+    return updateColors(g, thirdVertexKey, [okayColor], 100);
+};
+var transferColors = function (graph, subGraph) {
+    var newGraph = lodash_1.cloneDeep(graph);
+    Object.keys(subGraph.vertices).forEach(function (vKey) {
+        newGraph = planar_graph_1.setColors(newGraph, vKey, planar_graph_1.getColors(subGraph, vKey));
+    });
+    return newGraph;
+};
+var colorChordlessGraph = function (g) {
+    var boundaryVertices = planar_graph_1.getBoundaryVertexKeys(g, g.infiniteFace);
+    var vp = planar_graph_1.findVp(g);
+    var twoColors = lodash_1.difference(planar_graph_1.getColors(g, vp), planar_graph_1.getColors(g, g.mark1)).slice(0, 2);
+    animation_1.addStep(animation_1.AnimationType.DescribeChordlessOne, 1000, "There is no chord... Find a vertex on the outside of the graph that is a neighbor of a colored vertex and restrict it to two colors, not including the color of the colored vertex");
+    var updatedGraph = updateColors(g, vp, twoColors, 1000);
+    var subGraph = planar_graph_1.removeVertex(updatedGraph, vp);
+    var vp1;
+    animation_1.addStep(animation_1.AnimationType.DescribeChordlessTwo, 1000, "Ensure that the neighbors of the vertex in the interior of the graph can't be colored with those two colors. Only one of this vertex's neighbors can be colored with even one of the two colors, so we will be able to come back and properly color this vertex.");
+    planar_graph_1.getAdjacentVertices(g, vp).forEach(function (vKey) {
+        if (!lodash_1.includes(boundaryVertices, vKey)) {
+            subGraph = updateColors(subGraph, vKey, lodash_1.difference(planar_graph_1.getColors(subGraph, vKey), twoColors).slice(0, 3), 300);
+        }
+        else if (vKey !== g.mark1) {
+            vp1 = vKey;
+        }
+    });
+    animation_1.addStep(animation_1.AnimationType.DescribeChordlessThree, 1000, "Recursively color the graph with the vertex removed");
+    subGraph = color(subGraph);
+    var newGraph = transferColors(updatedGraph, subGraph);
+    animation_1.addStep(animation_1.AnimationType.RestrictGraph, 0, { graph: newGraph });
+    animation_1.addStep(animation_1.AnimationType.DescribeChordlessFour, 1000, "Color the vertex we removed");
+    newGraph = updateColors(newGraph, vp, lodash_1.difference(twoColors, planar_graph_1.getColors(newGraph, vp1)).slice(0, 1), 1000);
+    return newGraph;
+};
+var colorChordedGraph = function (g, chordKey) {
+    animation_1.addStep(animation_1.AnimationType.DescribeChorded, 2000, "There is a chord; split the graph and recursively color the subgraphs");
+    -animation_1.addStep(animation_1.AnimationType.HighlightEdge, 1000, planar_graph_1.getEndpoints(g, chordKey));
+    var _a = planar_graph_1.splitChordedGraph(g, chordKey), firstSubgraph = _a[0], secondSubgraph = _a[1];
+    firstSubgraph = color(firstSubgraph);
+    secondSubgraph = updateColors(secondSubgraph, secondSubgraph.mark1, planar_graph_1.getColors(firstSubgraph, secondSubgraph.mark1), 1000);
+    secondSubgraph = updateColors(secondSubgraph, secondSubgraph.mark2, planar_graph_1.getColors(firstSubgraph, secondSubgraph.mark2), 1000);
+    secondSubgraph = color(secondSubgraph);
+    var newGraph = transferColors(g, firstSubgraph);
+    newGraph = transferColors(newGraph, secondSubgraph);
+    return newGraph;
+};
+var color = function (g) {
+    animation_1.addStep(animation_1.AnimationType.RestrictGraph, 0, { graph: g });
+    if (lodash_1.values(g.vertices).length == 3) {
+        return colorTriangle(g);
+    }
+    else {
+        var chord = planar_graph_1.findChordKey(g);
+        if (chord) {
+            return colorChordedGraph(g, chord);
+        }
+        else {
+            return colorChordlessGraph(g);
+        }
+    }
+};
+exports.fiveColor = function (graph) {
+    animation_1.resetAnimation();
+    var coloredGraph = color(preColor(triangulate(hullify(graph))));
+    animation_1.addStep(animation_1.AnimationType.RestrictGraph, 0, { graph: coloredGraph });
+    animation_1.addStep(animation_1.AnimationType.Describe, 0, "We're done!");
+    animation_1.postProcessAnimation();
+    return coloredGraph;
+};
+
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var canvas_wrapper_1 = __webpack_require__(4);
+var thomassen_1 = __webpack_require__(5);
+var animation_1 = __webpack_require__(2);
+document.addEventListener('DOMContentLoaded', function () {
+    var wrapper = new canvas_wrapper_1.GraphDrawingWrapper("canvas", 10);
+    document.getElementById('animate-button').addEventListener("click", function () {
+        thomassen_1.fiveColor(wrapper.graph);
+        animation_1.animate(wrapper);
+    });
+});
 
 
 /***/ }),
