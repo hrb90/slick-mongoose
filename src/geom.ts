@@ -1,47 +1,55 @@
 export interface Coord {
-  x: number,
-  y: number
+  x: number;
+  y: number;
 }
 
 // coordinate equality
-export const eq = (a: Coord, b: Coord) => (a.x === b.x && a.y === b.y);
+export const eq = (a: Coord, b: Coord) => a.x === b.x && a.y === b.y;
 
 // 2-dimensional cross product
-export const xProd = (v1: Coord, v2: Coord) => (v1.x * v2.y - v1.y * v2.x);
+export const xProd = (v1: Coord, v2: Coord) => v1.x * v2.y - v1.y * v2.x;
 
 // dot product
-const dot = (v1: Coord, v2: Coord) => (v1.x * v2.x + v1.y * v2.y);
+const dot = (v1: Coord, v2: Coord) => v1.x * v2.x + v1.y * v2.y;
 
 const scale = (scalar: number, v: Coord) => ({
   x: scalar * v.x,
   y: scalar * v.y
-})
+});
 
 const plus = (a: Coord, b: Coord) => ({
   x: a.x + b.x,
   y: a.y + b.y
-})
+});
 
-const minus = (a: Coord, b: Coord) => plus(a, scale(-1, b))
+const minus = (a: Coord, b: Coord) => plus(a, scale(-1, b));
 
 export const angle = (v1: Coord, v2: Coord) => {
   return Math.atan2(v1.y - v2.y, v1.x - v2.x);
 };
 
-export const getConsecutiveCoordPairs =
-  (v: Coord, i: number, p: Coord[]) => ([v, p[(i+1)%p.length]]);
+export const getConsecutiveCoordPairs = (v: Coord, i: number, p: Coord[]) => [
+  v,
+  p[(i + 1) % p.length]
+];
 
 // Do the line segments from v1-v2 and v3-v4 intersect?
-export const intersect = (v1: Coord, v2: Coord, v3: Coord, v4: Coord, halfOpen: boolean = false) => {
+export const intersect = (
+  v1: Coord,
+  v2: Coord,
+  v3: Coord,
+  v4: Coord,
+  halfOpen: boolean = false
+) => {
   let r = minus(v2, v1);
   let s = minus(v4, v3);
   let diff = minus(v3, v1);
   let det = xProd(r, s);
   if (det !== 0) {
-    let t = xProd(diff, r)/det;
-    let u = xProd(diff, s)/det;
-    let interior = (x: number) => (0 < x && x < 1);
-    let boundary = (x: number) => (x === 0 || x === 1);
+    let t = xProd(diff, r) / det;
+    let u = xProd(diff, s) / det;
+    let interior = (x: number) => 0 < x && x < 1;
+    let boundary = (x: number) => x === 0 || x === 1;
     if (interior(t) && interior(u)) {
       // the segments intersect
       return true;
@@ -57,12 +65,12 @@ export const intersect = (v1: Coord, v2: Coord, v3: Coord, v4: Coord, halfOpen: 
       return false;
     } else {
       // all 4 points collinear
-      let t0 = dot(diff, r)/dot(r, r);
-      let t1 = t0 + dot(s, r)/dot(r, r);
-      return (Math.max(t0, t1) > 0 && Math.min(t0, t1) < 1);
+      let t0 = dot(diff, r) / dot(r, r);
+      let t1 = t0 + dot(s, r) / dot(r, r);
+      return Math.max(t0, t1) > 0 && Math.min(t0, t1) < 1;
     }
   }
-}
+};
 
 // Is v in the interior of polygon?
 export const inInterior = (polygon: Array<Coord>, v: Coord) => {
@@ -76,21 +84,21 @@ export const inInterior = (polygon: Array<Coord>, v: Coord) => {
   let crossingNum = 0;
   polygon.map(getConsecutiveCoordPairs).forEach(pair => {
     if (intersect(v, outerCoord, pair[0], pair[1], true)) crossingNum += 1;
-  })
+  });
   return crossingNum % 2 === 1;
-}
+};
 
 export const signedArea = (polygon: Array<Coord>) => {
   let signedAreaSum = 0;
   polygon.map(getConsecutiveCoordPairs).forEach(pair => {
     signedAreaSum += (pair[1].x - pair[0].x) * (pair[1].y + pair[0].y);
-  })
+  });
   return signedAreaSum;
-}
+};
 
-export const isClockwise = (polygon: Array<Coord>) => (signedArea(polygon) > 0);
+export const isClockwise = (polygon: Array<Coord>) => signedArea(polygon) > 0;
 
-export const collinear3 = (polygon: Array<Coord>) => (signedArea(polygon) === 0);
+export const collinear3 = (polygon: Array<Coord>) => signedArea(polygon) === 0;
 
 // Helper method for convex hull
 const lexSortYX = (a: Coord, b: Coord) => {
@@ -99,7 +107,7 @@ const lexSortYX = (a: Coord, b: Coord) => {
   } else {
     return a.x - b.x;
   }
-}
+};
 
 // Graham scan
 export const convexHull = (vertices: Coord[]): Coord[] => {
@@ -111,9 +119,9 @@ export const convexHull = (vertices: Coord[]): Coord[] => {
   stack.unshift(firstCoord);
   let otherVertices = verticesCopy.slice(1);
   // 2. Sort vertices by angle
-  otherVertices.sort((v1: Coord, v2: Coord) => (
-    isClockwise([firstCoord, v1, v2]) ? -1 : 1
-  ))
+  otherVertices.sort(
+    (v1: Coord, v2: Coord) => (isClockwise([firstCoord, v1, v2]) ? -1 : 1)
+  );
   // 3. Do the scan
   otherVertices.forEach(nextCoord => {
     while (stack.length > 1 && !isClockwise([stack[1], stack[0], nextCoord])) {
@@ -131,19 +139,23 @@ const dist2 = (v1: Coord, v2: Coord) => {
 
 export const distance = (v1: Coord, v2: Coord) => {
   return Math.sqrt(dist2(v1, v2));
-}
+};
 
 export const unitVector = (v1: Coord, v2: Coord) => {
   const d = distance(v1, v2);
   return <Coord>{ x: (v1.x - v2.x) / d, y: (v1.y - v2.y) / d };
 };
 
-export const pointSegmentDistance = (p: Coord, endPoint1: Coord, endPoint2: Coord) => {
+export const pointSegmentDistance = (
+  p: Coord,
+  endPoint1: Coord,
+  endPoint2: Coord
+) => {
   if (eq(endPoint1, endPoint2)) {
     return distance(p, endPoint1);
   } else {
     let l2 = dist2(endPoint2, endPoint1);
-    let t = dot(minus(p, endPoint1), minus(endPoint2, endPoint1))/l2;
+    let t = dot(minus(p, endPoint1), minus(endPoint2, endPoint1)) / l2;
     t = Math.max(0, Math.min(1, t));
     return distance(p, plus(endPoint1, scale(t, minus(endPoint2, endPoint1))));
   }

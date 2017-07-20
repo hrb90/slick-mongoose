@@ -1,11 +1,11 @@
 import { GraphDrawingWrapper } from "./src/canvas_wrapper";
-import { fiveColor } from './src/thomassen';
-import { animate } from './src/animation';
+import { fiveColor } from "./src/thomassen";
+import { animate } from "./src/animation";
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
   let wrapper = new GraphDrawingWrapper("canvas", 10);
 
-  document.getElementById('animate-button').addEventListener("click", () => {
+  document.getElementById("animate-button").addEventListener("click", () => {
     fiveColor(wrapper.graph);
     animate(wrapper);
   });

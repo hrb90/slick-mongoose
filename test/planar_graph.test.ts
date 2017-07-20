@@ -1,19 +1,26 @@
-import { PlanarGraph, createEmptyPlanarGraph, getVertexKey,
-  addEdge, safeAddEdge, removeEdgeByVertices, removeVertexByCoord,
-  getBoundaryEdgeKeys, getBoundaryVertexKeys, getOutgoingEdgeKeys,
-  splitChordedGraph, findChordKey, inducedInteriorSubgraph, findVp } from '../src/planar_graph';
-import { Coord } from '../src/geom';
+import {
+  PlanarGraph,
+  createEmptyPlanarGraph,
+  getVertexKey,
+  addEdge,
+  safeAddEdge,
+  removeEdgeByVertices,
+  removeVertexByCoord,
+  getBoundaryEdgeKeys,
+  getBoundaryVertexKeys,
+  getOutgoingEdgeKeys,
+  splitChordedGraph,
+  findChordKey,
+  inducedInteriorSubgraph,
+  findVp
+} from "../src/planar_graph";
+import { Coord } from "../src/geom";
 
 const v = (x: number, y: number) => ({ x: x, y: y });
 
 describe("addEdge", () => {
   it("keeps track of the infiniteFace I", () => {
-    let vs = [
-      v(0, -10),
-      v(0, 0),
-      v(-10, 10),
-      v(10, 10)
-    ]
+    let vs = [v(0, -10), v(0, 0), v(-10, 10), v(10, 10)];
     const graph1 = createEmptyPlanarGraph();
     const graph2 = addEdge(graph1, vs[0], vs[1]);
     const graph3 = addEdge(graph2, vs[1], vs[2]);
@@ -23,12 +30,7 @@ describe("addEdge", () => {
   });
 
   it("keeps track of the infiniteFace II ", () => {
-    let vs = [
-      v(0, -10),
-      v(0, 0),
-      v(-10, 10),
-      v(10, 10)
-    ]
+    let vs = [v(0, -10), v(0, 0), v(-10, 10), v(10, 10)];
     const graph = createEmptyPlanarGraph();
     const graph1 = addEdge(graph, vs[0], vs[1]);
     const graph2 = addEdge(graph1, vs[1], vs[3]);
@@ -50,7 +52,7 @@ describe("addEdge", () => {
     ];
     // first two elements of the tuple are the indices of the vertices
     // third element is whether we will throw an error
-    let edges : [number, number, boolean][] = [
+    let edges: [number, number, boolean][] = [
       [0, 1, true],
       [1, 2, true],
       [2, 3, true],
@@ -71,34 +73,31 @@ describe("addEdge", () => {
 
     it("takes edges unless the new edge would cross, in which case it throws an error", () => {
       edges.forEach(triple => {
-        let isSafe = safeAddEdge(graph, vertices[triple[0]], vertices[triple[1]]);
+        let isSafe = safeAddEdge(
+          graph,
+          vertices[triple[0]],
+          vertices[triple[1]]
+        );
         expect(isSafe).toBe(triple[2]);
         if (isSafe) {
           graph = addEdge(graph, vertices[triple[0]], vertices[triple[1]]);
         }
-      })
+      });
     });
 
     it("maintains the correct number of edges", () => {
-      expect(Object.keys(graph.edges).length/2).toBe(13);
-    })
+      expect(Object.keys(graph.edges).length / 2).toBe(13);
+    });
 
     it("maintains the correct number of faces", () => {
       expect(Object.keys(graph.faces).length).toBe(8);
-    })
+    });
   });
 
   describe("build a graph with intermediate steps with non-simple faces", () => {
     let graph = createEmptyPlanarGraph();
 
-    let vertices = [
-      v(2, 2),
-      v(10, 15),
-      v(18, 2),
-      v(0, 0),
-      v(10, 17),
-      v(20, 0)
-    ];
+    let vertices = [v(2, 2), v(10, 15), v(18, 2), v(0, 0), v(10, 17), v(20, 0)];
 
     let edges: [number, number, boolean][] = [
       [0, 1, true],
@@ -109,37 +108,35 @@ describe("addEdge", () => {
       [4, 5, true],
       [3, 4, true],
       [1, 4, true]
-    ]
+    ];
 
     it("takes edges unless the new edge would cross, in which case it throws an error", () => {
       edges.forEach(triple => {
-        let isSafe = safeAddEdge(graph, vertices[triple[0]], vertices[triple[1]]);
+        let isSafe = safeAddEdge(
+          graph,
+          vertices[triple[0]],
+          vertices[triple[1]]
+        );
         expect(isSafe).toBe(triple[2]);
         if (isSafe) {
           graph = addEdge(graph, vertices[triple[0]], vertices[triple[1]]);
         }
-      })
+      });
     });
 
     it("maintains the correct number of edges", () => {
-      expect(Object.keys(graph.edges).length/2).toBe(8);
-    })
+      expect(Object.keys(graph.edges).length / 2).toBe(8);
+    });
 
     it("maintains the correct number of faces", () => {
       expect(Object.keys(graph.faces).length).toBe(4);
-    })
+    });
   });
 
   describe("build another graph with some non-simple faces", () => {
     let graph = createEmptyPlanarGraph();
 
-    let vertices = [
-      v(0, 0),
-      v(1, 1),
-      v(2, 1),
-      v(3, 0),
-      v(1.5, 4)
-    ];
+    let vertices = [v(0, 0), v(1, 1), v(2, 1), v(3, 0), v(1.5, 4)];
 
     let edges: [number, number, boolean][] = [
       [1, 0, true],
@@ -148,37 +145,36 @@ describe("addEdge", () => {
       [1, 4, true],
       [4, 2, true],
       [0, 4, true],
-      [3, 4, true],
-    ]
+      [3, 4, true]
+    ];
 
     it("takes edges unless the new edge would cross, in which case it throws an error", () => {
       edges.forEach(triple => {
-        let isSafe = safeAddEdge(graph, vertices[triple[0]], vertices[triple[1]]);
+        let isSafe = safeAddEdge(
+          graph,
+          vertices[triple[0]],
+          vertices[triple[1]]
+        );
         expect(isSafe).toBe(triple[2]);
         if (isSafe) {
           graph = addEdge(graph, vertices[triple[0]], vertices[triple[1]]);
         }
-      })
+      });
     });
 
     it("maintains the correct number of edges", () => {
-      expect(Object.keys(graph.edges).length/2).toBe(7);
-    })
+      expect(Object.keys(graph.edges).length / 2).toBe(7);
+    });
 
     it("maintains the correct number of faces", () => {
       expect(Object.keys(graph.faces).length).toBe(4);
-    })
-  })
+    });
+  });
 });
 
 describe("removeEdge", () => {
   it("keeps track of the infiniteFace", () => {
-    let vs = [
-      v(0, -10),
-      v(0, 0),
-      v(-10, 10),
-      v(10, 10)
-    ]
+    let vs = [v(0, -10), v(0, 0), v(-10, 10), v(10, 10)];
     const graph1 = createEmptyPlanarGraph();
     const graph2 = addEdge(graph1, vs[0], vs[1]);
     const graph3 = addEdge(graph2, vs[1], vs[2]);
@@ -193,14 +189,7 @@ describe("removeEdge", () => {
   describe("build a graph with intermediate steps with non-simple faces", () => {
     let graph = createEmptyPlanarGraph();
 
-    let vertices = [
-      v(2, 2),
-      v(10, 15),
-      v(18, 2),
-      v(0, 0),
-      v(10, 17),
-      v(20, 0)
-    ];
+    let vertices = [v(2, 2), v(10, 15), v(18, 2), v(0, 0), v(10, 17), v(20, 0)];
 
     let edges: [number, number][] = [
       [0, 1],
@@ -211,7 +200,7 @@ describe("removeEdge", () => {
       [4, 5],
       [3, 4],
       [1, 4]
-    ]
+    ];
 
     edges.forEach(edge => {
       graph = addEdge(graph, vertices[edge[0]], vertices[edge[1]]);
@@ -221,28 +210,20 @@ describe("removeEdge", () => {
     graph = removeEdgeByVertices(graph, vertices[1], vertices[2]);
 
     it("maintains the correct number of edges", () => {
-      expect(Object.keys(graph.edges).length/2).toBe(6);
-    })
+      expect(Object.keys(graph.edges).length / 2).toBe(6);
+    });
 
     it("maintains the correct number of faces", () => {
       expect(Object.keys(graph.faces).length).toBe(2);
-    })
+    });
   });
-
-})
+});
 
 describe("removeVertex", () => {
   describe("build a graph with intermediate steps with non-simple faces", () => {
     let graph = createEmptyPlanarGraph();
 
-    let vertices = [
-      v(2, 2),
-      v(10, 15),
-      v(18, 2),
-      v(0, 0),
-      v(10, 17),
-      v(20, 0)
-    ];
+    let vertices = [v(2, 2), v(10, 15), v(18, 2), v(0, 0), v(10, 17), v(20, 0)];
 
     let edges: [number, number][] = [
       [0, 1],
@@ -253,7 +234,7 @@ describe("removeVertex", () => {
       [4, 5],
       [3, 4],
       [1, 4]
-    ]
+    ];
 
     edges.forEach(edge => {
       graph = addEdge(graph, vertices[edge[0]], vertices[edge[1]]);
@@ -262,14 +243,14 @@ describe("removeVertex", () => {
     graph = removeVertexByCoord(graph, vertices[2]);
 
     it("maintains the correct number of edges", () => {
-      expect(Object.keys(graph.edges).length/2).toBe(6);
-    })
+      expect(Object.keys(graph.edges).length / 2).toBe(6);
+    });
 
     it("maintains the correct number of faces", () => {
       expect(Object.keys(graph.faces).length).toBe(3);
-    })
+    });
   });
-})
+});
 
 describe("splitChordedGraph", () => {
   it("passes the simplest possible case", () => {
@@ -292,7 +273,6 @@ describe("splitChordedGraph", () => {
     expect(Object.keys(t1.faces).length).toBe(2);
     expect(Object.keys(t2.faces).length).toBe(2);
   });
-
 });
 
 describe("inducedInteriorSubgraph", () => {
@@ -329,7 +309,7 @@ describe("inducedInteriorSubgraph", () => {
       [4, 5],
       [4, 6],
       [4, 7],
-      [5, 6],
+      [5, 6]
     ];
 
     edges.forEach(edge => {
@@ -348,13 +328,7 @@ describe("inducedInteriorSubgraph", () => {
 
 describe("findVp", () => {
   it("finds the right point on a 5-cycle", () => {
-    let vertices = [
-      v(0, 0),
-      v(5, 0),
-      v(5, 5),
-      v(3, 7),
-      v(0, 5)
-    ];
+    let vertices = [v(0, 0), v(5, 0), v(5, 5), v(3, 7), v(0, 5)];
 
     let g = createEmptyPlanarGraph();
     g = addEdge(g, v(0, 0), v(5, 0));
@@ -366,7 +340,7 @@ describe("findVp", () => {
     g.mark1 = getVertexKey(g, v(0, 0));
     g.mark2 = getVertexKey(g, v(5, 0));
 
-    let a = g.vertices[findVp(g)]
+    let a = g.vertices[findVp(g)];
 
     expect(a.x).toBe(0);
     expect(a.y).toBe(5);

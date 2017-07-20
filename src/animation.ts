@@ -1,6 +1,6 @@
-import { GraphDrawingWrapper } from './canvas_wrapper';
-import { Color } from './planar_graph';
-import { filter, findIndex } from 'lodash';
+import { GraphDrawingWrapper } from "./canvas_wrapper";
+import { Color } from "./planar_graph";
+import { filter, findIndex } from "lodash";
 
 export enum AnimationType {
   AddEdge,
@@ -15,15 +15,15 @@ export enum AnimationType {
   DescribeChordlessFour,
   DescribeChorded,
   DescribePreColor,
-  DescribeTriangle,
+  DescribeTriangle
 }
 
 type Animation = {
-  type: AnimationType,
-  addButton: boolean,
-  pause: number,
-  data: any
-}
+  type: AnimationType;
+  addButton: boolean;
+  pause: number;
+  data: any;
+};
 
 const updateDescription = (text: string) => {
   document.getElementById("description").textContent = text;
@@ -34,31 +34,36 @@ const addContinueButton = (callback: () => void) => {
   continueButton.innerText = "Continue";
   continueButton.onclick = callback;
   document.getElementById("description").appendChild(continueButton);
-}
+};
 
 let animationSteps: Animation[] = [];
 
 // A controlled effectful function to use in the thomassen algorithms.
 export const addStep = (type: AnimationType, pause: number, data: any) => {
-  animationSteps.push({type, pause, data, addButton: false})
-}
+  animationSteps.push({ type, pause, data, addButton: false });
+};
 
 export const resetAnimation = (): void => {
   animationSteps = [];
-}
+};
 
 export const postProcessAnimation = (): void => {
-  [AnimationType.DescribeChorded, AnimationType.DescribeTriangle,
-  AnimationType.DescribeChordlessOne, AnimationType.DescribeChordlessTwo,
-  AnimationType.DescribeChordlessThree, AnimationType.DescribeChordlessFour,
-  AnimationType.DescribePreColor].forEach(type => {
-    let firstIndexOfType = findIndex(animationSteps, a => a.type === type)
+  [
+    AnimationType.DescribeChorded,
+    AnimationType.DescribeTriangle,
+    AnimationType.DescribeChordlessOne,
+    AnimationType.DescribeChordlessTwo,
+    AnimationType.DescribeChordlessThree,
+    AnimationType.DescribeChordlessFour,
+    AnimationType.DescribePreColor
+  ].forEach(type => {
+    let firstIndexOfType = findIndex(animationSteps, a => a.type === type);
     if (firstIndexOfType >= 0) {
       animationSteps[firstIndexOfType].addButton = true;
     }
   });
   console.log(animationSteps);
-}
+};
 
 export const drawStep = (a: Animation, canvas: GraphDrawingWrapper): void => {
   switch (a.type) {
@@ -88,7 +93,7 @@ export const drawStep = (a: Animation, canvas: GraphDrawingWrapper): void => {
     case AnimationType.Pause:
       break;
   }
-}
+};
 
 export const animate = (canvas: GraphDrawingWrapper): void => {
   if (animationSteps.length > 0) {
