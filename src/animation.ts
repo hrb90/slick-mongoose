@@ -31,10 +31,15 @@ const updateDescription = (text: string) => {
 
 const addContinueButton = (callback: () => void) => {
   var continueButton = document.createElement("button");
+  continueButton.id = "continueButton";
   continueButton.innerText = "Continue";
   continueButton.onclick = callback;
   document.getElementById("description").appendChild(continueButton);
 };
+
+const removeElementById = (id: string): void => {
+  document.getElementById(id).remove();
+}
 
 let animationSteps: Animation[] = [];
 
@@ -100,7 +105,10 @@ export const animate = (canvas: GraphDrawingWrapper): void => {
     let step = animationSteps.shift();
     drawStep(step, canvas);
     if (step.addButton) {
-      addContinueButton(() => animate(canvas));
+      addContinueButton(() => {
+        animate(canvas);
+        removeElementById("continueButton");
+      });
     } else {
       setTimeout(() => animate(canvas), step.pause);
     }
