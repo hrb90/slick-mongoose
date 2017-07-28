@@ -48,11 +48,6 @@ const animAddEdge = (g: PlanarGraph, pair: Vertex[]) => {
 };
 
 const hullify = (g: PlanarGraph): PlanarGraph => {
-  addStep(
-    AnimationType.Describe,
-    1000,
-    "Add edges so that the graph is triangulated and 2-connected. A coloring of the new graph will work as a coloring of the original graph."
-  );
   let hullVertices = convexHull(values(g.vertices));
   hullVertices.map(getConsecutiveCoordPairs).forEach((pair: Vertex[]) => {
     if (safeAddEdge(g, pair[0], pair[1])) {
@@ -111,7 +106,11 @@ const triangulate = (g: PlanarGraph): PlanarGraph => {
       }
     });
   }
-  addStep(AnimationType.Pause, 3000, {});
+  addStep(
+    AnimationType.DescribeAddEdges,
+    1000,
+    "Add edges so that the graph is triangulated and 2-connected (i.e. can't be disconnected by removing one edge or vertex). Adding edges only makes our problem harder; a coloring of the new graph will work as a coloring of the original graph."
+  );
   return g;
 };
 

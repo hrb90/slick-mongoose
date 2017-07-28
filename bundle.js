@@ -17166,11 +17166,11 @@
 
 Object.defineProperty(exports, "__esModule", { value: true });
 // coordinate equality
-exports.eq = function (a, b) { return (a.x === b.x && a.y === b.y); };
+exports.eq = function (a, b) { return a.x === b.x && a.y === b.y; };
 // 2-dimensional cross product
-exports.xProd = function (v1, v2) { return (v1.x * v2.y - v1.y * v2.x); };
+exports.xProd = function (v1, v2) { return v1.x * v2.y - v1.y * v2.x; };
 // dot product
-var dot = function (v1, v2) { return (v1.x * v2.x + v1.y * v2.y); };
+var dot = function (v1, v2) { return v1.x * v2.x + v1.y * v2.y; };
 var scale = function (scalar, v) { return ({
     x: scalar * v.x,
     y: scalar * v.y
@@ -17183,7 +17183,10 @@ var minus = function (a, b) { return plus(a, scale(-1, b)); };
 exports.angle = function (v1, v2) {
     return Math.atan2(v1.y - v2.y, v1.x - v2.x);
 };
-exports.getConsecutiveCoordPairs = function (v, i, p) { return ([v, p[(i + 1) % p.length]]); };
+exports.getConsecutiveCoordPairs = function (v, i, p) { return [
+    v,
+    p[(i + 1) % p.length]
+]; };
 // Do the line segments from v1-v2 and v3-v4 intersect?
 exports.intersect = function (v1, v2, v3, v4, halfOpen) {
     if (halfOpen === void 0) { halfOpen = false; }
@@ -17194,8 +17197,8 @@ exports.intersect = function (v1, v2, v3, v4, halfOpen) {
     if (det !== 0) {
         var t = exports.xProd(diff, r) / det;
         var u = exports.xProd(diff, s) / det;
-        var interior = function (x) { return (0 < x && x < 1); };
-        var boundary = function (x) { return (x === 0 || x === 1); };
+        var interior = function (x) { return 0 < x && x < 1; };
+        var boundary = function (x) { return x === 0 || x === 1; };
         if (interior(t) && interior(u)) {
             // the segments intersect
             return true;
@@ -17217,7 +17220,7 @@ exports.intersect = function (v1, v2, v3, v4, halfOpen) {
             // all 4 points collinear
             var t0 = dot(diff, r) / dot(r, r);
             var t1 = t0 + dot(s, r) / dot(r, r);
-            return (Math.max(t0, t1) > 0 && Math.min(t0, t1) < 1);
+            return Math.max(t0, t1) > 0 && Math.min(t0, t1) < 1;
         }
     }
 };
@@ -17245,8 +17248,8 @@ exports.signedArea = function (polygon) {
     });
     return signedAreaSum;
 };
-exports.isClockwise = function (polygon) { return (exports.signedArea(polygon) > 0); };
-exports.collinear3 = function (polygon) { return (exports.signedArea(polygon) === 0); };
+exports.isClockwise = function (polygon) { return exports.signedArea(polygon) > 0; };
+exports.collinear3 = function (polygon) { return exports.signedArea(polygon) === 0; };
 // Helper method for convex hull
 var lexSortYX = function (a, b) {
     if (a.y - b.y !== 0) {
@@ -17308,6 +17311,7 @@ exports.pointSegmentDistance = function (p, endPoint1, endPoint2) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var lodash_1 = __webpack_require__(0);
+// Refactor this to just have a "describe" type and a "describew"
 var AnimationType;
 (function (AnimationType) {
     AnimationType[AnimationType["AddEdge"] = 0] = "AddEdge";
@@ -17316,22 +17320,27 @@ var AnimationType;
     AnimationType[AnimationType["HighlightEdge"] = 3] = "HighlightEdge";
     AnimationType[AnimationType["Pause"] = 4] = "Pause";
     AnimationType[AnimationType["Describe"] = 5] = "Describe";
-    AnimationType[AnimationType["DescribeChordlessOne"] = 6] = "DescribeChordlessOne";
-    AnimationType[AnimationType["DescribeChordlessTwo"] = 7] = "DescribeChordlessTwo";
-    AnimationType[AnimationType["DescribeChordlessThree"] = 8] = "DescribeChordlessThree";
-    AnimationType[AnimationType["DescribeChordlessFour"] = 9] = "DescribeChordlessFour";
-    AnimationType[AnimationType["DescribeChorded"] = 10] = "DescribeChorded";
-    AnimationType[AnimationType["DescribePreColor"] = 11] = "DescribePreColor";
-    AnimationType[AnimationType["DescribeTriangle"] = 12] = "DescribeTriangle";
+    AnimationType[AnimationType["DescribeAddEdges"] = 6] = "DescribeAddEdges";
+    AnimationType[AnimationType["DescribeChordlessOne"] = 7] = "DescribeChordlessOne";
+    AnimationType[AnimationType["DescribeChordlessTwo"] = 8] = "DescribeChordlessTwo";
+    AnimationType[AnimationType["DescribeChordlessThree"] = 9] = "DescribeChordlessThree";
+    AnimationType[AnimationType["DescribeChordlessFour"] = 10] = "DescribeChordlessFour";
+    AnimationType[AnimationType["DescribeChorded"] = 11] = "DescribeChorded";
+    AnimationType[AnimationType["DescribePreColor"] = 12] = "DescribePreColor";
+    AnimationType[AnimationType["DescribeTriangle"] = 13] = "DescribeTriangle";
 })(AnimationType = exports.AnimationType || (exports.AnimationType = {}));
 var updateDescription = function (text) {
     document.getElementById("description").textContent = text;
 };
 var addContinueButton = function (callback) {
     var continueButton = document.createElement("button");
+    continueButton.id = "continueButton";
     continueButton.innerText = "Continue";
     continueButton.onclick = callback;
-    document.getElementById("description").appendChild(continueButton);
+    document.getElementById("sidebar").appendChild(continueButton);
+};
+var removeElementById = function (id) {
+    document.getElementById(id).remove();
 };
 var animationSteps = [];
 // A controlled effectful function to use in the thomassen algorithms.
@@ -17342,10 +17351,16 @@ exports.resetAnimation = function () {
     animationSteps = [];
 };
 exports.postProcessAnimation = function () {
-    [AnimationType.DescribeChorded, AnimationType.DescribeTriangle,
-        AnimationType.DescribeChordlessOne, AnimationType.DescribeChordlessTwo,
-        AnimationType.DescribeChordlessThree, AnimationType.DescribeChordlessFour,
-        AnimationType.DescribePreColor].forEach(function (type) {
+    [
+        AnimationType.DescribeAddEdges,
+        AnimationType.DescribeChorded,
+        AnimationType.DescribeTriangle,
+        AnimationType.DescribeChordlessOne,
+        AnimationType.DescribeChordlessTwo,
+        AnimationType.DescribeChordlessThree,
+        AnimationType.DescribeChordlessFour,
+        AnimationType.DescribePreColor
+    ].forEach(function (type) {
         var firstIndexOfType = lodash_1.findIndex(animationSteps, function (a) { return a.type === type; });
         if (firstIndexOfType >= 0) {
             animationSteps[firstIndexOfType].addButton = true;
@@ -17369,6 +17384,7 @@ exports.drawStep = function (a, canvas) {
             canvas.unsafeDrawEdge(a.data[0], a.data[1], "red");
             break;
         case AnimationType.Describe:
+        case AnimationType.DescribeAddEdges:
         case AnimationType.DescribeChorded:
         case AnimationType.DescribeTriangle:
         case AnimationType.DescribeChordlessOne:
@@ -17387,7 +17403,10 @@ exports.animate = function (canvas) {
         var step = animationSteps.shift();
         exports.drawStep(step, canvas);
         if (step.addButton) {
-            addContinueButton(function () { return exports.animate(canvas); });
+            addContinueButton(function () {
+                exports.animate(canvas);
+                removeElementById("continueButton");
+            });
         }
         else {
             setTimeout(function () { return exports.animate(canvas); }, step.pause);
@@ -17413,25 +17432,31 @@ var Color;
     Color[Color["Green"] = 3] = "Green";
     Color[Color["Blue"] = 4] = "Blue";
 })(Color = exports.Color || (exports.Color = {}));
-exports.ALL_COLORS = [Color.Red, Color.Blue, Color.Yellow, Color.Green, Color.Orange];
+exports.ALL_COLORS = [
+    Color.Red,
+    Color.Blue,
+    Color.Yellow,
+    Color.Green,
+    Color.Orange
+];
 // Effectful stuff
 var slugCounter = 0;
 var getFaceSlug = function () {
     slugCounter = slugCounter + 1;
     return slugCounter + "";
 };
-var getVertexSlug = function (c) { return (c.x + "," + c.y); };
+var getVertexSlug = function (c) { return c.x + "," + c.y; };
 var getEdgeSlug = function (c1, c2) {
-    return (getVertexSlug(c1) + ";" + getVertexSlug(c2));
+    return getVertexSlug(c1) + ";" + getVertexSlug(c2);
 };
 // Exports
 exports.createEmptyPlanarGraph = function () {
     var infFace = { infinite: true };
     return {
-        infiniteFace: 'infinite',
+        infiniteFace: "infinite",
         vertices: {},
         edges: {},
-        faces: { 'infinite': infFace }
+        faces: { infinite: infFace }
     };
 };
 exports.addEdge = function (graph, c1, c2) {
@@ -17453,7 +17478,10 @@ exports.addEdge = function (graph, c1, c2) {
     }
 };
 exports.getEndpoints = function (graph, edgeKey) {
-    return [graph.edges[edgeKey].origin, graph.edges[graph.edges[edgeKey].twin].origin];
+    return [
+        graph.edges[edgeKey].origin,
+        graph.edges[graph.edges[edgeKey].twin].origin
+    ];
 };
 exports.removeEdge = function (graph, edgeKey) {
     var newGraph = lodash_1.cloneDeep(graph);
@@ -17461,7 +17489,8 @@ exports.removeEdge = function (graph, edgeKey) {
     var keepFaceKey = newGraph.edges[edgeKey].incidentFace;
     var delFaceKey = newGraph.edges[twinEdgeKey].incidentFace;
     if (keepFaceKey !== delFaceKey) {
-        if (newGraph.faces[keepFaceKey].infinite || newGraph.faces[delFaceKey].infinite) {
+        if (newGraph.faces[keepFaceKey].infinite ||
+            newGraph.faces[delFaceKey].infinite) {
             newGraph.faces[keepFaceKey].infinite = true;
             newGraph.infiniteFace = keepFaceKey;
         }
@@ -17469,7 +17498,7 @@ exports.removeEdge = function (graph, edgeKey) {
         newGraph = removeEdgeFixOrigin(newGraph, edgeKey);
         newGraph = removeEdgeFixOrigin(newGraph, twinEdgeKey);
         delete newGraph.faces[delFaceKey];
-        newFaceEdges.forEach(function (eKey) { return newGraph.edges[eKey].incidentFace = keepFaceKey; });
+        newFaceEdges.forEach(function (eKey) { return (newGraph.edges[eKey].incidentFace = keepFaceKey); });
         delete newGraph.edges[edgeKey];
         delete newGraph.edges[twinEdgeKey];
         return newGraph;
@@ -17481,9 +17510,7 @@ exports.removeEdge = function (graph, edgeKey) {
 exports.removeEdgeByVertices = function (graph, c1, c2) {
     var vKey1 = exports.getVertexKey(graph, c1);
     var vKey2 = exports.getVertexKey(graph, c2);
-    var ourEdge = lodash_1.find(exports.getOutgoingEdgeKeys(graph, vKey1), function (key) {
-        return (graph.edges[graph.edges[key].twin].origin === vKey2);
-    });
+    var ourEdge = lodash_1.find(exports.getOutgoingEdgeKeys(graph, vKey1), function (key) { return graph.edges[graph.edges[key].twin].origin === vKey2; });
     if (ourEdge) {
         return exports.removeEdge(graph, ourEdge);
     }
@@ -17541,9 +17568,7 @@ exports.getEdgeKeyByCoords = function (graph, c1, c2) {
     }
 };
 exports.getAdjacentVertices = function (graph, vertexKey) {
-    return exports.getOutgoingEdgeKeys(graph, vertexKey).map(function (eKey) {
-        return graph.edges[graph.edges[eKey].next].origin;
-    });
+    return exports.getOutgoingEdgeKeys(graph, vertexKey).map(function (eKey) { return graph.edges[graph.edges[eKey].next].origin; });
 };
 exports.getBoundaryEdgeKeys = function (graph, fKey) {
     var face = graph.faces[fKey];
@@ -17573,7 +17598,9 @@ exports.getSplitFaceKey = function (graph, c1, c2) {
             var secondVertex = graph.vertices[graph.edges[graph.edges[edgeKey].next].origin];
             return !geom_1.intersect(c1, c2, firstVertex, secondVertex);
         };
-        return exports.getBoundaryEdgeKeys(graph, possFaceKey).every(nonIntersect) ? possFaceKey : null;
+        return exports.getBoundaryEdgeKeys(graph, possFaceKey).every(nonIntersect)
+            ? possFaceKey
+            : null;
     }
     else {
         return null;
@@ -17612,15 +17639,37 @@ var begin = function (c1, c2) {
     var v2Slug = getVertexSlug(c2);
     var e12Slug = getEdgeSlug(c1, c2);
     var e21Slug = getEdgeSlug(c2, c1);
-    var v1 = { x: c1.x, y: c1.y, incidentEdge: e12Slug, colors: exports.ALL_COLORS };
-    var v2 = { x: c2.x, y: c2.y, incidentEdge: e21Slug, colors: exports.ALL_COLORS };
-    var e12 = { twin: e21Slug, next: e21Slug, prev: e21Slug, origin: v1Slug, incidentFace: 'infinite' };
-    var e21 = { twin: e12Slug, next: e12Slug, prev: e12Slug, origin: v2Slug, incidentFace: 'infinite' };
+    var v1 = {
+        x: c1.x,
+        y: c1.y,
+        incidentEdge: e12Slug,
+        colors: exports.ALL_COLORS
+    };
+    var v2 = {
+        x: c2.x,
+        y: c2.y,
+        incidentEdge: e21Slug,
+        colors: exports.ALL_COLORS
+    };
+    var e12 = {
+        twin: e21Slug,
+        next: e21Slug,
+        prev: e21Slug,
+        origin: v1Slug,
+        incidentFace: "infinite"
+    };
+    var e21 = {
+        twin: e12Slug,
+        next: e12Slug,
+        prev: e12Slug,
+        origin: v2Slug,
+        incidentFace: "infinite"
+    };
     return {
-        infiniteFace: 'infinite',
+        infiniteFace: "infinite",
         vertices: (_a = {}, _a[v1Slug] = v1, _a[v2Slug] = v2, _a),
         edges: (_b = {}, _b[e12Slug] = e12, _b[e21Slug] = e21, _b),
-        faces: { 'infinite': { infinite: true, incidentEdge: e12Slug } }
+        faces: { infinite: { infinite: true, incidentEdge: e12Slug } }
     };
     var _a, _b;
 };
@@ -17641,10 +17690,20 @@ var connect = function (graph, vKey1, vKey2) {
         var v1v2Slug = getEdgeSlug(v1, v2);
         var v2v1Slug = getEdgeSlug(v2, v1);
         // The incidentFace pointers will be fixed later on...
-        var v1v2 = { origin: vKey1, next: e2Key, prev: e1.prev, twin: v2v1Slug,
-            incidentFace: boundingFace };
-        var v2v1 = { origin: vKey2, next: e1Key, prev: e2.prev, twin: v1v2Slug,
-            incidentFace: boundingFace };
+        var v1v2 = {
+            origin: vKey1,
+            next: e2Key,
+            prev: e1.prev,
+            twin: v2v1Slug,
+            incidentFace: boundingFace
+        };
+        var v2v1 = {
+            origin: vKey2,
+            next: e1Key,
+            prev: e2.prev,
+            twin: v1v2Slug,
+            incidentFace: boundingFace
+        };
         newGraph.edges[e1.prev].next = v1v2Slug;
         e1.prev = v2v1Slug;
         newGraph.edges[e2.prev].next = v2v1Slug;
@@ -17652,8 +17711,11 @@ var connect = function (graph, vKey1, vKey2) {
         newGraph.edges[v1v2Slug] = v1v2;
         newGraph.edges[v2v1Slug] = v2v1;
         // Now we create a new face
-        var newFaceEdge = newGraph.faces[boundingFace].infinite ? pickInfiniteEdge(newGraph, v1v2Slug) : v1v2Slug;
-        newGraph.faces[boundingFace].incidentEdge = newGraph.edges[newFaceEdge].twin;
+        var newFaceEdge = newGraph.faces[boundingFace].infinite
+            ? pickInfiniteEdge(newGraph, v1v2Slug)
+            : v1v2Slug;
+        newGraph.faces[boundingFace].incidentEdge =
+            newGraph.edges[newFaceEdge].twin;
         var newFaceSlug = getFaceSlug();
         var newFace = { infinite: false, incidentEdge: newFaceEdge };
         newGraph.edges[newGraph.edges[newFaceEdge].twin].incidentFace = boundingFace;
@@ -17682,14 +17744,28 @@ var connectNewVertex = function (graph, vKey, newVertex) {
         var oldInEdge = newGraph.edges[oldInEdgeKey];
         var oldNewSlug = getEdgeSlug(oldVertex, newVertex);
         var newOldSlug = getEdgeSlug(newVertex, oldVertex);
-        var oldNew = { origin: vKey, prev: oldInEdgeKey, twin: newOldSlug,
-            next: newOldSlug, incidentFace: boundingFaceKey };
-        var newOld = { origin: newVertexSlug, prev: oldNewSlug,
-            next: oldOutEdgeKey, twin: oldNewSlug, incidentFace: boundingFaceKey };
+        var oldNew = {
+            origin: vKey,
+            prev: oldInEdgeKey,
+            twin: newOldSlug,
+            next: newOldSlug,
+            incidentFace: boundingFaceKey
+        };
+        var newOld = {
+            origin: newVertexSlug,
+            prev: oldNewSlug,
+            next: oldOutEdgeKey,
+            twin: oldNewSlug,
+            incidentFace: boundingFaceKey
+        };
         oldInEdge.next = oldNewSlug;
         oldOutEdge.prev = newOldSlug;
-        newGraph.vertices[newVertexSlug] = { x: newVertex.x, y: newVertex.y,
-            colors: exports.ALL_COLORS, incidentEdge: newOldSlug };
+        newGraph.vertices[newVertexSlug] = {
+            x: newVertex.x,
+            y: newVertex.y,
+            colors: exports.ALL_COLORS,
+            incidentEdge: newOldSlug
+        };
         newGraph.edges[oldNewSlug] = oldNew;
         newGraph.edges[newOldSlug] = newOld;
         return newGraph;
@@ -17725,13 +17801,13 @@ var getNextClockwiseEdgeKey = function (graph, vKey, newAngle) {
         return [eKey, geom_1.angle(v1, v2)];
     });
     var smallAngleEdges = keysWithAngles.filter(function (ea) { return ea[1] < newAngle; });
-    var sortByAngleDecreasing = function (e1, e2) { return (e2[1] - e1[1]); };
+    var sortByAngleDecreasing = function (e1, e2) { return e2[1] - e1[1]; };
     var getHighestAngleEdge = function (pairList) {
-        return (pairList.sort(sortByAngleDecreasing)[0][0]);
+        return pairList.sort(sortByAngleDecreasing)[0][0];
     };
-    return (smallAngleEdges.length > 0) ?
-        getHighestAngleEdge(smallAngleEdges) :
-        getHighestAngleEdge(keysWithAngles);
+    return smallAngleEdges.length > 0
+        ? getHighestAngleEdge(smallAngleEdges)
+        : getHighestAngleEdge(keysWithAngles);
 };
 exports.getVertexKey = function (graph, c) {
     var matchedVertexKey = null;
@@ -17780,20 +17856,24 @@ var removeLeafVertex = function (graph, vertexKey) {
 };
 var isBridge = function (g, eKey) {
     var twinEdgeKey = g.edges[eKey].twin;
-    return (g.edges[eKey].incidentFace === g.edges[twinEdgeKey].incidentFace);
+    return g.edges[eKey].incidentFace === g.edges[twinEdgeKey].incidentFace;
 };
 exports.inducedInteriorSubgraph = function (g, polygon) {
-    var vertexOutsidePolygon = function (vKey) { return !(lodash_1.includes(polygon, vKey) ||
-        geom_1.inInterior(polygon.map(function (x) { return g.vertices[x]; }), g.vertices[vKey])); };
+    var vertexOutsidePolygon = function (vKey) {
+        return !(lodash_1.includes(polygon, vKey) ||
+            geom_1.inInterior(polygon.map(function (x) { return g.vertices[x]; }), g.vertices[vKey]));
+    };
     var edgeOutsidePolygon = function (eKey) {
         return exports.getEndpoints(g, eKey).some(vertexOutsidePolygon);
     };
     var removableVertices = function (graph) {
-        return Object.keys(graph.vertices).filter(vertexOutsidePolygon)
-            .filter(function (v) { return (exports.getOutgoingEdgeKeys(graph, v).length === 1); });
+        return Object.keys(graph.vertices)
+            .filter(vertexOutsidePolygon)
+            .filter(function (v) { return exports.getOutgoingEdgeKeys(graph, v).length === 1; });
     };
     var removableEdges = function (graph) {
-        return Object.keys(graph.edges).filter(edgeOutsidePolygon)
+        return Object.keys(graph.edges)
+            .filter(edgeOutsidePolygon)
             .filter(function (x) { return !isBridge(graph, x); });
     };
     var newGraph = lodash_1.cloneDeep(g);
@@ -17818,9 +17898,9 @@ exports.findChordKey = function (graph) {
         var edgeKeys = exports.getOutgoingEdgeKeys(graph, vKey);
         edgeKeys.forEach(function (eKey) {
             var e = graph.edges[eKey];
-            if (lodash_1.includes(outerVertices, graph.edges[e.next].origin)
-                && e.incidentFace !== graph.infiniteFace
-                && graph.edges[e.twin].incidentFace !== graph.infiniteFace) {
+            if (lodash_1.includes(outerVertices, graph.edges[e.next].origin) &&
+                e.incidentFace !== graph.infiniteFace &&
+                graph.edges[e.twin].incidentFace !== graph.infiniteFace) {
                 chordKey = eKey;
             }
         });
@@ -17833,9 +17913,12 @@ exports.splitChordedGraph = function (g, chordKey) {
     var _b = [vi, vj].map(function (x) { return outerVertices.indexOf(x); }), viIdx = _b[0], vjIdx = _b[1];
     var _c = viIdx < vjIdx ? [viIdx, vjIdx] : [vjIdx, viIdx], lsIdx = _c[0], gtIdx = _c[1];
     var poly1 = outerVertices.slice(lsIdx, gtIdx + 1);
-    var poly2 = outerVertices.slice(0, lsIdx + 1).concat(outerVertices.slice(gtIdx));
-    var _d = lodash_1.includes(poly1, g.mark1) && lodash_1.includes(poly1, g.mark2) ?
-        [poly1, poly2] : [poly2, poly1], firstPoly = _d[0], secondPoly = _d[1];
+    var poly2 = outerVertices
+        .slice(0, lsIdx + 1)
+        .concat(outerVertices.slice(gtIdx));
+    var _d = lodash_1.includes(poly1, g.mark1) && lodash_1.includes(poly1, g.mark2)
+        ? [poly1, poly2]
+        : [poly2, poly1], firstPoly = _d[0], secondPoly = _d[1];
     var _e = [firstPoly, secondPoly].map(function (x) {
         return exports.inducedInteriorSubgraph(g, x);
     }), firstSubgraph = _e[0], secondSubgraph = _e[1];
@@ -17883,7 +17966,7 @@ var GraphDrawingWrapper = (function () {
         this.highlightedVertex = null;
     }
     GraphDrawingWrapper.prototype.clear = function () {
-        var context = this.canvasEl.getContext('2d');
+        var context = this.canvasEl.getContext("2d");
         context.clearRect(0, 0, this.canvasEl.width, this.canvasEl.height);
     };
     GraphDrawingWrapper.prototype.clickVertex = function (v) {
@@ -17911,8 +17994,9 @@ var GraphDrawingWrapper = (function () {
         if (faded === void 0) { faded = false; }
         if (fillColors === void 0) { fillColors = planar_graph_1.ALL_COLORS; }
         this.vertices.push(v);
-        var context = this.canvasEl.getContext('2d');
-        context.strokeStyle = v === this.highlightedVertex ? "red" : (faded ? "lightgrey" : "black");
+        var context = this.canvasEl.getContext("2d");
+        context.strokeStyle =
+            v === this.highlightedVertex ? "red" : faded ? "lightgrey" : "black";
         context.fillStyle = "none";
         context.beginPath();
         context.arc(v.x, v.y, this.radius, 0, 2 * Math.PI);
@@ -17930,7 +18014,7 @@ var GraphDrawingWrapper = (function () {
         var _this = this;
         var n = fillColors.length;
         fillColors.forEach(function (color, idx) {
-            var context = _this.canvasEl.getContext('2d');
+            var context = _this.canvasEl.getContext("2d");
             context.fillStyle = colorToString(color, faded);
             context.beginPath();
             context.arc(v.x, v.y, _this.radius, 2 * idx * Math.PI / n, 2 * (idx + 1) * Math.PI / n);
@@ -17991,7 +18075,10 @@ var GraphDrawingWrapper = (function () {
         Object.keys(g.edges).forEach(function (e) {
             var _a = planar_graph_1.getEndpoints(g, e), v1 = _a[0], v2 = _a[1];
             var edgeColor;
-            edgeColor = lodash_1.includes(strongVertexKeys, v1) && lodash_1.includes(strongVertexKeys, v2) ? "black" : "lightgrey";
+            edgeColor =
+                lodash_1.includes(strongVertexKeys, v1) && lodash_1.includes(strongVertexKeys, v2)
+                    ? "black"
+                    : "lightgrey";
             _this.unsafeDrawEdge(g.vertices[v1], g.vertices[v2], edgeColor);
         });
         this.graph = g;
@@ -18000,7 +18087,7 @@ var GraphDrawingWrapper = (function () {
         this.highlightedVertex = null;
     };
     GraphDrawingWrapper.prototype.unsafeDrawEdge = function (v1, v2, strokeColor) {
-        var context = this.canvasEl.getContext('2d');
+        var context = this.canvasEl.getContext("2d");
         var unit = geom_1.unitVector(v1, v2);
         context.strokeStyle = strokeColor;
         context.beginPath();
@@ -18039,7 +18126,6 @@ var animAddEdge = function (g, pair) {
     return planar_graph_1.addEdge(g, pair[0], pair[1]);
 };
 var hullify = function (g) {
-    animation_1.addStep(animation_1.AnimationType.Describe, 1000, "Add edges so that the graph is triangulated and 2-connected. A coloring of the new graph will work as a coloring of the original graph.");
     var hullVertices = geom_1.convexHull(lodash_1.values(g.vertices));
     hullVertices.map(geom_1.getConsecutiveCoordPairs).forEach(function (pair) {
         if (planar_graph_1.safeAddEdge(g, pair[0], pair[1])) {
@@ -18051,9 +18137,10 @@ var hullify = function (g) {
 var getBestSplittingEdge = function (g, edgeKeys, faceKey) {
     var mostDist = -1;
     var bestPair = [];
-    var potentialEdges = edgeKeys.map(function (eKey) {
-        return [g.edges[eKey].origin, g.edges[g.edges[g.edges[eKey].next].next].origin];
-    });
+    var potentialEdges = edgeKeys.map(function (eKey) { return [
+        g.edges[eKey].origin,
+        g.edges[g.edges[g.edges[eKey].next].next].origin
+    ]; });
     var faceVertices = edgeKeys.map(function (eKey) { return g.vertices[g.edges[eKey].origin]; });
     for (var i = 0; i < potentialEdges.length; i++) {
         var v1 = g.vertices[potentialEdges[i][0]];
@@ -18077,9 +18164,7 @@ var splitFace = function (g, faceKey) {
     return g;
 };
 var isTriangulated = function (g) {
-    return Object.keys(g.faces).every(function (fKey) {
-        return (g.infiniteFace === fKey || planar_graph_1.getBoundaryEdgeKeys(g, fKey).length === 3);
-    });
+    return Object.keys(g.faces).every(function (fKey) { return g.infiniteFace === fKey || planar_graph_1.getBoundaryEdgeKeys(g, fKey).length === 3; });
 };
 var triangulate = function (g) {
     while (!isTriangulated(g)) {
@@ -18089,7 +18174,7 @@ var triangulate = function (g) {
             }
         });
     }
-    animation_1.addStep(animation_1.AnimationType.Pause, 3000, {});
+    animation_1.addStep(animation_1.AnimationType.DescribeAddEdges, 1000, "Add edges so that the graph is triangulated and 2-connected (i.e. can't be disconnected by removing one edge or vertex). Adding edges only makes our problem harder; a coloring of the new graph will work as a coloring of the original graph.");
     return g;
 };
 var preColor = function (g) {
@@ -18102,9 +18187,7 @@ var preColor = function (g) {
     });
     animation_1.addStep(animation_1.AnimationType.Pause, 1000, {});
     animation_1.addStep(animation_1.AnimationType.Describe, 2000, "Restrict outer vertices to three possible colors");
-    boundingVertices.forEach(function (vKey) {
-        return g = updateColors(g, vKey, planar_graph_1.ALL_COLORS.slice(0, 3), 0);
-    });
+    boundingVertices.forEach(function (vKey) { return (g = updateColors(g, vKey, planar_graph_1.ALL_COLORS.slice(0, 3), 0)); });
     animation_1.addStep(animation_1.AnimationType.Pause, 1000, {});
     g = updateColors(g, g.mark1, [planar_graph_1.Color.Red], 0);
     g = updateColors(g, g.mark2, [planar_graph_1.Color.Blue], 0);
@@ -18112,12 +18195,18 @@ var preColor = function (g) {
     return g;
 };
 var updateColors = function (g, vKey, colors, time) {
-    animation_1.addStep(animation_1.AnimationType.UpdateColors, time, { vertex: g.vertices[vKey], colors: colors });
+    animation_1.addStep(animation_1.AnimationType.UpdateColors, time, {
+        vertex: g.vertices[vKey],
+        colors: colors
+    });
     return planar_graph_1.setColors(g, vKey, colors);
 };
 var colorTriangle = function (g) {
     var badColors = [planar_graph_1.getColors(g, g.mark1)[0], planar_graph_1.getColors(g, g.mark2)[0]];
-    var thirdVertexKey = lodash_1.difference(Object.keys(g.vertices), [g.mark1, g.mark2])[0];
+    var thirdVertexKey = lodash_1.difference(Object.keys(g.vertices), [
+        g.mark1,
+        g.mark2
+    ])[0];
     var okayColor = lodash_1.difference(planar_graph_1.getColors(g, thirdVertexKey), badColors)[0];
     animation_1.addStep(animation_1.AnimationType.DescribeTriangle, 1000, "The triangle has two colored vertices and one vertex with three choices. So we can always color the third vertex");
     return updateColors(g, thirdVertexKey, [okayColor], 100);
@@ -18201,9 +18290,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var canvas_wrapper_1 = __webpack_require__(4);
 var thomassen_1 = __webpack_require__(5);
 var animation_1 = __webpack_require__(2);
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener("DOMContentLoaded", function () {
     var wrapper = new canvas_wrapper_1.GraphDrawingWrapper("canvas", 10);
-    document.getElementById('animate-button').addEventListener("click", function () {
+    document.getElementById("animate-button").addEventListener("click", function () {
         thomassen_1.fiveColor(wrapper.graph);
         animation_1.animate(wrapper);
     });

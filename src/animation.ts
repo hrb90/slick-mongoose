@@ -2,6 +2,8 @@ import { GraphDrawingWrapper } from "./canvas_wrapper";
 import { Color } from "./planar_graph";
 import { filter, findIndex } from "lodash";
 
+// Refactor this to just have a "describe" type and a "describew"
+
 export enum AnimationType {
   AddEdge,
   UpdateColors,
@@ -9,6 +11,7 @@ export enum AnimationType {
   HighlightEdge,
   Pause,
   Describe,
+  DescribeAddEdges,
   DescribeChordlessOne,
   DescribeChordlessTwo,
   DescribeChordlessThree,
@@ -34,7 +37,7 @@ const addContinueButton = (callback: () => void) => {
   continueButton.id = "continueButton";
   continueButton.innerText = "Continue";
   continueButton.onclick = callback;
-  document.getElementById("description").appendChild(continueButton);
+  document.getElementById("sidebar").appendChild(continueButton);
 };
 
 const removeElementById = (id: string): void => {
@@ -54,6 +57,7 @@ export const resetAnimation = (): void => {
 
 export const postProcessAnimation = (): void => {
   [
+    AnimationType.DescribeAddEdges,
     AnimationType.DescribeChorded,
     AnimationType.DescribeTriangle,
     AnimationType.DescribeChordlessOne,
@@ -86,6 +90,7 @@ export const drawStep = (a: Animation, canvas: GraphDrawingWrapper): void => {
       canvas.unsafeDrawEdge(a.data[0], a.data[1], "red");
       break;
     case AnimationType.Describe:
+    case AnimationType.DescribeAddEdges:
     case AnimationType.DescribeChorded:
     case AnimationType.DescribeTriangle:
     case AnimationType.DescribeChordlessOne:
