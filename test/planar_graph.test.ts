@@ -15,6 +15,7 @@ import {
   findVp
 } from "../src/planar_graph";
 import { Coord } from "../src/geom";
+import {} from "jest";
 
 const v = (x: number, y: number) => ({ x: x, y: y });
 

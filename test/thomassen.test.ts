@@ -6,6 +6,7 @@ import {
 } from "../src/planar_graph";
 import { fiveColor } from "../src/thomassen";
 import { Coord } from "../src/geom";
+import {} from "jest";
 
 const v = (x: number, y: number) => ({ x: x, y: y });
 
