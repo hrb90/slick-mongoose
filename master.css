@@ -13,6 +13,10 @@ button {
   margin-bottom: 5px;
 }
 
+#intro {
+  margin: 8px;
+}
+
 #canvas {
   cursor: crosshair;
   margin-right: 5px;
