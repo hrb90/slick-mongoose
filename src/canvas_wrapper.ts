@@ -31,6 +31,7 @@ export class GraphDrawingWrapper {
   graph: PlanarGraph;
   vertices: Array<Coord>;
   highlightedVertex: Coord | null;
+  highlightedEdge: [Coord, Coord] | null;
   highlightedGraph: PlanarGraph;
   radius: number;
 
@@ -44,6 +45,7 @@ export class GraphDrawingWrapper {
     this.graph = createEmptyPlanarGraph();
     this.highlightedGraph = this.graph;
     this.highlightedVertex = null;
+    this.highlightedEdge = null;
   }
 
   clear() {
@@ -56,10 +58,13 @@ export class GraphDrawingWrapper {
       if (v !== this.highlightedVertex) {
         this.drawEdge(v, this.highlightedVertex);
       }
+      let highlit = this.highlightedVertex;
       this.unhighlightVertex();
+      this.drawCircle(highlit);
     } else {
       this.highlightVertex(v);
     }
+    this.drawCircle(v);
   }
 
   doesAddEdge(v1: Coord, v2: Coord) {
@@ -79,8 +84,11 @@ export class GraphDrawingWrapper {
   ) {
     this.vertices.push(v);
     let context = this.canvasEl.getContext("2d");
-    context.strokeStyle =
-      v === this.highlightedVertex ? "red" : faded ? "lightgrey" : "black";
+    context.strokeStyle = faded ? "lightgrey" : "black";
+    context.lineWidth = 2;
+    if (this.highlightedVertex && eq(v, this.highlightedVertex)) {
+      context.strokeStyle = "red";
+    }
     context.fillStyle = "none";
     context.beginPath();
     context.arc(v.x, v.y, this.radius, 0, 2 * Math.PI);
@@ -133,6 +141,10 @@ export class GraphDrawingWrapper {
     }
   }
 
+  highlightEdge(v1: Coord, v2: Coord) {
+    this.highlightedEdge = [v1, v2];
+  }
+
   highlightGraph(g: PlanarGraph) {
     this.highlightedGraph = g;
   }
@@ -143,6 +155,14 @@ export class GraphDrawingWrapper {
     } else {
       this.highlightedVertex = v;
     }
+  }
+
+  isHighlightedEdge(v1: Coord, v2: Coord) {
+    if (this.highlightedEdge === null) return false;
+    const h1 = this.highlightedEdge[0];
+    const h2 = this.highlightedEdge[1];
+    console.log("checking for highlight", h1, v1, h2, v2)
+    return (eq(h1, v1) && eq(h2, v2)) || (eq(h1, v2) && eq(h2, v1));
   }
 
   redraw() {
@@ -169,9 +189,17 @@ export class GraphDrawingWrapper {
         includes(strongVertexKeys, v1) && includes(strongVertexKeys, v2)
           ? "black"
           : "lightgrey";
+      if (this.isHighlightedEdge(g.vertices[v1], g.vertices[v2])) {
+        console.log("found highlighted edge");
+        edgeColor = "red";
+      }
       this.unsafeDrawEdge(g.vertices[v1], g.vertices[v2], edgeColor);
     });
     this.graph = g;
+  }
+
+  unhighlightEdge() {
+    this.highlightedEdge = null;
   }
 
   unhighlightVertex() {
@@ -182,6 +210,7 @@ export class GraphDrawingWrapper {
     let context = this.canvasEl.getContext("2d");
     let unit = unitVector(v1, v2);
     context.strokeStyle = strokeColor;
+    context.lineWidth = 1;
     context.beginPath();
     context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
     context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
@@ -191,7 +220,6 @@ export class GraphDrawingWrapper {
   updateColors(v: Coord, colors: Color[]) {
     let vKey = getVertexKey(this.graph, v);
     this.graph = setColors(this.graph, vKey, colors);
-    this.highlightVertex(v);
     this.redraw();
   }
 }

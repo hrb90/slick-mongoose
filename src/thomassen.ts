@@ -239,12 +239,13 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
 };
 
 const colorChordedGraph = (g: PlanarGraph, chordKey: string): PlanarGraph => {
+  addStep(AnimationType.HighlightEdge, 500, getEndpoints(g, chordKey).map(vKey => g.vertices[vKey]));
   addStep(
     AnimationType.DescribeChorded,
     500,
     "There is a chord; split the graph and recursively color the subgraphs"
   );
-  addStep(AnimationType.HighlightEdge, 500, getEndpoints(g, chordKey));
+  addStep(AnimationType.UnhighlightEdge, 0, null)
   let [firstSubgraph, secondSubgraph] = splitChordedGraph(g, chordKey);
   firstSubgraph = color(firstSubgraph);
   secondSubgraph = updateColors(
@@ -259,6 +260,8 @@ const colorChordedGraph = (g: PlanarGraph, chordKey: string): PlanarGraph => {
     getColors(firstSubgraph, secondSubgraph.mark2),
     500
   );
+  addStep(AnimationType.HighlightEdge, 500, getEndpoints(g, chordKey).map(vKey => g.vertices[vKey]));
+  addStep(AnimationType.UnhighlightEdge, 0, null)
   secondSubgraph = color(secondSubgraph);
   let newGraph = transferColors(g, firstSubgraph);
   newGraph = transferColors(newGraph, secondSubgraph);

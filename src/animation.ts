@@ -9,6 +9,7 @@ export enum AnimationType {
   UpdateColors,
   RestrictGraph,
   HighlightEdge,
+  UnhighlightEdge,
   Pause,
   Describe,
   DescribeAddEdges,
@@ -87,8 +88,12 @@ export const drawStep = (a: Animation, canvas: GraphDrawingWrapper): void => {
       canvas.redraw();
       break;
     case AnimationType.HighlightEdge:
-      canvas.unsafeDrawEdge(a.data[0], a.data[1], "red");
+      canvas.highlightEdge(a.data[0], a.data[1]);
+      canvas.redraw();
       break;
+    case AnimationType.UnhighlightEdge:
+      canvas.unhighlightEdge();
+      canvas.redraw();
     case AnimationType.Describe:
     case AnimationType.DescribeAddEdges:
     case AnimationType.DescribeChorded:
