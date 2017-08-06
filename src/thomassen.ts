@@ -170,7 +170,9 @@ const colorTriangle = (g: PlanarGraph): PlanarGraph => {
     800,
     "The triangle has two colored vertices and one vertex with three choices. So we can always color the third vertex."
   );
-  return updateColors(g, thirdVertexKey, [okayColor], 100);
+  const newGraph = updateColors(g, thirdVertexKey, [okayColor], 100);
+  addStep(AnimationType.Pause, 300, {});
+  return newGraph;
 };
 
 const transferColors = (
@@ -235,6 +237,7 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
     difference(twoColors, getColors(newGraph, vp1)).slice(0, 1),
     800
   );
+  addStep(AnimationType.Pause, 300, {});
   return newGraph;
 };
 
@@ -265,11 +268,13 @@ const colorChordedGraph = (g: PlanarGraph, chordKey: string): PlanarGraph => {
   secondSubgraph = color(secondSubgraph);
   let newGraph = transferColors(g, firstSubgraph);
   newGraph = transferColors(newGraph, secondSubgraph);
+  addStep(AnimationType.Pause, 300, {});
   return newGraph;
 };
 
 const color = (g: PlanarGraph): PlanarGraph => {
   addStep(AnimationType.RestrictGraph, 0, { graph: g });
+  addStep(AnimationType.Pause, 300, {});
   if (values(g.vertices).length == 3) {
     return colorTriangle(g);
   } else {
