@@ -167,7 +167,7 @@ const colorTriangle = (g: PlanarGraph): PlanarGraph => {
   let okayColor = difference(getColors(g, thirdVertexKey), badColors)[0];
   addStep(
     AnimationType.DescribeTriangle,
-    500,
+    800,
     "The triangle has two colored vertices and one vertex with three choices. So we can always color the third vertex."
   );
   return updateColors(g, thirdVertexKey, [okayColor], 100);
@@ -193,15 +193,15 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
   );
   addStep(
     AnimationType.DescribeChordlessOne,
-    500,
+    800,
     "There is no chord... Find a vertex on the outside of the graph that is a neighbor of a colored vertex and restrict it to two colors, not including the color of the colored vertex"
   );
-  let updatedGraph = updateColors(g, vp, twoColors, 500);
+  let updatedGraph = updateColors(g, vp, twoColors, 800);
   let subGraph = removeVertex(updatedGraph, vp);
   let vp1: string;
   addStep(
     AnimationType.DescribeChordlessTwo,
-    500,
+    800,
     "Ensure that the neighbors of the vertex in the interior of the graph can't be colored with those two colors. Only one of this vertex's neighbors can be colored with even one of the two colors, so we will be able to come back and properly color this vertex."
   );
   getAdjacentVertices(g, vp).forEach(vKey => {
@@ -218,7 +218,7 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
   });
   addStep(
     AnimationType.DescribeChordlessThree,
-    500,
+    800,
     "Recursively color the graph with the vertex removed"
   );
   subGraph = color(subGraph);
@@ -226,23 +226,23 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
   addStep(AnimationType.RestrictGraph, 0, { graph: newGraph });
   addStep(
     AnimationType.DescribeChordlessFour,
-    500,
+    800,
     "Color the vertex we removed"
   );
   newGraph = updateColors(
     newGraph,
     vp,
     difference(twoColors, getColors(newGraph, vp1)).slice(0, 1),
-    500
+    800
   );
   return newGraph;
 };
 
 const colorChordedGraph = (g: PlanarGraph, chordKey: string): PlanarGraph => {
-  addStep(AnimationType.HighlightEdge, 500, getEndpoints(g, chordKey).map(vKey => g.vertices[vKey]));
+  addStep(AnimationType.HighlightEdge, 800, getEndpoints(g, chordKey).map(vKey => g.vertices[vKey]));
   addStep(
     AnimationType.DescribeChorded,
-    500,
+    800,
     "There is a chord; split the graph and recursively color the subgraphs"
   );
   addStep(AnimationType.UnhighlightEdge, 0, null)
@@ -252,15 +252,15 @@ const colorChordedGraph = (g: PlanarGraph, chordKey: string): PlanarGraph => {
     secondSubgraph,
     secondSubgraph.mark1,
     getColors(firstSubgraph, secondSubgraph.mark1),
-    500
+    800
   );
   secondSubgraph = updateColors(
     secondSubgraph,
     secondSubgraph.mark2,
     getColors(firstSubgraph, secondSubgraph.mark2),
-    500
+    800
   );
-  addStep(AnimationType.HighlightEdge, 500, getEndpoints(g, chordKey).map(vKey => g.vertices[vKey]));
+  addStep(AnimationType.HighlightEdge, 800, getEndpoints(g, chordKey).map(vKey => g.vertices[vKey]));
   addStep(AnimationType.UnhighlightEdge, 0, null)
   secondSubgraph = color(secondSubgraph);
   let newGraph = transferColors(g, firstSubgraph);
