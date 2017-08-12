@@ -94,7 +94,7 @@ export const addEdge = (
   let vKey2 = getVertexKey(graph, c2);
   if (!vKey1 && !vKey2) {
     if (values(graph.vertices).length > 0)
-      throw new Error("Please keep the graph connected");
+      throw "KeepGraphConnected";
     return begin(c1, c2);
   } else if (!vKey1 && vKey2) {
     return connectNewVertex(graph, vKey2, c1);

@@ -73,6 +73,9 @@ export class GraphDrawingWrapper {
       this.highlightedGraph = this.graph;
       return true;
     } catch (e) {
+      if (e === "KeepGraphConnected") {
+        alert("Please keep the graph connected");
+      }
       return false;
     }
   }
