@@ -55,6 +55,10 @@ export class GraphDrawingWrapper {
     context.clearRect(0, 0, this.canvasEl.width, this.canvasEl.height);
   }
 
+  darken() {
+    this.canvasEl.className = "greyer-canvas";
+  }
+
   clickVertex(v: Coord) {
     if (this.highlightedVertex) {
       if (v !== this.highlightedVertex) {
@@ -174,6 +178,10 @@ export class GraphDrawingWrapper {
     const h2 = this.highlightedEdge[1];
     console.log("checking for highlight", h1, v1, h2, v2)
     return (eq(h1, v1) && eq(h2, v2)) || (eq(h1, v2) && eq(h2, v1));
+  }
+
+  lighten() {
+    this.canvasEl.className = "";
   }
 
   redraw() {

@@ -6,8 +6,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let wrapper = new GraphDrawingWrapper("canvas", 10);
 
   document.getElementById("animate-button").addEventListener("click", () => {
-    wrapper.unhighlightVertex();
-    fiveColor(wrapper.graph);
-    animate(wrapper);
+    if (!wrapper.frozen) {      
+      wrapper.unhighlightVertex();
+      fiveColor(wrapper.graph);
+      animate(wrapper);
+    }
   });
 });

@@ -1,6 +1,7 @@
 import { GraphDrawingWrapper } from "./canvas_wrapper";
 import { Color } from "./planar_graph";
 import { filter, findIndex } from "lodash";
+import { bind, unbind } from "mousetrap";
 
 // Refactor this to just have a "describe" type and a "describew"
 
@@ -36,10 +37,13 @@ const updateDescription = (text: string) => {
 };
 
 const addContinueButton = (callback: () => void) => {
-  var continueButton = document.createElement("button");
+  var continueButton = document.createElement("strong");
   continueButton.id = "continueButton";
-  continueButton.innerText = "Continue";
-  continueButton.onclick = callback;
+  continueButton.innerText = "Press spacebar to continue";
+  bind('space', () => {
+    unbind('space');
+    callback();
+  })
   document.getElementById("sidebar").appendChild(continueButton);
 };
 
@@ -123,7 +127,9 @@ export const animate = (canvas: GraphDrawingWrapper): void => {
     let step = animationSteps.shift();
     drawStep(step, canvas);
     if (step.addButton) {
+      canvas.darken();
       addContinueButton(() => {
+        canvas.lighten();
         animate(canvas);
         removeElementById("continueButton");
       });

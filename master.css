@@ -21,3 +21,7 @@ button {
   cursor: crosshair;
   margin-right: 5px;
 }
+
+.greyer-canvas {
+  background-color: #f0f0f0;
+}
