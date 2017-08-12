@@ -34,6 +34,7 @@ export class GraphDrawingWrapper {
   highlightedEdge: [Coord, Coord] | null;
   highlightedGraph: PlanarGraph;
   radius: number;
+  frozen: boolean;
 
   constructor(canvasId: string, radius: number = 15) {
     this.radius = radius;
@@ -46,6 +47,7 @@ export class GraphDrawingWrapper {
     this.highlightedGraph = this.graph;
     this.highlightedVertex = null;
     this.highlightedEdge = null;
+    this.frozen = false;
   }
 
   clear() {
@@ -124,23 +126,29 @@ export class GraphDrawingWrapper {
     });
   }
 
+  freeze() {
+    this.frozen = true;
+  }
+
   handleClick(e: MouseEvent) {
-    try {
-      let newVertex = <Coord>{ x: e.x, y: e.y, colors: [] };
-      let clickedVertex: Coord | undefined;
-      let overlappingVertex: Coord | undefined;
-      this.vertices.forEach(v => {
-        let dist = distance(v, newVertex);
-        if (dist <= this.radius) clickedVertex = v;
-        if (dist <= 2 * this.radius) overlappingVertex = v;
-      });
-      if (clickedVertex) {
-        this.clickVertex(clickedVertex);
-      } else if (!overlappingVertex) {
-        this.drawCircle(newVertex);
+    if (!this.frozen) {
+      try {
+        let newVertex = <Coord>{ x: e.x, y: e.y, colors: [] };
+        let clickedVertex: Coord | undefined;
+        let overlappingVertex: Coord | undefined;
+        this.vertices.forEach(v => {
+          let dist = distance(v, newVertex);
+          if (dist <= this.radius) clickedVertex = v;
+          if (dist <= 2 * this.radius) overlappingVertex = v;
+        });
+        if (clickedVertex) {
+          this.clickVertex(clickedVertex);
+        } else if (!overlappingVertex) {
+          this.drawCircle(newVertex);
+        }
+      } catch (err) {
+        alert(err.message);
       }
-    } catch (err) {
-      alert(err.message);
     }
   }
 
@@ -199,6 +207,10 @@ export class GraphDrawingWrapper {
       this.unsafeDrawEdge(g.vertices[v1], g.vertices[v2], edgeColor);
     });
     this.graph = g;
+  }
+
+  unfreeze() {
+    this.frozen = false;
   }
 
   unhighlightEdge() {

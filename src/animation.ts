@@ -6,6 +6,8 @@ import { filter, findIndex } from "lodash";
 
 export enum AnimationType {
   AddEdge,
+  Begin,
+  End,
   UpdateColors,
   RestrictGraph,
   HighlightEdge,
@@ -79,6 +81,12 @@ export const drawStep = (a: Animation, canvas: GraphDrawingWrapper): void => {
   switch (a.type) {
     case AnimationType.AddEdge:
       canvas.drawEdge(a.data[0], a.data[1], "blue");
+      break;
+    case AnimationType.Begin:
+      canvas.freeze();
+      break;
+    case AnimationType.End:
+      canvas.unfreeze();
       break;
     case AnimationType.UpdateColors:
       canvas.updateColors(a.data.vertex, a.data.colors);

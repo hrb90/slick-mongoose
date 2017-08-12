@@ -289,9 +289,11 @@ const color = (g: PlanarGraph): PlanarGraph => {
 
 export const fiveColor = (graph: PlanarGraph): PlanarGraph => {
   resetAnimation();
+  addStep(AnimationType.Begin, 0, {});
   let coloredGraph = color(preColor(triangulate(hullify(graph))));
   addStep(AnimationType.RestrictGraph, 0, { graph: coloredGraph });
   addStep(AnimationType.Describe, 0, "We're done!");
+  addStep(AnimationType.End, 0, {});
   postProcessAnimation();
   return coloredGraph;
 };
