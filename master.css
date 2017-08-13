@@ -4,24 +4,45 @@ body, html {
   margin: 0 10px 0 0;
 }
 
-button {
-  display: block;
+@media (min-width: 1200px) {
+  button {
+    display: block;
+  }
+
+  #top {
+    display: flex;
+    margin-bottom: 5px;
+  }
+
+  #intro {
+    margin: 8px;
+  }
+
+  #canvas {
+    cursor: crosshair;
+    margin-right: 5px;
+  }
+
+  #sidebar {
+    word-wrap: normal;
+    max-width: 200px;
+  }
+
+  .greyer-canvas {
+    background-color: #f0f0f0;
+  }
+
+  #sorry {
+    display: none;
+  }
 }
 
-#top {
-  display: flex;
-  margin-bottom: 5px;
-}
+@media (max-width: 1200px) {
+  #sorry {
+    display: block;
+  }
 
-#intro {
-  margin: 8px;
-}
-
-#canvas {
-  cursor: crosshair;
-  margin-right: 5px;
-}
-
-.greyer-canvas {
-  background-color: #f0f0f0;
+  #top {
+    display: none;
+  }
 }

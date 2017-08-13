@@ -137,7 +137,7 @@ export class GraphDrawingWrapper {
   handleClick(e: MouseEvent) {
     if (!this.frozen) {
       try {
-        let newVertex = <Coord>{ x: e.x, y: e.y, colors: [] };
+        let newVertex = this.translateEventToCoord(e);
         let clickedVertex: Coord | undefined;
         let overlappingVertex: Coord | undefined;
         this.vertices.forEach(v => {
@@ -176,7 +176,7 @@ export class GraphDrawingWrapper {
     if (this.highlightedEdge === null) return false;
     const h1 = this.highlightedEdge[0];
     const h2 = this.highlightedEdge[1];
-    console.log("checking for highlight", h1, v1, h2, v2)
+    console.log("checking for highlight", h1, v1, h2, v2);
     return (eq(h1, v1) && eq(h2, v2)) || (eq(h1, v2) && eq(h2, v1));
   }
 
@@ -215,6 +215,16 @@ export class GraphDrawingWrapper {
       this.unsafeDrawEdge(g.vertices[v1], g.vertices[v2], edgeColor);
     });
     this.graph = g;
+  }
+
+  translateEventToCoord(e: MouseEvent): Coord {
+    console.log(this.canvasEl.offsetTop);
+    console.log(this.canvasEl.offsetLeft);
+    return {
+      x: e.x - this.canvasEl.offsetLeft,
+      y: e.y - this.canvasEl.offsetTop,
+      colors: []
+    } as Coord;
   }
 
   unfreeze() {
