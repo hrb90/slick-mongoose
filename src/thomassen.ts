@@ -35,6 +35,7 @@ import {
   resetAnimation,
   postProcessAnimation
 } from "./animation";
+import { EXPLANATIONS } from "./explanation";
 import { values, forIn, includes, difference, cloneDeep } from "lodash";
 
 const minDist = (cList: Coord[], ep1: Coord, ep2: Coord): number => {
@@ -106,11 +107,7 @@ const triangulate = (g: PlanarGraph): PlanarGraph => {
       }
     });
   }
-  addStep(
-    AnimationType.DescribeAddEdges,
-    0,
-    "Add edges so that the graph is triangulated and 2-connected (i.e. can't be disconnected by removing one edge or vertex). Adding edges only makes our problem harder; a coloring of the new graph will work as a coloring of the original graph."
-  );
+  addStep(AnimationType.DescribeAddEdges, 0, EXPLANATIONS.addEdges);
   return g;
 };
 
@@ -118,30 +115,18 @@ const preColor = (g: PlanarGraph): PlanarGraph => {
   const boundingVertices = getBoundaryVertexKeys(g, g.infiniteFace);
   g.mark1 = boundingVertices[0];
   g.mark2 = boundingVertices[1];
-  addStep(
-    AnimationType.Describe,
-    2000,
-    "Begin with vertices having five possible colors"
-  );
+  addStep(AnimationType.Describe, 2000, EXPLANATIONS.fiveChoices);
   Object.keys(g.vertices).forEach(vKey => {
     g = updateColors(g, vKey, ALL_COLORS, 0);
   });
-  addStep(
-    AnimationType.Describe,
-    2000,
-    "Restrict outer vertices to three possible colors"
-  );
+  addStep(AnimationType.Describe, 2000, EXPLANATIONS.restrictOuter);
   boundingVertices.forEach(
     vKey => (g = updateColors(g, vKey, ALL_COLORS.slice(0, 3), 0))
   );
   addStep(AnimationType.Pause, 1000, {});
   g = updateColors(g, g.mark1, [Color.Red], 0);
   g = updateColors(g, g.mark2, [Color.Blue], 0);
-  addStep(
-    AnimationType.DescribePreColor,
-    2000,
-    "Color two adjacent outer vertices red and blue. Note that the interior vertices have five possible colors, two outer vertices are colored, and the rest of the outer vertices have three possible colors. This will be an invariant throughout the recursive algorithm."
-  );
+  addStep(AnimationType.DescribePreColor, 2000, EXPLANATIONS.endPreColor);
   return g;
 };
 
@@ -165,11 +150,7 @@ const colorTriangle = (g: PlanarGraph): PlanarGraph => {
     g.mark2
   ])[0];
   let okayColor = difference(getColors(g, thirdVertexKey), badColors)[0];
-  addStep(
-    AnimationType.DescribeTriangle,
-    800,
-    "The triangle has two colored vertices and one vertex with three choices. So we can always color the third vertex."
-  );
+  addStep(AnimationType.DescribeTriangle, 800, EXPLANATIONS.baseCase);
   const newGraph = updateColors(g, thirdVertexKey, [okayColor], 100);
   addStep(AnimationType.Pause, 300, {});
   return newGraph;
@@ -196,7 +177,7 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
   addStep(
     AnimationType.DescribeChordlessOne,
     800,
-    "There is no chord... Find a vertex on the outside of the graph that is a neighbor of a colored vertex and restrict it to two colors, not including the color of the colored vertex"
+    EXPLANATIONS.chordlessPartOne
   );
   let updatedGraph = updateColors(g, vp, twoColors, 800);
   let subGraph = removeVertex(updatedGraph, vp);
@@ -204,7 +185,7 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
   addStep(
     AnimationType.DescribeChordlessTwo,
     800,
-    "Ensure that the neighbors of the vertex in the interior of the graph can't be colored with those two colors. Only one of this vertex's neighbors can be colored with even one of the two colors, so we will be able to come back and properly color this vertex."
+    EXPLANATIONS.chordlessPartTwo
   );
   getAdjacentVertices(g, vp).forEach(vKey => {
     if (!includes(boundaryVertices, vKey)) {
@@ -221,7 +202,7 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
   addStep(
     AnimationType.DescribeChordlessThree,
     800,
-    "Recursively color the graph with the vertex removed"
+    EXPLANATIONS.chordlessPartThree
   );
   subGraph = color(subGraph);
   let newGraph = transferColors(updatedGraph, subGraph);
@@ -229,7 +210,7 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
   addStep(
     AnimationType.DescribeChordlessFour,
     800,
-    "Color the vertex we removed"
+    EXPLANATIONS.chordlessPartFour
   );
   newGraph = updateColors(
     newGraph,
@@ -242,13 +223,13 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
 };
 
 const colorChordedGraph = (g: PlanarGraph, chordKey: string): PlanarGraph => {
-  addStep(AnimationType.HighlightEdge, 800, getEndpoints(g, chordKey).map(vKey => g.vertices[vKey]));
   addStep(
-    AnimationType.DescribeChorded,
+    AnimationType.HighlightEdge,
     800,
-    "There is a chord; split the graph and recursively color the subgraphs"
+    getEndpoints(g, chordKey).map(vKey => g.vertices[vKey])
   );
-  addStep(AnimationType.UnhighlightEdge, 0, null)
+  addStep(AnimationType.DescribeChorded, 800, EXPLANATIONS.chorded);
+  addStep(AnimationType.UnhighlightEdge, 0, null);
   let [firstSubgraph, secondSubgraph] = splitChordedGraph(g, chordKey);
   firstSubgraph = color(firstSubgraph);
   secondSubgraph = updateColors(
@@ -263,8 +244,12 @@ const colorChordedGraph = (g: PlanarGraph, chordKey: string): PlanarGraph => {
     getColors(firstSubgraph, secondSubgraph.mark2),
     800
   );
-  addStep(AnimationType.HighlightEdge, 800, getEndpoints(g, chordKey).map(vKey => g.vertices[vKey]));
-  addStep(AnimationType.UnhighlightEdge, 0, null)
+  addStep(
+    AnimationType.HighlightEdge,
+    800,
+    getEndpoints(g, chordKey).map(vKey => g.vertices[vKey])
+  );
+  addStep(AnimationType.UnhighlightEdge, 0, null);
   secondSubgraph = color(secondSubgraph);
   let newGraph = transferColors(g, firstSubgraph);
   newGraph = transferColors(newGraph, secondSubgraph);
@@ -292,7 +277,7 @@ export const fiveColor = (graph: PlanarGraph): PlanarGraph => {
   addStep(AnimationType.Begin, 0, {});
   let coloredGraph = color(preColor(triangulate(hullify(graph))));
   addStep(AnimationType.RestrictGraph, 0, { graph: coloredGraph });
-  addStep(AnimationType.Describe, 0, "We're done!");
+  addStep(AnimationType.Describe, 0, EXPLANATIONS.finished);
   addStep(AnimationType.End, 0, {});
   postProcessAnimation();
   return coloredGraph;
