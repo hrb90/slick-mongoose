@@ -1,6 +1,6 @@
 # slick-mongoose
 
-A visualization of [Carsten Thomassen's proof](http://dl.acm.org/citation.cfm?id=184192) of the 5-color theorem for planar graphs.
+A visualization of [Carsten Thomassen's proof](http://dl.acm.org/citation.cfm?id=184192) of the 5-color theorem for planar graphs. [See it in action here](http://www.harrisonrbrown.com/slick-mongoose).
 
 `geom.ts` implements some basic computational geometry primitives.
 
