@@ -4,9 +4,14 @@ A visualization of [Carsten Thomassen's proof](http://dl.acm.org/citation.cfm?id
 
 ## Contributing
 
-The sidebar text explaining what's going on in the visualization lives in `explanation.ts`; pull requests to improve the explanatory text are welcome.
+The sidebar text explaining what's going on in the visualization lives in `explanation.ts`; pull requests to improve the explanatory text are encouraged!
 
-You should probably not touch (or read...) any of the code in the other files, but if you insist on it, you can run some smell tests with `npm test`.
+The code in the other files is poorly documented and has very little test coverage, but if you want to tinker,
+
+`npm install`
+`npm test`.
+
+## What's where
 
 `geom.ts` implements some basic computational geometry primitives.
 
