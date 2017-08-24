@@ -9,6 +9,7 @@ The sidebar text explaining what's going on in the visualization lives in `expla
 The code in the other files is poorly documented and has very little test coverage, but if you want to tinker,
 
 `npm install`
+
 `npm test`.
 
 ## What's where
