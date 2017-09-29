@@ -6,7 +6,7 @@ export interface Coord {
 // coordinate equality
 export const eq = (a: Coord, b: Coord) => {
   const intEq = (x: number, y: number) => Math.abs(x - y) < 0.1;
-  return intEq(a.x, b.x) && intEq(a.y, b.y);
+  return intEq(a.x, b.x) && intEq(a.y, b.y)
 };
 
 // 2-dimensional cross product

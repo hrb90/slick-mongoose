@@ -1,6 +1,14 @@
 import { Coord, eq, intersect, inInterior, isClockwise, angle } from "./geom";
-import { values, includes, subtractArrs, intersection, find } from "./utils";
-const cloneDeep = require("lodash.clonedeep");
+import {
+  intersection,
+  find,
+  uniq,
+  forIn,
+  values,
+  cloneDeep,
+  includes,
+  difference
+} from "lodash";
 
 export interface Face {
   infinite: boolean;
@@ -85,7 +93,8 @@ export const addEdge = (
   let vKey1 = getVertexKey(graph, c1);
   let vKey2 = getVertexKey(graph, c2);
   if (!vKey1 && !vKey2) {
-    if (values(graph.vertices).length > 0) throw "KeepGraphConnected";
+    if (values(graph.vertices).length > 0)
+      throw "KeepGraphConnected";
     return begin(c1, c2);
   } else if (!vKey1 && vKey2) {
     return connectNewVertex(graph, vKey2, c1);
@@ -531,8 +540,8 @@ const getNextClockwiseEdgeKey = (
 
 export const getVertexKey = (graph: PlanarGraph, c: Coord): string | null => {
   let matchedVertexKey = null;
-  Object.keys(graph.vertices).forEach((key: string) => {
-    if (eq(graph.vertices[key], c)) matchedVertexKey = key;
+  forIn(graph.vertices, (value: Vertex, key: String) => {
+    if (eq(value, c)) matchedVertexKey = key;
   });
   return matchedVertexKey;
 };

@@ -1,8 +1,8 @@
-import { mapValues } from "./utils";
+import { mapValues } from "lodash";
 
 const readable = {
   addEdges: `Add edges so that the graph is triangulated and 2-connected (i.e.
-  can't be disconnected by removing one edge or vertex). Adding edges only makes 
+  can't be disconnected by removing one edge or vertex). Adding edges only makes
   our problem harder; a coloring of the new graph will work as a coloring of the
   original graph.`,
   fiveChoices: "Begin with vertices having five possible colors",

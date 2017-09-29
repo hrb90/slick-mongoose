@@ -36,8 +36,7 @@ import {
   postProcessAnimation
 } from "./animation";
 import { EXPLANATIONS } from "./explanation";
-import { values, subtractArrs, includes } from "./utils";
-const cloneDeep = require("lodash.clonedeep");
+import { values, forIn, includes, difference, cloneDeep } from "lodash";
 
 const minDist = (cList: Coord[], ep1: Coord, ep2: Coord): number => {
   let sansEndpoints = cList.filter(v => !(eq(v, ep1) || eq(v, ep2)));
@@ -102,7 +101,7 @@ const isTriangulated = (g: PlanarGraph): boolean => {
 
 const triangulate = (g: PlanarGraph): PlanarGraph => {
   while (!isTriangulated(g)) {
-    Object.keys(g.faces).forEach((fKey: string) => {
+    forIn(g.faces, (f: Face, fKey: string) => {
       if (getBoundaryEdgeKeys(g, fKey).length > 3) {
         g = splitFace(g, fKey);
       }
@@ -146,11 +145,11 @@ const updateColors = (
 
 const colorTriangle = (g: PlanarGraph): PlanarGraph => {
   let badColors = [getColors(g, g.mark1)[0], getColors(g, g.mark2)[0]];
-  let thirdVertexKey = subtractArrs(Object.keys(g.vertices), [
+  let thirdVertexKey = difference(Object.keys(g.vertices), [
     g.mark1,
     g.mark2
   ])[0];
-  let okayColor = subtractArrs(getColors(g, thirdVertexKey), badColors)[0];
+  let okayColor = difference(getColors(g, thirdVertexKey), badColors)[0];
   addStep(AnimationType.DescribeTriangle, 800, EXPLANATIONS.baseCase);
   const newGraph = updateColors(g, thirdVertexKey, [okayColor], 100);
   addStep(AnimationType.Pause, 300, {});
@@ -171,7 +170,7 @@ const transferColors = (
 const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
   let boundaryVertices = getBoundaryVertexKeys(g, g.infiniteFace);
   let vp = findVp(g);
-  let twoColors = subtractArrs(getColors(g, vp), getColors(g, g.mark1)).slice(
+  let twoColors = difference(getColors(g, vp), getColors(g, g.mark1)).slice(
     0,
     2
   );
@@ -193,7 +192,7 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
       subGraph = updateColors(
         subGraph,
         vKey,
-        subtractArrs(getColors(subGraph, vKey), twoColors).slice(0, 3),
+        difference(getColors(subGraph, vKey), twoColors).slice(0, 3),
         300
       );
     } else if (vKey !== g.mark1) {
@@ -216,7 +215,7 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
   newGraph = updateColors(
     newGraph,
     vp,
-    subtractArrs(twoColors, getColors(newGraph, vp1)).slice(0, 1),
+    difference(twoColors, getColors(newGraph, vp1)).slice(0, 1),
     800
   );
   addStep(AnimationType.Pause, 300, {});
