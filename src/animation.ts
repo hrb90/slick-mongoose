@@ -40,16 +40,16 @@ const addContinueButton = (callback: () => void) => {
   var continueButton = document.createElement("strong");
   continueButton.id = "continueButton";
   continueButton.innerText = "Press spacebar to continue";
-  bind('space', () => {
-    unbind('space');
+  bind("space", () => {
+    unbind("space");
     callback();
-  })
+  });
   document.getElementById("sidebar").appendChild(continueButton);
 };
 
 const removeElementById = (id: string): void => {
   document.getElementById(id).remove();
-}
+};
 
 let animationSteps: Animation[] = [];
 
