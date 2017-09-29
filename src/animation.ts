@@ -1,6 +1,6 @@
 import { GraphDrawingWrapper } from "./canvas_wrapper";
 import { Color } from "./planar_graph";
-import { findIndex } from "./utils";
+import { filter, findIndex } from "lodash";
 import { bind, unbind } from "mousetrap";
 
 // Refactor this to just have a "describe" type and a "describew"

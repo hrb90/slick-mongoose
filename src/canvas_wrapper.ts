@@ -9,7 +9,7 @@ import {
   getEndpoints,
   getVertexKey
 } from "./planar_graph";
-import { subtractArrs, includes } from "./utils";
+import { values, difference, includes } from "lodash";
 
 const colorToString = (c: Color, faded: boolean) => {
   switch (c) {
@@ -187,7 +187,7 @@ export class GraphDrawingWrapper {
   redraw() {
     this.clear();
     let strongVertexKeys = Object.keys(this.highlightedGraph.vertices);
-    let fadedVertexKeys = subtractArrs(
+    let fadedVertexKeys = difference(
       Object.keys(this.graph.vertices),
       strongVertexKeys
     );
