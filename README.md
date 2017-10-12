@@ -12,6 +12,8 @@ The code in the other files is poorly documented and has very little test covera
 
 `npm test`.
 
+You can run a partial [mutation test](https://en.wikipedia.org/wiki/Mutation_testing) with `npm run mutate`.
+
 ## What's where
 
 `geom.ts` implements some basic computational geometry primitives.

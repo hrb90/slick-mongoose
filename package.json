@@ -4,7 +4,8 @@
   "description": "it's a secret... for now",
   "main": "index.ts",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "mutate": "./node_modules/.bin/stryker run"
   },
   "repository": {
     "type": "git",
