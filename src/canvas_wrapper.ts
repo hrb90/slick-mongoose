@@ -1,4 +1,4 @@
-import { Coord, isClockwise, distance, unitVector, eq } from "./geom";
+import { Coord, distance, unitVector, eq } from "./geom";
 import {
   PlanarGraph,
   Color,
@@ -9,7 +9,7 @@ import {
   getEndpoints,
   getVertexKey
 } from "./planar_graph";
-import { values, difference, includes } from "lodash";
+import { difference, includes } from "lodash";
 
 const colorToString = (c: Color, faded: boolean) => {
   switch (c) {

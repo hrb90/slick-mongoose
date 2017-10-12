@@ -2,12 +2,10 @@ import { Coord, eq, intersect, inInterior, isClockwise, angle } from "./geom";
 import {
   intersection,
   find,
-  uniq,
   forIn,
   values,
   cloneDeep,
   includes,
-  difference
 } from "lodash";
 
 export interface Face {

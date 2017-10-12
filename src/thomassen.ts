@@ -1,27 +1,22 @@
 import {
   Coord,
   eq,
-  angle,
   getConsecutiveCoordPairs,
   convexHull,
   pointSegmentDistance
 } from "./geom";
 import {
   Vertex,
-  HalfEdge,
-  Face,
   PlanarGraph,
   Color,
   ALL_COLORS,
   addEdge,
   safeAddEdge,
-  removeEdge,
   removeVertex,
   splitChordedGraph,
   getAdjacentVertices,
   getBoundaryEdgeKeys,
   getBoundaryVertexKeys,
-  getOutgoingEdgeKeys,
   findChordKey,
   getSplitFaceKey,
   getColors,
@@ -101,7 +96,7 @@ const isTriangulated = (g: PlanarGraph): boolean => {
 
 const triangulate = (g: PlanarGraph): PlanarGraph => {
   while (!isTriangulated(g)) {
-    forIn(g.faces, (f: Face, fKey: string) => {
+    forIn(g.faces, (_, fKey: string) => {
       if (getBoundaryEdgeKeys(g, fKey).length > 3) {
         g = splitFace(g, fKey);
       }

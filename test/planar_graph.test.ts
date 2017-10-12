@@ -1,5 +1,4 @@
 import {
-  PlanarGraph,
   createEmptyPlanarGraph,
   getVertexKey,
   addEdge,
@@ -7,14 +6,11 @@ import {
   removeEdgeByVertices,
   removeVertexByCoord,
   getBoundaryEdgeKeys,
-  getBoundaryVertexKeys,
-  getOutgoingEdgeKeys,
   splitChordedGraph,
   findChordKey,
   inducedInteriorSubgraph,
   findVp
 } from "../src/planar_graph";
-import { Coord } from "../src/geom";
 import {} from "jest";
 
 const v = (x: number, y: number) => ({ x: x, y: y });
@@ -329,8 +325,6 @@ describe("inducedInteriorSubgraph", () => {
 
 describe("findVp", () => {
   it("finds the right point on a 5-cycle", () => {
-    let vertices = [v(0, 0), v(5, 0), v(5, 5), v(3, 7), v(0, 5)];
-
     let g = createEmptyPlanarGraph();
     g = addEdge(g, v(0, 0), v(5, 0));
     g = addEdge(g, v(5, 0), v(5, 5));
