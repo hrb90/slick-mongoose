@@ -31,8 +31,7 @@ import {
   postProcessAnimation
 } from "./animation";
 import { EXPLANATIONS } from "./explanation";
-import { values, difference } from "./util";
-import { cloneDeep } from "lodash";
+import { values, difference, cloneDeep } from "./util";
 
 const minDist = (cList: Coord[], ep1: Coord, ep2: Coord): number => {
   let sansEndpoints = cList.filter(v => !(eq(v, ep1) || eq(v, ep2)));

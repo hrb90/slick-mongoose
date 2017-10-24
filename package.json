@@ -36,13 +36,10 @@
     ]
   },
   "dependencies": {
-    "lodash": "^4.17.4",
-    "lodash.clonedeep": "^4.5.0",
     "mousetrap": "^1.6.1"
   },
   "devDependencies": {
     "@types/jest": "~19.2.0",
-    "@types/lodash.clonedeep": "^4.5.3",
     "@types/mousetrap": "^1.5.34",
     "jest": "^19.0.2",
     "jest-cli": "~19.0.2",

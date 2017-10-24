@@ -1,6 +1,5 @@
 import { Coord, eq, intersect, inInterior, isClockwise, angle } from "./geom";
-import { values, intersection, find } from "./util";
-import { cloneDeep } from "lodash";
+import { values, intersection, find, cloneDeep } from "./util";
 
 export interface Face {
   infinite: boolean;
@@ -85,8 +84,7 @@ export const addEdge = (
   let vKey1 = getVertexKey(graph, c1);
   let vKey2 = getVertexKey(graph, c2);
   if (!vKey1 && !vKey2) {
-    if (values(graph.vertices).length > 0)
-      throw "KeepGraphConnected";
+    if (values(graph.vertices).length > 0) throw "KeepGraphConnected";
     return begin(c1, c2);
   } else if (!vKey1 && vKey2) {
     return connectNewVertex(graph, vKey2, c1);

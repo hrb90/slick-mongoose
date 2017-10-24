@@ -35,3 +35,9 @@ export function mapValues<T, U>(
   });
   return newDict;
 }
+
+// This is a bad way to do this, but I can get away with it
+export function cloneDeep<T>(obj: T) {
+  const newObj = JSON.parse(JSON.stringify(obj));
+  return newObj as T;
+}
