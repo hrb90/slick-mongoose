@@ -176,7 +176,6 @@ export class GraphDrawingWrapper {
     if (this.highlightedEdge === null) return false;
     const h1 = this.highlightedEdge[0];
     const h2 = this.highlightedEdge[1];
-    console.log("checking for highlight", h1, v1, h2, v2);
     return (eq(h1, v1) && eq(h2, v2)) || (eq(h1, v2) && eq(h2, v1));
   }
 
@@ -209,7 +208,6 @@ export class GraphDrawingWrapper {
           ? "black"
           : "lightgrey";
       if (this.isHighlightedEdge(g.vertices[v1], g.vertices[v2])) {
-        console.log("found highlighted edge");
         edgeColor = "red";
       }
       this.unsafeDrawEdge(g.vertices[v1], g.vertices[v2], edgeColor);
@@ -218,8 +216,6 @@ export class GraphDrawingWrapper {
   }
 
   translateEventToCoord(e: MouseEvent): Coord {
-    console.log(this.canvasEl.offsetTop);
-    console.log(this.canvasEl.offsetLeft);
     return {
       x: e.x - this.canvasEl.offsetLeft,
       y: e.y - this.canvasEl.offsetTop,
