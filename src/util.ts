@@ -21,5 +21,17 @@ export function findIndex(arr: any[], predicate: (x: any) => boolean) {
 }
 
 export function intersection<T>(arr1: Array<T>, arr2: Array<T>): Array<T> {
-  return arr1.filter(x => arr2.indexOf(x) >= 0);  
+  return arr1.filter(x => arr2.indexOf(x) >= 0);
+}
+
+export function mapValues<T, U>(
+  dict: { [k: string]: T },
+  callback: (x: T) => U
+) {
+  const keys = Object.keys(dict);
+  const newDict: { [k: string]: U } = {};
+  keys.forEach(key => {
+    newDict[key] = callback(dict[key]);
+  });
+  return newDict;
 }

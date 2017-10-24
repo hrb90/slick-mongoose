@@ -1,4 +1,4 @@
-import { mapValues } from "lodash";
+import { mapValues } from "./util";
 
 const readable = {
   addEdges: `Add edges so that the graph is triangulated and 2-connected (i.e.
