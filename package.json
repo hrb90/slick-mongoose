@@ -36,11 +36,8 @@
     ]
   },
   "dependencies": {
-    "lodash": "^4.17.4",
     "lodash.clonedeep": "^4.5.0",
-    "mousetrap": "^1.6.1",
-    "stryker": "^0.10.3",
-    "stryker-api": "^0.9.0"
+    "mousetrap": "^1.6.1"
   },
   "devDependencies": {
     "@types/jest": "~19.2.0",
@@ -48,11 +45,12 @@
     "@types/mousetrap": "^1.5.34",
     "jest": "^19.0.2",
     "jest-cli": "~19.0.2",
+    "stryker": "^0.10.3",
     "stryker-api": "^0.9.0",
     "stryker-jest-runner": "^0.2.1",
     "stryker-typescript": "0.0.2",
     "ts-jest": "^19.0.8",
-    "ts-loader": "^2.0.3",
+    "ts-loader": "^2.3.7",
     "typescript": "^2.2.2"
   }
 }

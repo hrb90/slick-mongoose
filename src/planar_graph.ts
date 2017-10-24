@@ -1,12 +1,6 @@
 import { Coord, eq, intersect, inInterior, isClockwise, angle } from "./geom";
-import {
-  intersection,
-  find,
-  forIn,
-  values,
-  cloneDeep,
-  includes,
-} from "lodash";
+import { values, intersection, find } from "./util";
+import { cloneDeep } from "lodash";
 
 export interface Face {
   infinite: boolean;
@@ -234,7 +228,7 @@ export const getBoundaryEdgeKeys = (
   let boundaryEdgeKeys = [] as string[];
   if (face.incidentEdge) {
     let currentEdge = face.incidentEdge;
-    while (!includes(boundaryEdgeKeys, currentEdge)) {
+    while (!boundaryEdgeKeys.includes(currentEdge)) {
       boundaryEdgeKeys.push(currentEdge);
       currentEdge = graph.edges[currentEdge].next;
     }
@@ -271,7 +265,7 @@ export const getSplitFaceKey = (
     getIncidentFaceKeys(graph, c1),
     getIncidentFaceKeys(graph, c2)
   );
-  if (includes(commonFaces, possFaceKey)) {
+  if (commonFaces.includes(possFaceKey)) {
     const nonIntersect = (edgeKey: string) => {
       let firstVertex = graph.vertices[graph.edges[edgeKey].origin];
       let secondVertex =
@@ -293,7 +287,7 @@ export const getOutgoingEdgeKeys = (
   let incidentEdgeKeys = [] as string[];
   if (graph.vertices[vKey].incidentEdge) {
     let currentEdgeKey = graph.vertices[vKey].incidentEdge;
-    while (!includes(incidentEdgeKeys, currentEdgeKey)) {
+    while (!incidentEdgeKeys.includes(currentEdgeKey)) {
       incidentEdgeKeys.push(currentEdgeKey);
       currentEdgeKey = graph.edges[graph.edges[currentEdgeKey].twin].next;
     }
@@ -373,7 +367,7 @@ const connect = (
   vKey2: string
 ): PlanarGraph => {
   let newGraph = cloneDeep(graph);
-  if (includes(getAdjacentVertices(newGraph, vKey1), vKey2)) {
+  if (getAdjacentVertices(newGraph, vKey1).includes(vKey2)) {
     throw new Error("Can't connect already connected vertices");
   }
   let v1 = newGraph.vertices[vKey1];
@@ -538,9 +532,9 @@ const getNextClockwiseEdgeKey = (
 
 export const getVertexKey = (graph: PlanarGraph, c: Coord): string | null => {
   let matchedVertexKey = null;
-  forIn(graph.vertices, (value: Vertex, key: String) => {
-    if (eq(value, c)) matchedVertexKey = key;
-  });
+  for (let vKey in graph.vertices) {
+    if (eq(graph.vertices[vKey], c)) matchedVertexKey = vKey;
+  }
   return matchedVertexKey;
 };
 
@@ -602,7 +596,7 @@ export const inducedInteriorSubgraph = (
 ): PlanarGraph => {
   const vertexOutsidePolygon = (vKey: string) =>
     !(
-      includes(polygon, vKey) ||
+      polygon.includes(vKey) ||
       inInterior(polygon.map(x => g.vertices[x]), g.vertices[vKey])
     );
   const edgeOutsidePolygon = (eKey: string) =>
@@ -641,7 +635,7 @@ export const findChordKey = (graph: PlanarGraph): string | null => {
     edgeKeys.forEach(eKey => {
       let e = graph.edges[eKey];
       if (
-        includes(outerVertices, graph.edges[e.next].origin) &&
+        outerVertices.includes(graph.edges[e.next].origin) &&
         e.incidentFace !== graph.infiniteFace &&
         graph.edges[e.twin].incidentFace !== graph.infiniteFace
       ) {
@@ -665,7 +659,7 @@ export const splitChordedGraph = (
     .slice(0, lsIdx + 1)
     .concat(outerVertices.slice(gtIdx));
   let [firstPoly, secondPoly] =
-    includes(poly1, g.mark1) && includes(poly1, g.mark2)
+    poly1.includes(g.mark1) && poly1.includes(g.mark2)
       ? [poly1, poly2]
       : [poly2, poly1];
   let [firstSubgraph, secondSubgraph] = [firstPoly, secondPoly].map(x =>

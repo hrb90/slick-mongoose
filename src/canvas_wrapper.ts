@@ -9,7 +9,7 @@ import {
   getEndpoints,
   getVertexKey
 } from "./planar_graph";
-import { difference, includes } from "lodash";
+import { difference } from "./util";
 
 const colorToString = (c: Color, faded: boolean) => {
   switch (c) {
@@ -205,7 +205,7 @@ export class GraphDrawingWrapper {
       let [v1, v2] = getEndpoints(g, e);
       let edgeColor: string;
       edgeColor =
-        includes(strongVertexKeys, v1) && includes(strongVertexKeys, v2)
+        strongVertexKeys.includes(v1) && strongVertexKeys.includes(v2)
           ? "black"
           : "lightgrey";
       if (this.isHighlightedEdge(g.vertices[v1], g.vertices[v2])) {

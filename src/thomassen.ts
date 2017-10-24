@@ -31,7 +31,8 @@ import {
   postProcessAnimation
 } from "./animation";
 import { EXPLANATIONS } from "./explanation";
-import { values, forIn, includes, difference, cloneDeep } from "lodash";
+import { values, difference } from "./util";
+import { cloneDeep } from "lodash";
 
 const minDist = (cList: Coord[], ep1: Coord, ep2: Coord): number => {
   let sansEndpoints = cList.filter(v => !(eq(v, ep1) || eq(v, ep2)));
@@ -96,11 +97,11 @@ const isTriangulated = (g: PlanarGraph): boolean => {
 
 const triangulate = (g: PlanarGraph): PlanarGraph => {
   while (!isTriangulated(g)) {
-    forIn(g.faces, (_, fKey: string) => {
+    for (let fKey in g.faces) {
       if (getBoundaryEdgeKeys(g, fKey).length > 3) {
         g = splitFace(g, fKey);
       }
-    });
+    }
   }
   addStep(AnimationType.DescribeAddEdges, 0, EXPLANATIONS.addEdges);
   return g;
@@ -183,7 +184,7 @@ const colorChordlessGraph = (g: PlanarGraph): PlanarGraph => {
     EXPLANATIONS.chordlessPartTwo
   );
   getAdjacentVertices(g, vp).forEach(vKey => {
-    if (!includes(boundaryVertices, vKey)) {
+    if (!boundaryVertices.includes(vKey)) {
       subGraph = updateColors(
         subGraph,
         vKey,
