@@ -12,7 +12,7 @@ The code in the other files is poorly documented and has very little test covera
 
 `npm test`.
 
-You can run a partial [mutation test](https://en.wikipedia.org/wiki/Mutation_testing) with `npm run mutate`.
+`npm run mutate` will use [Stryker](https://stryker-mutator.github.io/) to run some [mutation tests](https://en.wikipedia.org/wiki/Mutation_testing).
 
 ## What's where
 
@@ -23,3 +23,7 @@ You can run a partial [mutation test](https://en.wikipedia.org/wiki/Mutation_tes
 `animation.ts` contains datatypes and functions for constructing and reading a list-based description of the steps of our animation.
 
 Thomassen's algorithm is implemented in `thomassen.ts`, which exports a single `fiveColor` method.
+
+## Acknowledgements
+
+Thanks to [Tom Hull](http://mars.wne.edu/~thull/) for introducing me to this lovely proof; [Yaanik Desai](http://profiles.ucsf.edu/yaanik.desai) for the repository name; and [@nicojs](https://github.com/nicojs) for help configuring the mutation testing framework.
