@@ -1,5 +1,3 @@
-var tsconfig = require("./tsconfig.json");
-
 module.exports = function(config) {
   config.set({
     files: [
@@ -26,10 +24,10 @@ module.exports = function(config) {
       "test/**/*.ts"
     ],
     mutate: ["src/geom.ts", "src/planar_graph.ts", "src/thomassen.ts"],
-    tsconfig: tsconfig,
+    tsconfigFile: 'tsconfig.json',
     mutator: 'typescript',
     testRunner: "jest",
-    reporter: ["clear-text", "progress"],
+    reporter: ["clear-text", "progress", "html"],
     transpilers: ['typescript'],
     coverageAnalysis: "off"
   });
