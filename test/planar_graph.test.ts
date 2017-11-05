@@ -4,6 +4,7 @@ import {
   addEdge,
   safeAddEdge,
   removeEdgeByVertices,
+  removeVertex,
   removeVertexByCoord,
   getBoundaryEdgeKeys,
   splitChordedGraph,
@@ -11,6 +12,8 @@ import {
   inducedInteriorSubgraph,
   findVp
 } from "../src/planar_graph";
+import { euler } from "./base";
+import { REMOVE_VERTEX_TEST, REMOVE_VERTEX_TEST_KEY } from "./graphs";
 import {} from "jest";
 
 const v = (x: number, y: number) => ({ x: x, y: y });
@@ -24,6 +27,7 @@ describe("addEdge", () => {
     const graph4 = addEdge(graph3, vs[2], vs[3]);
     const graph5 = addEdge(graph4, vs[3], vs[1]);
     expect(getBoundaryEdgeKeys(graph5, graph5.infiniteFace).length).toBe(5);
+    expect(euler(graph5)).toBe(true);
   });
 
   it("keeps track of the infiniteFace II ", () => {
@@ -181,6 +185,8 @@ describe("removeEdge", () => {
     const graph7 = removeEdgeByVertices(graph6, vs[1], vs[2]);
     expect(getBoundaryEdgeKeys(graph5, graph5.infiniteFace).length).toBe(4);
     expect(getBoundaryEdgeKeys(graph7, graph7.infiniteFace).length).toBe(5);
+    expect(euler(graph5)).toBe(true);
+    expect(euler(graph7)).toBe(true);
   });
 
   describe("build a graph with intermediate steps with non-simple faces", () => {
@@ -245,6 +251,15 @@ describe("removeVertex", () => {
 
     it("maintains the correct number of faces", () => {
       expect(Object.keys(graph.faces).length).toBe(3);
+    });
+  });
+
+  describe("remove a vertex from a larger graph", () => {
+    it("successfully does it", () => {
+      const verticesBefore = Object.keys(REMOVE_VERTEX_TEST.vertices).length;
+      const newGraph = removeVertex(REMOVE_VERTEX_TEST, REMOVE_VERTEX_TEST_KEY);
+      expect(Object.keys(newGraph.vertices).length).toBe(verticesBefore - 1);
+      // breaks the euler invariant; fix!
     });
   });
 });

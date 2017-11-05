@@ -1,20 +1,11 @@
-import {
-  PlanarGraph,
-  getEndpoints
-} from "../src/planar_graph";
+import { PlanarGraph, getEndpoints } from "../src/planar_graph";
 import { fiveColor } from "../src/thomassen";
+import { euler } from "./base";
+import { NINE_VERTEX, W6, BIG_GRAPH } from "./graphs";
 import {} from "jest";
 
-const NINE_VERTEX_EXAMPLE_STR = `{"infiniteFace":"infinite","vertices":{"259,75":{"x":259,"y":75,"incidentEdge":"259,75;282,129","colors":[0,1,2,3,4]},"282,129":{"x":282,"y":129,"incidentEdge":"282,129;259,75","colors":[0,1,2,3,4]},"328,74":{"x":328,"y":74,"colors":[0,1,2,3,4],"incidentEdge":"328,74;259,75"},"343,173":{"x":343,"y":173,"colors":[0,1,2,3,4],"incidentEdge":"343,173;328,74"},"265,202":{"x":265,"y":202,"colors":[0,1,2,3,4],"incidentEdge":"265,202;343,173"},"224,147":{"x":224,"y":147,"colors":[0,1,2,3,4],"incidentEdge":"224,147;265,202"},"407,215":{"x":407,"y":215,"colors":[0,1,2,3,4],"incidentEdge":"407,215;343,173"},"248,267":{"x":248,"y":267,"colors":[0,1,2,3,4],"incidentEdge":"248,267;265,202"},"223,95":{"x":223,"y":95,"colors":[0,1,2,3,4],"incidentEdge":"223,95;224,147"}},"edges":{"259,75;282,129":{"twin":"282,129;259,75","next":"282,129;224,147","prev":"224,147;259,75","origin":"259,75","incidentFace":"7"},"282,129;259,75":{"twin":"259,75;282,129","next":"259,75;328,74","prev":"328,74;282,129","origin":"282,129","incidentFace":"10"},"259,75;328,74":{"origin":"259,75","prev":"282,129;259,75","twin":"328,74;259,75","next":"328,74;282,129","incidentFace":"10"},"328,74;259,75":{"origin":"328,74","prev":"407,215;328,74","next":"259,75;223,95","twin":"259,75;328,74","incidentFace":"infinite"},"328,74;343,173":{"origin":"328,74","prev":"282,129;328,74","twin":"343,173;328,74","next":"343,173;282,129","incidentFace":"11"},"343,173;328,74":{"origin":"343,173","prev":"407,215;343,173","next":"328,74;407,215","twin":"328,74;343,173","incidentFace":"17"},"343,173;265,202":{"origin":"343,173","prev":"282,129;343,173","twin":"265,202;343,173","next":"265,202;282,129","incidentFace":"9"},"265,202;343,173":{"origin":"265,202","prev":"407,215;265,202","next":"343,173;407,215","twin":"343,173;265,202","incidentFace":"16"},"265,202;224,147":{"origin":"265,202","prev":"282,129;265,202","twin":"224,147;265,202","next":"224,147;282,129","incidentFace":"8"},"224,147;265,202":{"origin":"224,147","prev":"248,267;224,147","next":"265,202;248,267","twin":"265,202;224,147","incidentFace":"23"},"224,147;259,75":{"origin":"224,147","next":"259,75;282,129","prev":"282,129;224,147","twin":"259,75;224,147","incidentFace":"7"},"259,75;224,147":{"origin":"259,75","next":"224,147;223,95","prev":"223,95;259,75","twin":"224,147;259,75","incidentFace":"26"},"224,147;282,129":{"origin":"224,147","next":"282,129;265,202","prev":"265,202;224,147","twin":"282,129;224,147","incidentFace":"8"},"282,129;224,147":{"origin":"282,129","next":"224,147;259,75","prev":"259,75;282,129","twin":"224,147;282,129","incidentFace":"7"},"265,202;282,129":{"origin":"265,202","next":"282,129;343,173","prev":"343,173;265,202","twin":"282,129;265,202","incidentFace":"9"},"282,129;265,202":{"origin":"282,129","next":"265,202;224,147","prev":"224,147;282,129","twin":"265,202;282,129","incidentFace":"8"},"343,173;282,129":{"origin":"343,173","next":"282,129;328,74","prev":"328,74;343,173","twin":"282,129;343,173","incidentFace":"11"},"282,129;343,173":{"origin":"282,129","next":"343,173;265,202","prev":"265,202;282,129","twin":"343,173;282,129","incidentFace":"9"},"282,129;328,74":{"origin":"282,129","next":"328,74;343,173","prev":"343,173;282,129","twin":"328,74;282,129","incidentFace":"11"},"328,74;282,129":{"origin":"328,74","next":"282,129;259,75","prev":"259,75;328,74","twin":"282,129;328,74","incidentFace":"10"},"343,173;407,215":{"origin":"343,173","prev":"265,202;343,173","twin":"407,215;343,173","next":"407,215;265,202","incidentFace":"16"},"407,215;343,173":{"origin":"407,215","prev":"328,74;407,215","next":"343,173;328,74","twin":"343,173;407,215","incidentFace":"17"},"407,215;265,202":{"origin":"407,215","next":"265,202;343,173","prev":"343,173;407,215","twin":"265,202;407,215","incidentFace":"16"},"265,202;407,215":{"origin":"265,202","next":"407,215;248,267","prev":"248,267;265,202","twin":"407,215;265,202","incidentFace":"22"},"328,74;407,215":{"origin":"328,74","next":"407,215;343,173","prev":"343,173;328,74","twin":"407,215;328,74","incidentFace":"17"},"407,215;328,74":{"origin":"407,215","next":"328,74;259,75","prev":"248,267;407,215","twin":"328,74;407,215","incidentFace":"infinite"},"265,202;248,267":{"origin":"265,202","prev":"224,147;265,202","twin":"248,267;265,202","next":"248,267;224,147","incidentFace":"23"},"248,267;265,202":{"origin":"248,267","prev":"407,215;248,267","next":"265,202;407,215","twin":"265,202;248,267","incidentFace":"22"},"407,215;248,267":{"origin":"407,215","next":"248,267;265,202","prev":"265,202;407,215","twin":"248,267;407,215","incidentFace":"22"},"248,267;407,215":{"origin":"248,267","next":"407,215;328,74","prev":"224,147;248,267","twin":"407,215;248,267","incidentFace":"infinite"},"248,267;224,147":{"origin":"248,267","next":"224,147;265,202","prev":"265,202;248,267","twin":"224,147;248,267","incidentFace":"23"},"224,147;248,267":{"origin":"224,147","next":"248,267;407,215","prev":"223,95;224,147","twin":"248,267;224,147","incidentFace":"infinite"},"224,147;223,95":{"origin":"224,147","prev":"259,75;224,147","twin":"223,95;224,147","next":"223,95;259,75","incidentFace":"26"},"223,95;224,147":{"origin":"223,95","prev":"259,75;223,95","next":"224,147;248,267","twin":"224,147;223,95","incidentFace":"infinite"},"223,95;259,75":{"origin":"223,95","next":"259,75;224,147","prev":"224,147;223,95","twin":"259,75;223,95","incidentFace":"26"},"259,75;223,95":{"origin":"259,75","next":"223,95;224,147","prev":"328,74;259,75","twin":"223,95;259,75","incidentFace":"infinite"}},"faces":{"7":{"infinite":false,"incidentEdge":"282,129;224,147"},"8":{"infinite":false,"incidentEdge":"282,129;265,202"},"9":{"infinite":false,"incidentEdge":"282,129;343,173"},"10":{"infinite":false,"incidentEdge":"328,74;282,129"},"11":{"infinite":false,"incidentEdge":"282,129;328,74"},"16":{"infinite":false,"incidentEdge":"407,215;265,202"},"17":{"infinite":false,"incidentEdge":"328,74;407,215"},"22":{"infinite":false,"incidentEdge":"407,215;248,267"},"23":{"infinite":false,"incidentEdge":"248,267;224,147"},"26":{"infinite":false,"incidentEdge":"223,95;259,75"},"infinite":{"infinite":true,"incidentEdge":"259,75;223,95"}}}`;
-
-const W6_STR = `{"infiniteFace":"infinite","vertices":{"248,188":{"x":248,"y":188,"incidentEdge":"248,188;183,143","colors":[0,1,2,3,4]},"183,143":{"x":183,"y":143,"incidentEdge":"183,143;248,188","colors":[0,1,2,3,4]},"192,267":{"x":192,"y":267,"colors":[0,1,2,3,4],"incidentEdge":"192,267;248,188"},"301,272":{"x":301,"y":272,"colors":[0,1,2,3,4],"incidentEdge":"301,272;192,267"},"345,164":{"x":345,"y":164,"colors":[0,1,2,3,4],"incidentEdge":"345,164;301,272"},"254,101":{"x":254,"y":101,"colors":[0,1,2,3,4],"incidentEdge":"254,101;345,164"}},"edges":{"248,188;183,143":{"twin":"183,143;248,188","next":"183,143;254,101","prev":"254,101;248,188","origin":"248,188","incidentFace":"11"},"183,143;248,188":{"twin":"248,188;183,143","next":"248,188;192,267","prev":"192,267;183,143","origin":"183,143","incidentFace":"8"},"248,188;192,267":{"origin":"248,188","prev":"183,143;248,188","twin":"192,267;248,188","next":"192,267;183,143","incidentFace":"8"},"192,267;248,188":{"origin":"192,267","prev":"301,272;192,267","next":"248,188;301,272","twin":"248,188;192,267","incidentFace":"9"},"192,267;301,272":{"origin":"192,267","prev":"183,143;192,267","twin":"301,272;192,267","next":"301,272;345,164","incidentFace":"infinite"},"301,272;192,267":{"origin":"301,272","prev":"248,188;301,272","next":"192,267;248,188","twin":"192,267;301,272","incidentFace":"9"},"301,272;345,164":{"origin":"301,272","prev":"192,267;301,272","twin":"345,164;301,272","next":"345,164;254,101","incidentFace":"infinite"},"345,164;301,272":{"origin":"345,164","prev":"248,188;345,164","next":"301,272;248,188","twin":"301,272;345,164","incidentFace":"10"},"345,164;254,101":{"origin":"345,164","prev":"301,272;345,164","twin":"254,101;345,164","next":"254,101;183,143","incidentFace":"infinite"},"254,101;345,164":{"origin":"254,101","prev":"248,188;254,101","next":"345,164;248,188","twin":"345,164;254,101","incidentFace":"12"},"192,267;183,143":{"origin":"192,267","next":"183,143;248,188","prev":"248,188;192,267","twin":"183,143;192,267","incidentFace":"8"},"183,143;192,267":{"origin":"183,143","next":"192,267;301,272","prev":"254,101;183,143","twin":"192,267;183,143","incidentFace":"infinite"},"183,143;254,101":{"origin":"183,143","next":"254,101;248,188","prev":"248,188;183,143","twin":"254,101;183,143","incidentFace":"11"},"254,101;183,143":{"origin":"254,101","next":"183,143;192,267","prev":"345,164;254,101","twin":"183,143;254,101","incidentFace":"infinite"},"301,272;248,188":{"origin":"301,272","next":"248,188;345,164","prev":"345,164;301,272","twin":"248,188;301,272","incidentFace":"10"},"248,188;301,272":{"origin":"248,188","next":"301,272;192,267","prev":"192,267;248,188","twin":"301,272;248,188","incidentFace":"9"},"345,164;248,188":{"origin":"345,164","next":"248,188;254,101","prev":"254,101;345,164","twin":"248,188;345,164","incidentFace":"12"},"248,188;345,164":{"origin":"248,188","next":"345,164;301,272","prev":"301,272;248,188","twin":"345,164;248,188","incidentFace":"10"},"248,188;254,101":{"origin":"248,188","next":"254,101;345,164","prev":"345,164;248,188","twin":"254,101;248,188","incidentFace":"12"},"254,101;248,188":{"origin":"254,101","next":"248,188;183,143","prev":"183,143;254,101","twin":"248,188;254,101","incidentFace":"11"}},"faces":{"8":{"infinite":false,"incidentEdge":"192,267;183,143"},"9":{"infinite":false,"incidentEdge":"248,188;301,272"},"10":{"infinite":false,"incidentEdge":"248,188;345,164"},"11":{"infinite":false,"incidentEdge":"254,101;248,188"},"12":{"infinite":false,"incidentEdge":"248,188;254,101"},"infinite":{"infinite":true,"incidentEdge":"254,101;183,143"}}}`;
-
-const NINE_VERTEX = JSON.parse(NINE_VERTEX_EXAMPLE_STR);
-
-const W6 = JSON.parse(W6_STR);
-
 describe("fiveColor", () => {
-  const testEdgeBase = (coloredGraph: PlanarGraph) => (eKey: string) => {
+  const testEdgeColoring = (coloredGraph: PlanarGraph, eKey: string) => {
     let endpoints = getEndpoints(coloredGraph, eKey);
     let v0 = coloredGraph.vertices[endpoints[0]];
     let v1 = coloredGraph.vertices[endpoints[1]];
@@ -25,19 +16,27 @@ describe("fiveColor", () => {
     );
   };
 
-  it("colors a small graph", () => {
-    let coloredGraph = fiveColor(W6);
-    let testEdge = testEdgeBase(coloredGraph);
+  const testGraphColoring = (graph: PlanarGraph) => {
+    const coloredGraph = fiveColor(graph);
+    let result = true;
     Object.keys(coloredGraph.edges).forEach(eKey => {
-      expect(testEdge(eKey)).toBe(true);
+      result = result && testEdgeColoring(coloredGraph, eKey);
     });
+    return result;
+  };
+
+  const testGraph = (graph: PlanarGraph) =>
+    testGraphColoring(graph) && euler(graph);
+
+  it("colors a small graph", () => {
+    expect(testGraph(W6)).toBe(true);
   });
 
   it("colors a medium size graph", () => {
-    let coloredGraph = fiveColor(NINE_VERTEX);
-    let testEdge = testEdgeBase(coloredGraph);
-    Object.keys(coloredGraph.edges).forEach(eKey => {
-      expect(testEdge(eKey)).toBe(true);
-    });
+    expect(testGraph(NINE_VERTEX)).toBe(true);
+  });
+
+  it("colors a big graph", () => {
+    expect(testGraph(BIG_GRAPH)).toBe(true);
   });
 });
