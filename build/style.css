@@ -1,0 +1,53 @@
+body, html {
+  color: #333;
+  display: block;
+  flex-direction: column;
+  margin: 0 10px 0 0;
+}
+
+button {
+  display: block;
+}
+
+#canvas {
+  cursor: crosshair;
+  width: 1000px;
+  height: 600px;
+  margin-right: 5px;
+}
+
+#intro {
+  display: flex;
+  justify-content: center;
+  margin: 8px;
+}
+
+.explanation {
+  word-wrap: normal;
+  max-width: 400px;
+}
+
+.greyer-canvas {
+  background-color: #f0f0f0;
+}
+
+@media (min-width: 1200px) {
+  #top {
+    display: flex;
+    margin-bottom: 5px;
+  }
+
+  #sorry {
+    display: none;
+  }
+}
+
+@media (max-width: 1200px) {
+  #sorry {
+    display: block;
+  }
+
+  #top {
+    display: none;
+  }
+}

@@ -1,7 +1,7 @@
 module.exports = {
  entry: './index.ts',
  output: {
-   filename: 'bundle.js',
+   filename: 'build/bundle.js',
    path: __dirname
  },
  module: {
