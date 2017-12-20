@@ -1,5 +1,4 @@
 body, html {
-  color: #333;
   display: block;
   flex-direction: column;
   margin: 0 10px 0 0;
@@ -23,8 +22,28 @@ button {
 }
 
 .explanation {
+  display: flex;
+  flex-direction: column;
   word-wrap: normal;
-  max-width: 400px;
+  max-width: 500px;
+}
+
+h2 {
+  align-self: center;
+  color: #4acaa8;
+}
+
+a.viz-button {
+  align-self: center;
+  color: #fff!important;
+  background-color: #4acaa8;
+  padding: 6px;
+  border-radius: 2px;
+}
+
+a.viz-button:hover {
+  background-color: #39c29d;
+  border-bottom: 1px solid #39c29d;
 }
 
 .greyer-canvas {
