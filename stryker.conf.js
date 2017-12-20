@@ -16,7 +16,7 @@ module.exports = function(config) {
         mutated: true,
         included: false
       },
-      { 
+      {
         pattern: "src/*.ts",
         mutated: false,
         included: false
@@ -24,11 +24,11 @@ module.exports = function(config) {
       "test/**/*.ts"
     ],
     mutate: ["src/geom.ts", "src/planar_graph.ts", "src/thomassen.ts"],
-    tsconfigFile: 'tsconfig.json',
-    mutator: 'typescript',
+    tsconfigFile: "tsconfig.json",
+    mutator: "typescript",
     testRunner: "jest",
     reporter: ["clear-text", "progress", "html"],
-    transpilers: ['typescript'],
+    transpilers: ["typescript"],
     coverageAnalysis: "off"
   });
 };

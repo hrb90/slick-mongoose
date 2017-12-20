@@ -12,8 +12,10 @@ import {} from "jest";
 const v = (x: number, y: number) => ({ x: x, y: y });
 
 describe("intersect", () => {
-  const intersectTrue = (a: Coord, b: Coord, c: Coord, d: Coord) => intersect(a, b, c, d, true);
-  const intersectFalse = (a: Coord, b: Coord, c: Coord, d: Coord) => intersect(a, b, c, d, false);
+  const intersectTrue = (a: Coord, b: Coord, c: Coord, d: Coord) =>
+    intersect(a, b, c, d, true);
+  const intersectFalse = (a: Coord, b: Coord, c: Coord, d: Coord) =>
+    intersect(a, b, c, d, false);
 
   describe("points in general position", () => {
     it("handles the case of quadrilateral convex hull", () => {
