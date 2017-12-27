@@ -74,6 +74,7 @@ a.viz-button {
 }
 
 .normal-button:hover {
+  color: #fff!important;
   background-color: #39c29d;
   border-bottom: 1px solid #39c29d;
 }
