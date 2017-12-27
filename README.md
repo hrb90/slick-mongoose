@@ -6,11 +6,9 @@ A visualization of [Carsten Thomassen's proof](http://dl.acm.org/citation.cfm?id
 
 The sidebar text explaining what's going on in the visualization lives in `explanation.ts`; pull requests to improve the explanatory text are encouraged!
 
-The code in the other files is poorly documented and has very little test coverage, but if you want to tinker,
+The code in the other files is not terribly well-documented, but if you want to play around, all you need is
 
-`npm install`
-
-`npm test`.
+`npm install && npm test`.
 
 `npm run mutate` will use [Stryker](https://stryker-mutator.github.io/) to run some [mutation tests](https://en.wikipedia.org/wiki/Mutation_testing).
 
