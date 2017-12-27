@@ -8,22 +8,25 @@
     <title>Five Colors Suffice</title>
   </head>
   <body>
-    <div id="top">
-      <section id="sidebar" class="explanation">
-        <p id="description">Draw a planar graph on the table by adding vertices and connecting them with edges that don't cross. When you're done, press enter and watch the algorithm color your graph with five colors!</p>
-      </section>
-      <canvas id="canvas" width="1000" height="600" style="border:1px solid black;"></canvas>
-      <div class="buttons">
-        <button id="color-graph">
-          Color graph
-        </button>
-        <button id="clear-canvas">
-          Clear canvas
-        </button>
+    <div id="main">
+      <div id="viz">
+        <section id="sidebar">
+          <h2>Five Colors Suffice</h2>
+          <p id="description">Draw a planar graph on the canvas below by adding vertices and connecting them with edges that don't cross. When you're done, press enter and watch the algorithm color your graph with five colors!</p>
+        </section>
+        <canvas id="canvas" width="1000" height="600" style="border:1px solid black;"></canvas>
+        <div id="buttons">
+          <div id="color-graph" class="normal-button">
+            Color graph
+          </div>
+          <div id="clear-canvas" class="warning-button">
+            Clear canvas
+          </div>
+        </div>
       </div>
-    </div>
-    <div id="sorry">
-      <p>Sorry, you'll need to use a larger window to view this visualization correctly.</p>
+      <div id="sorry">
+        <p>Sorry, you'll need to use a larger window to view this visualization correctly.</p>
+      </div>
     </div>
   </body>
 </html>

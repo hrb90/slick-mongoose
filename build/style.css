@@ -4,6 +4,10 @@ body, html {
   margin: 0 10px 0 0;
 }
 
+p {
+  margin: 0;
+}
+
 button {
   display: block;
 }
@@ -21,6 +25,30 @@ button {
   margin: 8px;
 }
 
+#main {
+  display: flex;
+  justify-content: center;
+  margin: 8px;
+}
+
+#viz {
+  width: 1020px;  
+}
+
+#sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 1000px;
+  height: 200px;
+}
+
+#buttons {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+}
+
 .explanation {
   display: flex;
   flex-direction: column;
@@ -35,15 +63,27 @@ h2 {
 
 a.viz-button {
   align-self: center;
+}
+
+.normal-button {
   color: #fff!important;
+  cursor: pointer;
   background-color: #4acaa8;
   padding: 6px;
   border-radius: 2px;
 }
 
-a.viz-button:hover {
+.normal-button:hover {
   background-color: #39c29d;
   border-bottom: 1px solid #39c29d;
+}
+
+.warning-button {
+  border: 1px solid #c00040;
+  color: #c00040!important;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 2px;
 }
 
 .greyer-canvas {
@@ -51,8 +91,9 @@ a.viz-button:hover {
 }
 
 @media (min-width: 1200px) {
-  #top {
+  #viz {
     display: flex;
+    flex-direction: column;
     margin-bottom: 5px;
   }
 
@@ -66,7 +107,7 @@ a.viz-button:hover {
     display: block;
   }
 
-  #top {
+  #viz {
     display: none;
   }
 }
