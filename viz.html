@@ -9,10 +9,18 @@
   </head>
   <body>
     <div id="top">
-      <canvas id="canvas" width="1000" height="600" style="border:1px solid black;"></canvas>
       <section id="sidebar" class="explanation">
         <p id="description">Draw a planar graph on the table by adding vertices and connecting them with edges that don't cross. When you're done, press enter and watch the algorithm color your graph with five colors!</p>
       </section>
+      <canvas id="canvas" width="1000" height="600" style="border:1px solid black;"></canvas>
+      <div class="buttons">
+        <button id="color-graph">
+          Color graph
+        </button>
+        <button id="clear-canvas">
+          Clear canvas
+        </button>
+      </div>
     </div>
     <div id="sorry">
       <p>Sorry, you'll need to use a larger window to view this visualization correctly.</p>

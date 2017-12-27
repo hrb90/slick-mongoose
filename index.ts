@@ -6,11 +6,23 @@ import { bind } from "mousetrap";
 document.addEventListener("DOMContentLoaded", () => {
   let wrapper = new GraphDrawingWrapper("canvas", 10);
 
-  bind("enter", () => {
+  const runVisualization = () => {
     if (!wrapper.frozen) {
       wrapper.unhighlightVertex();
       fiveColor(wrapper.graph);
       animate(wrapper);
+    }
+  };
+
+  bind("enter", runVisualization);
+  document
+    .getElementById("color-graph")
+    .addEventListener("click", runVisualization);
+
+  document.getElementById("clear-canvas").addEventListener("click", () => {
+    if (!wrapper.frozen) {
+      wrapper.clearGraph();
+      wrapper.clear();
     }
   });
 });

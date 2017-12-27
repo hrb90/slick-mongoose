@@ -9,7 +9,8 @@ import {
   getEndpoints,
   getVertexKey
 } from "./planar_graph";
-import { difference } from "./util";
+import { DEFAULT_GRAPH } from "./default_graph";
+import { difference, values } from "./util";
 
 const colorToString = (c: Color, faded: boolean) => {
   switch (c) {
@@ -38,21 +39,25 @@ export class GraphDrawingWrapper {
 
   constructor(canvasId: string, radius: number = 15) {
     this.radius = radius;
-    this.vertices = [];
+    this.frozen = false;
     this.canvasEl = <HTMLCanvasElement>document.getElementById(canvasId);
     this.drawCircle = this.drawCircle.bind(this);
     this.handleClick = this.handleClick.bind(this);
     this.canvasEl.addEventListener("click", this.handleClick);
-    this.graph = createEmptyPlanarGraph();
-    this.highlightedGraph = this.graph;
-    this.highlightedVertex = null;
-    this.highlightedEdge = null;
-    this.frozen = false;
+    this.clearGraph();
   }
 
   clear() {
     let context = this.canvasEl.getContext("2d");
     context.clearRect(0, 0, this.canvasEl.width, this.canvasEl.height);
+  }
+
+  clearGraph() {
+    this.graph = createEmptyPlanarGraph();
+    this.highlightedGraph = this.graph;
+    this.highlightedVertex = null;
+    this.highlightedEdge = null;
+    this.vertices = [];
   }
 
   darken() {
@@ -213,6 +218,13 @@ export class GraphDrawingWrapper {
       this.unsafeDrawEdge(g.vertices[v1], g.vertices[v2], edgeColor);
     });
     this.graph = g;
+  }
+
+  setDefaultGraph() {
+    this.clearGraph();
+    this.graph = DEFAULT_GRAPH;
+    this.highlightedGraph = this.graph;
+    this.vertices = values(this.graph.vertices);
   }
 
   translateEventToCoord(e: MouseEvent): Coord {
