@@ -119,7 +119,7 @@ const preColor = (g: PlanarGraph): PlanarGraph => {
     vKey => (g = updateColors(g, vKey, ALL_COLORS.slice(0, 3), 0))
   );
   addStep(AnimationType.Pause, 1000, {});
-  g = updateColors(g, g.mark1, [Color.Red], 0);
+  g = updateColors(g, g.mark1, [Color.Pink], 0);
   g = updateColors(g, g.mark2, [Color.Blue], 0);
   addStep(AnimationType.DescribePreColor, 2000, EXPLANATIONS.endPreColor);
   return g;

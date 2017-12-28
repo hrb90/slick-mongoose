@@ -40,7 +40,7 @@ button {
   flex-direction: column;
   justify-content: center;
   width: 1000px;
-  height: 200px;
+  height: 250px;
 }
 
 #buttons {
@@ -56,7 +56,7 @@ button {
   max-width: 500px;
 }
 
-h2 {
+h2, h3 {
   align-self: center;
   color: #4acaa8;
 }

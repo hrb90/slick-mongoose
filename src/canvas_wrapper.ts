@@ -14,16 +14,16 @@ import { difference, values } from "./util";
 
 const colorToString = (c: Color, faded: boolean) => {
   switch (c) {
-    case Color.Red:
-      return faded ? "#ff8080" : "red";
+    case Color.Pink:
+      return faded ? "#ffb1e0" : "#b14b7a";
     case Color.Blue:
-      return faded ? "#8080ff" : "blue";
+      return faded ? "#4becff" : "#0084b9";
     case Color.Green:
-      return faded ? "#80ff80" : "green";
+      return faded ? "#33d3aa" : "#107d54";
     case Color.Orange:
-      return faded ? "#ffe080" : "orange";
-    case Color.Yellow:
-      return faded ? "#ffff80" : "yellow";
+      return faded ? "#faa200" : "#c76f00";
+    case Color.Gray:
+      return faded ? "#8595a9" : "#39424e";
   }
 };
 
@@ -37,7 +37,7 @@ export class GraphDrawingWrapper {
   radius: number;
   frozen: boolean;
 
-  constructor(canvasId: string, radius: number = 15) {
+  constructor(canvasId: string, radius: number = 12) {
     this.radius = radius;
     this.frozen = false;
     this.canvasEl = <HTMLCanvasElement>document.getElementById(canvasId);
@@ -99,7 +99,7 @@ export class GraphDrawingWrapper {
     this.vertices.push(v);
     let context = this.canvasEl.getContext("2d");
     context.strokeStyle = faded ? "lightgrey" : "black";
-    context.lineWidth = 2;
+    context.lineWidth = 3;
     if (this.highlightedVertex && eq(v, this.highlightedVertex)) {
       context.strokeStyle = "red";
     }
@@ -140,6 +140,7 @@ export class GraphDrawingWrapper {
   }
 
   handleClick(e: MouseEvent) {
+    e.preventDefault();
     if (!this.frozen) {
       try {
         let newVertex = this.translateEventToCoord(e);

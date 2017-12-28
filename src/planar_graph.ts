@@ -22,17 +22,17 @@ export interface Vertex extends Coord {
 }
 
 export enum Color {
-  Red,
-  Orange,
-  Yellow,
   Green,
-  Blue
+  Blue,
+  Orange,
+  Pink,
+  Gray
 }
 
 export const ALL_COLORS = [
-  Color.Red,
+  Color.Pink,
   Color.Blue,
-  Color.Yellow,
+  Color.Gray,
   Color.Green,
   Color.Orange
 ];
