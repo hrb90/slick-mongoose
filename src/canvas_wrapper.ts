@@ -222,8 +222,8 @@ export class GraphDrawingWrapper {
 
   translateEventToCoord(e: MouseEvent): Coord {
     return {
-      x: e.x - this.canvasEl.offsetLeft,
-      y: e.y - this.canvasEl.offsetTop,
+      x: e.x - this.canvasEl.offsetLeft + window.pageXOffset,
+      y: e.y - this.canvasEl.offsetTop + window.pageYOffset,
       colors: []
     } as Coord;
   }
