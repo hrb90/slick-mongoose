@@ -14,15 +14,15 @@ import { difference } from "./util";
 const colorToString = (c: Color, faded: boolean) => {
   switch (c) {
     case Color.Pink:
-      return faded ? "#ffb1e0" : "#b14b7a";
+      return faded ? "#ffb1e0" : "#e47ead";
     case Color.Blue:
-      return faded ? "#4becff" : "#0084b9";
+      return faded ? "#4becff" : "#00b7ec";
     case Color.Green:
-      return faded ? "#33d3aa" : "#107d54";
+      return faded ? "#33d3aa" : "#00a077";
     case Color.Orange:
-      return faded ? "#faa200" : "#d77f00";
+      return faded ? "#faa200" : "#c76f00";
     case Color.Gray:
-      return faded ? "#8595a9" : "#39424e";
+      return faded ? "#dfd7cf" : "#a9a595";
   }
 };
 
