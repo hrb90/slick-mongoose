@@ -1,1 +1,2432 @@
-!function(e){function t(r){if(n[r])return n[r].exports;var i=n[r]={i:r,l:!1,exports:{}};return e[r].call(i.exports,i,i.exports,t),i.l=!0,i.exports}var n={};t.m=e,t.c=n,t.d=function(e,n,r){t.o(e,n)||Object.defineProperty(e,n,{configurable:!1,enumerable:!0,get:r})},t.n=function(e){var n=e&&e.__esModule?function(){return e.default}:function(){return e};return t.d(n,"a",n),n},t.o=function(e,t){return Object.prototype.hasOwnProperty.call(e,t)},t.p="",t(t.s=5)}([function(e,t,n){"use strict";function r(e){return Object.keys(e).map(function(t){return e[t]})}function i(e,t){return e.filter(function(e){return t.indexOf(e)<0})}function o(e,t){for(var n=0;n<e.length;n++)if(t(e[n]))return e[n];return null}function a(e,t){for(var n=0;n<e.length;n++)if(t(e[n]))return n;return-1}function c(e,t){return e.filter(function(e){return t.indexOf(e)>=0})}function s(e,t){var n=Object.keys(e),r={};return n.forEach(function(n){r[n]=t(e[n])}),r}function d(e){return JSON.parse(JSON.stringify(e))}Object.defineProperty(t,"__esModule",{value:!0}),t.values=r,t.difference=i,t.find=o,t.findIndex=a,t.intersection=c,t.mapValues=s,t.cloneDeep=d},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0}),t.eq=function(e,t){var n=function(e,t){return Math.abs(e-t)<.1};return n(e.x,t.x)&&n(e.y,t.y)},t.xProd=function(e,t){return e.x*t.y-e.y*t.x};var r=function(e,t){return e.x*t.x+e.y*t.y},i=function(e,t){return{x:e*t.x,y:e*t.y}},o=function(e,t){return{x:e.x+t.x,y:e.y+t.y}},a=function(e,t){return o(e,i(-1,t))};t.angle=function(e,t){return Math.atan2(e.y-t.y,e.x-t.x)},t.getConsecutiveCoordPairs=function(e,t,n){return[e,n[(t+1)%n.length]]},t.intersect=function(e,n,i,o,c){void 0===c&&(c=!1);var s=a(n,e),d=a(o,i),u=a(i,e),h=t.xProd(s,d);if(0!==h){var l=t.xProd(u,s)/h,g=t.xProd(u,d)/h,f=function(e){return 0<e&&e<1},p=function(e){return 0===e||1===e};return!(!f(l)||!f(g))||!(!p(l)&&!p(g))&&((f(l)||f(g))&&(!c||0===l||0===g))}if(0!==t.xProd(u,s))return!1;var v=r(u,s)/r(s,s),y=v+r(d,s)/r(s,s);return Math.max(v,y)>0&&Math.min(v,y)<1},t.inInterior=function(e,n){if(e.length<3||e.some(function(e){return t.eq(e,n)}))return!1;for(var r=Math.max.apply(Math,e.map(function(e){return e.x})),i=Math.max.apply(Math,e.map(function(e){return e.y})),o={x:r+1,y:i+1};e.some(function(e){return t.collinear3([e,n,o])});)o.x=o.x+1;var a=0;return e.map(t.getConsecutiveCoordPairs).forEach(function(e){t.intersect(n,o,e[0],e[1],!0)&&(a+=1)}),a%2==1},t.signedArea=function(e){var n=0;return e.map(t.getConsecutiveCoordPairs).forEach(function(e){n+=(e[1].x-e[0].x)*(e[1].y+e[0].y)}),n},t.isClockwise=function(e){return t.signedArea(e)>0},t.collinear3=function(e){return 0===t.signedArea(e)};var c=function(e,t){return e.y-t.y!=0?e.y-t.y:e.x-t.x};t.convexHull=function(e){var n=[],r=e.slice(0),i=r.sort(c)[0];n.unshift(i);var o=r.slice(1);return o.sort(function(e,n){return t.isClockwise([i,e,n])?-1:1}),o.forEach(function(e){for(;n.length>1&&!t.isClockwise([n[1],n[0],e]);)n.shift();n.unshift(e)}),n};var s=function(e,t){var n=a(t,e);return r(n,n)};t.distance=function(e,t){return Math.sqrt(s(e,t))},t.unitVector=function(e,n){var r=t.distance(e,n);return{x:(e.x-n.x)/r,y:(e.y-n.y)/r}},t.pointSegmentDistance=function(e,n,c){if(t.eq(n,c))return t.distance(e,n);var d=s(c,n),u=r(a(e,n),a(c,n))/d;return u=Math.max(0,Math.min(1,u)),t.distance(e,o(n,i(u,a(c,n))))}},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r,i=n(1),o=n(0);!function(e){e[e.Blue=0]="Blue",e[e.Green=1]="Green",e[e.Orange=2]="Orange",e[e.Gray=3]="Gray",e[e.Pink=4]="Pink"}(r=t.Color||(t.Color={})),t.ALL_COLORS=[r.Pink,r.Blue,r.Gray,r.Green,r.Orange];var a=0,c=function(){return(a+=1)+""},s=function(e){return e.x+","+e.y},d=function(e,t){return s(e)+";"+s(t)};t.createEmptyPlanarGraph=function(){return{infiniteFace:"infinite",vertices:{},edges:{},faces:{infinite:{infinite:!0}}}},t.addEdge=function(e,n,r){var i=t.getVertexKey(e,n),a=t.getVertexKey(e,r);if(i||a)return!i&&a?l(e,a,n):!a&&i?l(e,i,r):h(e,i,a);if(o.values(e.vertices).length>0)throw"KeepGraphConnected";return u(n,r)},t.getEndpoints=function(e,t){return[e.edges[t].origin,e.edges[e.edges[t].twin].origin]},t.removeEdge=function(e,t){var n=o.cloneDeep(e),r=n.edges[t].twin,i=n.edges[t].incidentFace,a=n.edges[r].incidentFace;if(i!==a){(n.faces[i].infinite||n.faces[a].infinite)&&(n.faces[i].infinite=!0,n.infiniteFace=i),n=y(n,t),n=y(n,r);var c=Object.keys(n.edges).filter(function(e){return n.edges[e].incidentFace===a});return delete n.faces[a],c.forEach(function(e){return n.edges[e].incidentFace=i}),delete n.edges[t],delete n.edges[r],n}throw new Error("Please keep the graph connected")},t.removeEdgeByVertices=function(e,n,r){var i=t.getVertexKey(e,n),a=t.getVertexKey(e,r),c=o.find(t.getOutgoingEdgeKeys(e,i),function(t){return e.edges[e.edges[t].twin].origin===a});if(c)return t.removeEdge(e,c);throw new Error("Can't connect already connected vertices")},t.removeVertex=function(e,n){var r=o.cloneDeep(e);return t.getOutgoingEdgeKeys(r,n).forEach(function(e){try{r=t.removeEdge(r,e)}catch(e){r=m(r,n)}}),r},t.removeVertexByCoord=function(e,n){return t.removeVertex(e,t.getVertexKey(e,n))},t.findVp=function(e){if(e.mark1&&e.mark2){var n=t.getBoundaryVertexKeys(e,e.infiniteFace),r=n.length,i=n.indexOf(e.mark1);if(i>-1)return n[(i+r-1)%r]!==e.mark2?n[(i+r-1)%r]:n[(i+1)%r];throw new Error("Marked vertices not on boundary")}throw new Error("Graph is unmarked")},t.getEdgeKeyByCoords=function(e,n,r){var i=t.getVertexKey(e,n),o=t.getVertexKey(e,r),a=t.getOutgoingEdgeKeys(e,i),c=t.getAdjacentVertices(e,i),s=c.indexOf(o);return s>=0?a[s]:null},t.getAdjacentVertices=function(e,n){return t.getOutgoingEdgeKeys(e,n).map(function(t){return e.edges[e.edges[t].next].origin})},t.getBoundaryEdgeKeys=function(e,t){var n=e.faces[t],r=[];if(n.incidentEdge)for(var i=n.incidentEdge;!r.includes(i);)r.push(i),i=e.edges[i].next;return r},t.getBoundaryVertexKeys=function(e,n){return t.getBoundaryEdgeKeys(e,n).map(function(t){return e.edges[t].origin})},t.getBoundaryVertices=function(e,n){return t.getBoundaryVertexKeys(e,n).map(function(t){return e.vertices[t]})},t.getSplitFaceKey=function(e,n,r){var a={x:(n.x+r.x)/2,y:(n.y+r.y)/2},c=g(e,a);if(o.intersection(f(e,n),f(e,r)).includes(c)){var s=function(t){var o=e.vertices[e.edges[t].origin],a=e.vertices[e.edges[e.edges[t].next].origin];return!i.intersect(n,r,o,a)};return t.getBoundaryEdgeKeys(e,c).every(s)?c:null}return null},t.getOutgoingEdgeKeys=function(e,t){var n=[];if(e.vertices[t].incidentEdge)for(var r=e.vertices[t].incidentEdge;!n.includes(r);)n.push(r),r=e.edges[e.edges[r].twin].next;return n},t.getColors=function(e,t){return e.vertices[t].colors},t.safeAddEdge=function(e,n,r){try{return t.addEdge(e,n,r),!0}catch(e){return!1}},t.setColors=function(e,t,n){var r=o.cloneDeep(e);return r.vertices[t].colors=n,r};var u=function(e,n){var r=s(e),i=s(n),o=d(e,n),a=d(n,e),c={x:e.x,y:e.y,incidentEdge:o,colors:t.ALL_COLORS},u={x:n.x,y:n.y,incidentEdge:a,colors:t.ALL_COLORS},h={twin:a,next:a,prev:a,origin:r,incidentFace:"infinite"},l={twin:o,next:o,prev:o,origin:i,incidentFace:"infinite"};return{infiniteFace:"infinite",vertices:(g={},g[r]=c,g[i]=u,g),edges:(f={},f[o]=h,f[a]=l,f),faces:{infinite:{infinite:!0,incidentEdge:o}}};var g,f},h=function(e,n,r){var a=o.cloneDeep(e);if(t.getAdjacentVertices(a,n).includes(r))throw new Error("Can't connect already connected vertices");var s=a.vertices[n],u=a.vertices[r],h=t.getSplitFaceKey(a,s,u);if(h){var l=p(a,n,i.angle(s,u)),g=a.edges[l],f=p(a,r,i.angle(u,s)),y=a.edges[f],m=d(s,u),E=d(u,s),x={origin:n,next:f,prev:g.prev,twin:E,incidentFace:h},b={origin:r,next:l,prev:y.prev,twin:m,incidentFace:h};a.edges[g.prev].next=m,g.prev=E,a.edges[y.prev].next=E,y.prev=m,a.edges[m]=x,a.edges[E]=b;var C=a.faces[h].infinite?v(a,m):m;a.faces[h].incidentEdge=a.edges[C].twin;var w=c(),k={infinite:!1,incidentEdge:C};a.edges[a.edges[C].twin].incidentFace=h,a.edges[C].incidentFace=w;for(var A=a.edges[C].next;A!==C;)a.edges[A].incidentFace=w,A=a.edges[A].next;return a.faces[w]=k,a}throw new Error("Can't connect those vertices")},l=function(e,n,r){var a=t.getSplitFaceKey(e,e.vertices[n],r);if(a){var c=o.cloneDeep(e),u=s(r),h=c.vertices[n],l=p(c,n,i.angle(h,r)),g=c.edges[l],f=g.prev,v=c.edges[f],y=d(h,r),m=d(r,h),E={origin:n,prev:f,twin:m,next:m,incidentFace:a},x={origin:u,prev:y,next:l,twin:y,incidentFace:a};return v.next=y,g.prev=m,c.vertices[u]={x:r.x,y:r.y,colors:t.ALL_COLORS,incidentEdge:m},c.edges[y]=E,c.edges[m]=x,c}throw new Error("Can't connect those vertices")},g=function(e,n){var r=e.infiniteFace;return Object.keys(e.faces).forEach(function(o){e.infiniteFace!==o&&i.inInterior(t.getBoundaryVertices(e,o),n)&&(r=o)}),r},f=function(e,n){var r=t.getVertexKey(e,n);if(r){return t.getOutgoingEdgeKeys(e,r).map(function(t){return e.edges[t].incidentFace})}return[g(e,n)]},p=function(e,n,r){var o=t.getOutgoingEdgeKeys(e,n).map(function(t){var n=e.vertices[e.edges[t].origin],r=e.vertices[e.edges[e.edges[t].next].origin];return[t,i.angle(n,r)]}),a=o.filter(function(e){return e[1]<r}),c=function(e,t){return t[1]-e[1]},s=function(e){return e.sort(c)[0][0]};return s(a.length>0?a:o)};t.getVertexKey=function(e,t){var n=null;for(var r in e.vertices)i.eq(e.vertices[r],t)&&(n=r);return n};var v=function(e,t){for(var n=e.edges[t],r=e.edges[n.twin],o=[e.vertices[r.origin]],a=e.edges[r.next];a!==r;)o.push(e.vertices[a.origin]),a=e.edges[a.next];return i.isClockwise(o)?t:n.twin},y=function(e,t){var n=o.cloneDeep(e),r=n.edges[t].prev,i=n.edges[n.edges[t].twin].next,a=n.edges[t].incidentFace;return n.edges[r].next=i,n.edges[i].prev=r,n.faces[a].incidentEdge=r,n.vertices[n.edges[t].origin].incidentEdge=i,n},m=function(e,n){var r=o.cloneDeep(e);if(1===t.getOutgoingEdgeKeys(r,n).length){var i=r.vertices[n].incidentEdge,a=r.edges[i].twin;return r=y(e,a),delete r.vertices[n],delete r.edges[i],delete r.edges[a],r}throw new Error("Not a leaf vertex!")},E=function(e,t){var n=e.edges[t].twin;return e.edges[t].incidentFace===e.edges[n].incidentFace};t.inducedInteriorSubgraph=function(e,n){for(var r=function(t){return!(n.includes(t)||i.inInterior(n.map(function(t){return e.vertices[t]}),e.vertices[t]))},a=function(n){return t.getEndpoints(e,n).some(r)},c=function(e){return Object.keys(e.vertices).filter(r).filter(function(n){return 1===t.getOutgoingEdgeKeys(e,n).length})},s=function(e){return Object.keys(e.edges).filter(a).filter(function(t){return!E(e,t)})},d=o.cloneDeep(e),u=s(d);u.length>0;)d=t.removeEdge(d,u[0]),u=s(d);for(var h=c(d);h.length>0;)d=t.removeVertex(d,h[0]),h=c(d);return d},t.findChordKey=function(e){var n=null,r=t.getBoundaryVertexKeys(e,e.infiniteFace);return r.forEach(function(i){t.getOutgoingEdgeKeys(e,i).forEach(function(t){var i=e.edges[t];r.includes(e.edges[i.next].origin)&&i.incidentFace!==e.infiniteFace&&e.edges[i.twin].incidentFace!==e.infiniteFace&&(n=t)})}),n},t.splitChordedGraph=function(e,n){var r=t.getEndpoints(e,n),i=r[0],o=r[1],a=t.getBoundaryVertexKeys(e,e.infiniteFace),c=[i,o].map(function(e){return a.indexOf(e)}),s=c[0],d=c[1],u=s<d?[s,d]:[d,s],h=u[0],l=u[1],g=a.slice(h,l+1),f=a.slice(0,h+1).concat(a.slice(l)),p=g.includes(e.mark1)&&g.includes(e.mark2)?[g,f]:[f,g],v=p[0],y=p[1],m=[v,y].map(function(n){return t.inducedInteriorSubgraph(e,n)}),E=m[0],x=m[1];return x.mark1=i,x.mark2=o,[E,x]}},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r,i=n(0),o=n(4);!function(e){e[e.AddEdge=0]="AddEdge",e[e.Begin=1]="Begin",e[e.End=2]="End",e[e.UpdateColors=3]="UpdateColors",e[e.RestrictGraph=4]="RestrictGraph",e[e.HighlightEdge=5]="HighlightEdge",e[e.UnhighlightEdge=6]="UnhighlightEdge",e[e.Pause=7]="Pause",e[e.Describe=8]="Describe",e[e.DescribeAddEdges=9]="DescribeAddEdges",e[e.DescribeChordlessOne=10]="DescribeChordlessOne",e[e.DescribeChordlessTwo=11]="DescribeChordlessTwo",e[e.DescribeChordlessThree=12]="DescribeChordlessThree",e[e.DescribeChordlessFour=13]="DescribeChordlessFour",e[e.DescribeChorded=14]="DescribeChorded",e[e.DescribePreColor=15]="DescribePreColor",e[e.DescribeTriangle=16]="DescribeTriangle"}(r=t.AnimationType||(t.AnimationType={}));var a=function(e){document.getElementById("description").textContent=e},c=function(e){var t=document.createElement("strong");t.id="continueButton",t.innerText="Press spacebar to continue",o.bind("space",function(){o.unbind("space"),e()}),document.getElementById("sidebar").appendChild(t)},s=function(e){document.getElementById(e).remove()},d=[];t.addStep=function(e,t,n){d.push({type:e,pause:t,data:n,addButton:!1})},t.resetAnimation=function(){d=[]},t.postProcessAnimation=function(){[r.DescribeAddEdges,r.DescribeChorded,r.DescribeTriangle,r.DescribeChordlessOne,r.DescribeChordlessTwo,r.DescribeChordlessThree,r.DescribeChordlessFour,r.DescribePreColor].forEach(function(e){var t=i.findIndex(d,function(t){return t.type===e});t>=0&&(d[t].addButton=!0)})},t.drawStep=function(e,t){switch(e.type){case r.AddEdge:t.drawEdge(e.data[0],e.data[1],"blue");break;case r.Begin:t.freeze();break;case r.End:t.unfreeze();break;case r.UpdateColors:t.updateColors(e.data.vertex,e.data.colors);break;case r.RestrictGraph:t.highlightGraph(e.data.graph),t.redraw();break;case r.HighlightEdge:t.highlightEdge(e.data[0],e.data[1]),t.redraw();break;case r.UnhighlightEdge:t.unhighlightEdge(),t.redraw();case r.Describe:case r.DescribeAddEdges:case r.DescribeChorded:case r.DescribeTriangle:case r.DescribeChordlessOne:case r.DescribeChordlessTwo:case r.DescribeChordlessThree:case r.DescribeChordlessFour:case r.DescribePreColor:a(e.data);break;case r.Pause:}},t.animate=function(e){if(d.length>0){var n=d.shift();t.drawStep(n,e),n.addButton?(e.darken(),c(function(){e.lighten(),t.animate(e),s("continueButton")})):setTimeout(function(){return t.animate(e)},n.pause)}}},function(e,t,n){var r;!function(i,o,a){function c(e,t,n){if(e.addEventListener)return void e.addEventListener(t,n,!1);e.attachEvent("on"+t,n)}function s(e){if("keypress"==e.type){var t=String.fromCharCode(e.which);return e.shiftKey||(t=t.toLowerCase()),t}return b[e.which]?b[e.which]:C[e.which]?C[e.which]:String.fromCharCode(e.which).toLowerCase()}function d(e,t){return e.sort().join(",")===t.sort().join(",")}function u(e){var t=[];return e.shiftKey&&t.push("shift"),e.altKey&&t.push("alt"),e.ctrlKey&&t.push("ctrl"),e.metaKey&&t.push("meta"),t}function h(e){if(e.preventDefault)return void e.preventDefault();e.returnValue=!1}function l(e){if(e.stopPropagation)return void e.stopPropagation();e.cancelBubble=!0}function g(e){return"shift"==e||"ctrl"==e||"alt"==e||"meta"==e}function f(){if(!x){x={};for(var e in b)e>95&&e<112||b.hasOwnProperty(e)&&(x[b[e]]=e)}return x}function p(e,t,n){return n||(n=f()[e]?"keydown":"keypress"),"keypress"==n&&t.length&&(n="keydown"),n}function v(e){return"+"===e?["+"]:(e=e.replace(/\+{2}/g,"+plus"),e.split("+"))}function y(e,t){var n,r,i,o=[];for(n=v(e),i=0;i<n.length;++i)r=n[i],k[r]&&(r=k[r]),t&&"keypress"!=t&&w[r]&&(r=w[r],o.push("shift")),g(r)&&o.push(r);return t=p(r,o,t),{key:r,modifiers:o,action:t}}function m(e,t){return null!==e&&e!==o&&(e===t||m(e.parentNode,t))}function E(e){function t(e){e=e||{};var t,n=!1;for(t in x)e[t]?n=!0:x[t]=0;n||(w=!1)}function n(e,t,n,r,i,o){var a,c,s=[],u=n.type;if(!v._callbacks[e])return[];for("keyup"==u&&g(e)&&(t=[e]),a=0;a<v._callbacks[e].length;++a)if(c=v._callbacks[e][a],(r||!c.seq||x[c.seq]==c.level)&&u==c.action&&("keypress"==u&&!n.metaKey&&!n.ctrlKey||d(t,c.modifiers))){var h=!r&&c.combo==i,l=r&&c.seq==r&&c.level==o;(h||l)&&v._callbacks[e].splice(a,1),s.push(c)}return s}function r(e,t,n,r){v.stopCallback(t,t.target||t.srcElement,n,r)||!1===e(t,n)&&(h(t),l(t))}function i(e){"number"!=typeof e.which&&(e.which=e.keyCode);var t=s(e);if(t)return"keyup"==e.type&&b===t?void(b=!1):void v.handleKey(t,u(e),e)}function a(){clearTimeout(m),m=setTimeout(t,1e3)}function f(e,n,i,o){function c(n){r(i,n,e),"keyup"!==o&&(b=s(n)),setTimeout(t,10)}x[e]=0;for(var d=0;d<n.length;++d){var u=d+1===n.length,h=u?c:function(t){return function(){w=t,++x[e],a()}}(o||y(n[d+1]).action);p(n[d],h,o,e,d)}}function p(e,t,r,i,o){v._directMap[e+":"+r]=t,e=e.replace(/\s+/g," ");var a,c=e.split(" ");if(c.length>1)return void f(e,c,t,r);a=y(e,r),v._callbacks[a.key]=v._callbacks[a.key]||[],n(a.key,a.modifiers,{type:a.action},i,e,o),v._callbacks[a.key][i?"unshift":"push"]({callback:t,modifiers:a.modifiers,action:a.action,seq:i,level:o,combo:e})}var v=this;if(e=e||o,!(v instanceof E))return new E(e);v.target=e,v._callbacks={},v._directMap={};var m,x={},b=!1,C=!1,w=!1;v._handleKey=function(e,i,o){var a,c=n(e,i,o),s={},d=0,u=!1;for(a=0;a<c.length;++a)c[a].seq&&(d=Math.max(d,c[a].level));for(a=0;a<c.length;++a)if(c[a].seq){if(c[a].level!=d)continue;u=!0,s[c[a].seq]=1,r(c[a].callback,o,c[a].combo,c[a].seq)}else u||r(c[a].callback,o,c[a].combo);var h="keypress"==o.type&&C;o.type!=w||g(e)||h||t(s),C=u&&"keydown"==o.type},v._bindMultiple=function(e,t,n){for(var r=0;r<e.length;++r)p(e[r],t,n)},c(e,"keypress",i),c(e,"keydown",i),c(e,"keyup",i)}if(i){for(var x,b={8:"backspace",9:"tab",13:"enter",16:"shift",17:"ctrl",18:"alt",20:"capslock",27:"esc",32:"space",33:"pageup",34:"pagedown",35:"end",36:"home",37:"left",38:"up",39:"right",40:"down",45:"ins",46:"del",91:"meta",93:"meta",224:"meta"},C={106:"*",107:"+",109:"-",110:".",111:"/",186:";",187:"=",188:",",189:"-",190:".",191:"/",192:"`",219:"[",220:"\\",221:"]",222:"'"},w={"~":"`","!":"1","@":"2","#":"3",$:"4","%":"5","^":"6","&":"7","*":"8","(":"9",")":"0",_:"-","+":"=",":":";",'"':"'","<":",",">":".","?":"/","|":"\\"},k={option:"alt",command:"meta",return:"enter",escape:"esc",plus:"+",mod:/Mac|iPod|iPhone|iPad/.test(navigator.platform)?"meta":"ctrl"},A=1;A<20;++A)b[111+A]="f"+A;for(A=0;A<=9;++A)b[A+96]=A.toString();E.prototype.bind=function(e,t,n){var r=this;return e=e instanceof Array?e:[e],r._bindMultiple.call(r,e,t,n),r},E.prototype.unbind=function(e,t){var n=this;return n.bind.call(n,e,function(){},t)},E.prototype.trigger=function(e,t){var n=this;return n._directMap[e+":"+t]&&n._directMap[e+":"+t]({},e),n},E.prototype.reset=function(){var e=this;return e._callbacks={},e._directMap={},e},E.prototype.stopCallback=function(e,t){var n=this;return!((" "+t.className+" ").indexOf(" mousetrap ")>-1)&&(!m(t,n.target)&&("INPUT"==t.tagName||"SELECT"==t.tagName||"TEXTAREA"==t.tagName||t.isContentEditable))},E.prototype.handleKey=function(){var e=this;return e._handleKey.apply(e,arguments)},E.addKeycodes=function(e){for(var t in e)e.hasOwnProperty(t)&&(b[t]=e[t]);x=null},E.init=function(){var e=E(o);for(var t in e)"_"!==t.charAt(0)&&(E[t]=function(t){return function(){return e[t].apply(e,arguments)}}(t))},E.init(),i.Mousetrap=E,void 0!==e&&e.exports&&(e.exports=E),void 0!==(r=function(){return E}.call(t,n,t,e))&&(e.exports=r)}}("undefined"!=typeof window?window:null,"undefined"!=typeof window?document:null)},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=n(6),i=n(7),o=n(3),a=n(4);document.addEventListener("DOMContentLoaded",function(){var e=new r.GraphDrawingWrapper("canvas"),t=function(){e.frozen||(e.unhighlightVertex(),i.fiveColor(e.graph),o.animate(e))};a.bind("enter",t),document.getElementById("color-graph").addEventListener("click",t),document.getElementById("clear-canvas").addEventListener("click",function(){e.frozen||(e.clearGraph(),e.clear())})})},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=n(1),i=n(2),o=n(0),a=function(e,t){switch(e){case i.Color.Pink:return t?"#ffb1e0":"#e47ead";case i.Color.Blue:return t?"#4becff":"#00b7ec";case i.Color.Green:return t?"#33d3aa":"#00a077";case i.Color.Orange:return t?"#faa200":"#c76f00";case i.Color.Gray:return t?"#dfd7cf":"#a9a595"}},c=function(){function e(e,t){void 0===t&&(t=12),this.radius=t,this.frozen=!1,this.canvasEl=document.getElementById(e),this.drawCircle=this.drawCircle.bind(this),this.handleClick=this.handleClick.bind(this),this.canvasEl.addEventListener("click",this.handleClick),this.clearGraph()}return e.prototype.clear=function(){this.canvasEl.getContext("2d").clearRect(0,0,this.canvasEl.width,this.canvasEl.height)},e.prototype.clearGraph=function(){this.graph=i.createEmptyPlanarGraph(),this.highlightedGraph=this.graph,this.highlightedVertex=null,this.highlightedEdge=null,this.vertices=[]},e.prototype.darken=function(){this.canvasEl.className="greyer-canvas"},e.prototype.clickVertex=function(e){if(this.highlightedVertex){e!==this.highlightedVertex&&this.drawEdge(e,this.highlightedVertex);var t=this.highlightedVertex;this.unhighlightVertex(),this.drawCircle(t)}else this.highlightVertex(e);this.drawCircle(e)},e.prototype.doesAddEdge=function(e,t){try{return this.graph=i.addEdge(this.graph,e,t),this.highlightedGraph=this.graph,!0}catch(e){return"KeepGraphConnected"===e&&alert("Please keep the graph connected"),!1}},e.prototype.drawCircle=function(e,t,n){void 0===t&&(t=!1),void 0===n&&(n=i.ALL_COLORS),this.vertices.push(e);var o=this.canvasEl.getContext("2d");o.strokeStyle=t?"lightgrey":"black",o.lineWidth=3,this.highlightedVertex&&r.eq(e,this.highlightedVertex)&&(o.strokeStyle="red"),o.fillStyle="none",o.beginPath(),o.arc(e.x,e.y,this.radius,0,2*Math.PI),o.stroke(),n.length>0&&this.fillCircle(e,t,n)},e.prototype.drawEdge=function(e,t,n){void 0===n&&(n="black"),this.doesAddEdge(e,t)&&this.unsafeDrawEdge(e,t,n)},e.prototype.fillCircle=function(e,t,n){var r=this,i=n.length;n.forEach(function(n,o){var c=r.canvasEl.getContext("2d");c.fillStyle=a(n,t),c.beginPath(),c.arc(e.x,e.y,r.radius,2*o*Math.PI/i,2*(o+1)*Math.PI/i),c.lineTo(e.x,e.y),c.closePath(),c.fill()})},e.prototype.freeze=function(){this.frozen=!0},e.prototype.handleClick=function(e){var t=this;if(e.preventDefault(),!this.frozen)try{var n,i,o=this.translateEventToCoord(e);this.vertices.forEach(function(e){var a=r.distance(e,o);a<=t.radius&&(n=e),a<=2*t.radius&&(i=e)}),n?this.clickVertex(n):i||this.drawCircle(o)}catch(e){alert(e.message)}},e.prototype.highlightEdge=function(e,t){this.highlightedEdge=[e,t]},e.prototype.highlightGraph=function(e){this.highlightedGraph=e},e.prototype.highlightVertex=function(e){this.highlightedVertex?this.unhighlightVertex():this.highlightedVertex=e},e.prototype.isHighlightedEdge=function(e,t){if(null===this.highlightedEdge)return!1;var n=this.highlightedEdge[0],i=this.highlightedEdge[1];return r.eq(n,e)&&r.eq(i,t)||r.eq(n,t)&&r.eq(i,e)},e.prototype.lighten=function(){this.canvasEl.className=""},e.prototype.redraw=function(){var e=this;this.clear();var t=Object.keys(this.highlightedGraph.vertices),n=o.difference(Object.keys(this.graph.vertices),t),r=this.graph;t.forEach(function(t){var n=r.vertices[t];e.drawCircle(n,!1,n.colors)}),n.forEach(function(t){var n=r.vertices[t];e.drawCircle(n,!0,n.colors)}),Object.keys(r.edges).forEach(function(n){var o,a=i.getEndpoints(r,n),c=a[0],s=a[1];o=t.includes(c)&&t.includes(s)?"black":"lightgrey",e.isHighlightedEdge(r.vertices[c],r.vertices[s])&&(o="red"),e.unsafeDrawEdge(r.vertices[c],r.vertices[s],o)}),this.graph=r},e.prototype.translateEventToCoord=function(e){return{x:e.x-this.canvasEl.offsetLeft+window.pageXOffset,y:e.y-this.canvasEl.offsetTop+window.pageYOffset,colors:[]}},e.prototype.unfreeze=function(){this.frozen=!1},e.prototype.unhighlightEdge=function(){this.highlightedEdge=null},e.prototype.unhighlightVertex=function(){this.highlightedVertex=null},e.prototype.unsafeDrawEdge=function(e,t,n){var i=this.canvasEl.getContext("2d"),o=r.unitVector(e,t);i.strokeStyle=n,i.lineWidth=1,i.beginPath(),i.moveTo(e.x-this.radius*o.x,e.y-this.radius*o.y),i.lineTo(t.x+this.radius*o.x,t.y+this.radius*o.y),i.stroke()},e.prototype.updateColors=function(e,t){var n=i.getVertexKey(this.graph,e);this.graph=i.setColors(this.graph,n,t),this.redraw()},e}();t.GraphDrawingWrapper=c},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=n(1),i=n(2),o=n(3),a=n(8),c=n(0),s=function(e,t,n){var i=e.filter(function(e){return!(r.eq(e,t)||r.eq(e,n))});return Math.min.apply(Math,i.map(function(e){return r.pointSegmentDistance(e,t,n)}))},d=function(e,t){return o.addStep(o.AnimationType.AddEdge,0,t),i.addEdge(e,t[0],t[1])},u=function(e){return r.convexHull(c.values(e.vertices)).map(r.getConsecutiveCoordPairs).forEach(function(t){i.safeAddEdge(e,t[0],t[1])&&(e=d(e,t))}),e},h=function(e,t,n){for(var r=-1,o=[],a=t.map(function(t){return[e.edges[t].origin,e.edges[e.edges[e.edges[t].next].next].origin]}),c=t.map(function(t){return e.vertices[e.edges[t].origin]}),d=0;d<a.length;d++){var u=e.vertices[a[d][0]],h=e.vertices[a[d][1]];if(i.getSplitFaceKey(e,u,h)===n){var l=s(c,u,h);l>r&&(r=l,o=[u,h])}}return o},l=function(e,t){var n=i.getBoundaryEdgeKeys(e,t);if(n.length>3&&e.infiniteFace!==t){var r=h(e,n,t);e=d(e,r)}return e},g=function(e){return Object.keys(e.faces).every(function(t){return e.infiniteFace===t||3===i.getBoundaryEdgeKeys(e,t).length})},f=function(e){for(;!g(e);)for(var t in e.faces)i.getBoundaryEdgeKeys(e,t).length>3&&(e=l(e,t));return o.addStep(o.AnimationType.DescribeAddEdges,0,a.EXPLANATIONS.addEdges),e},p=function(e){var t=i.getBoundaryVertexKeys(e,e.infiniteFace);return e.mark1=t[0],e.mark2=t[1],o.addStep(o.AnimationType.Describe,2e3,a.EXPLANATIONS.fiveChoices),Object.keys(e.vertices).forEach(function(t){e=v(e,t,i.ALL_COLORS,0)}),o.addStep(o.AnimationType.Describe,2e3,a.EXPLANATIONS.restrictOuter),t.forEach(function(t){return e=v(e,t,i.ALL_COLORS.slice(0,3),0)}),o.addStep(o.AnimationType.Pause,1e3,{}),e=v(e,e.mark1,[i.Color.Pink],0),e=v(e,e.mark2,[i.Color.Blue],0),o.addStep(o.AnimationType.DescribePreColor,2e3,a.EXPLANATIONS.endPreColor),e},v=function(e,t,n,r){return o.addStep(o.AnimationType.UpdateColors,r,{vertex:e.vertices[t],colors:n}),i.setColors(e,t,n)},y=function(e){var t=[i.getColors(e,e.mark1)[0],i.getColors(e,e.mark2)[0]],n=c.difference(Object.keys(e.vertices),[e.mark1,e.mark2])[0],r=c.difference(i.getColors(e,n),t)[0];o.addStep(o.AnimationType.DescribeTriangle,800,a.EXPLANATIONS.baseCase);var s=v(e,n,[r],100);return o.addStep(o.AnimationType.Pause,300,{}),s},m=function(e,t){var n=c.cloneDeep(e);return Object.keys(t.vertices).forEach(function(e){n=i.setColors(n,e,i.getColors(t,e))}),n},E=function(e){var t=i.getBoundaryVertexKeys(e,e.infiniteFace),n=i.findVp(e),r=c.difference(i.getColors(e,n),i.getColors(e,e.mark1)).slice(0,2);o.addStep(o.AnimationType.DescribeChordlessOne,800,a.EXPLANATIONS.chordlessPartOne);var s,d=v(e,n,r,800),u=i.removeVertex(d,n);o.addStep(o.AnimationType.DescribeChordlessTwo,800,a.EXPLANATIONS.chordlessPartTwo),i.getAdjacentVertices(e,n).forEach(function(n){t.includes(n)?n!==e.mark1&&(s=n):u=v(u,n,c.difference(i.getColors(u,n),r).slice(0,3),300)}),o.addStep(o.AnimationType.DescribeChordlessThree,800,a.EXPLANATIONS.chordlessPartThree),u=b(u);var h=m(d,u);return o.addStep(o.AnimationType.RestrictGraph,0,{graph:h}),o.addStep(o.AnimationType.DescribeChordlessFour,800,a.EXPLANATIONS.chordlessPartFour),h=v(h,n,c.difference(r,i.getColors(h,s)).slice(0,1),800),o.addStep(o.AnimationType.Pause,300,{}),h},x=function(e,t){o.addStep(o.AnimationType.HighlightEdge,800,i.getEndpoints(e,t).map(function(t){return e.vertices[t]})),o.addStep(o.AnimationType.DescribeChorded,800,a.EXPLANATIONS.chorded),o.addStep(o.AnimationType.UnhighlightEdge,0,null);var n=i.splitChordedGraph(e,t),r=n[0],c=n[1];r=b(r),c=v(c,c.mark1,i.getColors(r,c.mark1),800),c=v(c,c.mark2,i.getColors(r,c.mark2),800),o.addStep(o.AnimationType.HighlightEdge,800,i.getEndpoints(e,t).map(function(t){return e.vertices[t]})),o.addStep(o.AnimationType.UnhighlightEdge,0,null),c=b(c);var s=m(e,r);return s=m(s,c),o.addStep(o.AnimationType.Pause,300,{}),s},b=function(e){if(o.addStep(o.AnimationType.RestrictGraph,0,{graph:e}),o.addStep(o.AnimationType.Pause,300,{}),3==c.values(e.vertices).length)return y(e);var t=i.findChordKey(e);return t?x(e,t):E(e)};t.fiveColor=function(e){o.resetAnimation(),o.addStep(o.AnimationType.Begin,0,{});var t=b(p(f(u(e))));return o.addStep(o.AnimationType.RestrictGraph,0,{graph:t}),o.addStep(o.AnimationType.Describe,0,a.EXPLANATIONS.finished),o.addStep(o.AnimationType.End,0,{}),o.postProcessAnimation(),t}},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=n(0),i={addEdges:"Add edges so that the graph is triangulated and 2-connected (i.e.\n  can't be disconnected by removing one edge or vertex). Adding edges only makes\n  our problem harder; a coloring of the new graph will work as a coloring of the\n  original graph.",fiveChoices:"Begin with vertices having five possible colors",restrictOuter:"Restrict outer vertices to three possible colors",endPreColor:"Color two adjacent outer vertices red and blue. Note that the\n  interior vertices have five possible colors, two outer vertices are colored,\n  and the rest of the outer vertices have three possible colors.\n  This will be an invariant throughout the recursive algorithm.",baseCase:"The triangle is the base case of our algorithm. As promised by our\n  invariant, it has two colored vertices and one vertex with three choices.\n  So we can always color the third vertex.",chordlessPartOne:"There is no chord... Find a vertex on the outside of the\n  graph that is a neighbor of a colored vertex and restrict it to two colors,\n  not including the color of the colored vertex.",chordlessPartTwo:"Ensure that the neighbors of the vertex in the interior of\n  the graph can't be colored with those two colors. Only one of this vertex's\n  neighbors can be colored with even one of the two colors, so we will be able\n  to come back and properly color this vertex.",chordlessPartThree:"Recursively color the graph with the vertex removed",chordlessPartFour:"Color the vertex we removed",chorded:"There is a chord; split the graph and recursively color the subgraphs",finished:"We're done!"};t.EXPLANATIONS=r.mapValues(i,function(e){return e.replace("\n","")})}]);
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, {
+/******/ 				configurable: false,
+/******/ 				enumerable: true,
+/******/ 				get: getter
+/******/ 			});
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = 5);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+function values(dict) {
+    return Object.keys(dict).map(function (key) { return dict[key]; });
+}
+exports.values = values;
+function difference(arr1, arr2) {
+    return arr1.filter(function (x) { return arr2.indexOf(x) < 0; });
+}
+exports.difference = difference;
+function find(arr, predicate) {
+    for (var i = 0; i < arr.length; i++) {
+        if (predicate(arr[i]))
+            return arr[i];
+    }
+    return null;
+}
+exports.find = find;
+function findIndex(arr, predicate) {
+    for (var i = 0; i < arr.length; i++) {
+        if (predicate(arr[i]))
+            return i;
+    }
+    return -1;
+}
+exports.findIndex = findIndex;
+function intersection(arr1, arr2) {
+    return arr1.filter(function (x) { return arr2.indexOf(x) >= 0; });
+}
+exports.intersection = intersection;
+function mapValues(dict, callback) {
+    var keys = Object.keys(dict);
+    var newDict = {};
+    keys.forEach(function (key) {
+        newDict[key] = callback(dict[key]);
+    });
+    return newDict;
+}
+exports.mapValues = mapValues;
+// This is a bad way to do this, but I can get away with it
+function cloneDeep(obj) {
+    var newObj = JSON.parse(JSON.stringify(obj));
+    return newObj;
+}
+exports.cloneDeep = cloneDeep;
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+// coordinate equality
+exports.eq = function (a, b) {
+    var intEq = function (x, y) { return Math.abs(x - y) < 0.1; };
+    return intEq(a.x, b.x) && intEq(a.y, b.y);
+};
+// 2-dimensional cross product
+exports.xProd = function (v1, v2) { return v1.x * v2.y - v1.y * v2.x; };
+// dot product
+var dot = function (v1, v2) { return v1.x * v2.x + v1.y * v2.y; };
+var scale = function (scalar, v) { return ({
+    x: scalar * v.x,
+    y: scalar * v.y
+}); };
+var plus = function (a, b) { return ({
+    x: a.x + b.x,
+    y: a.y + b.y
+}); };
+var minus = function (a, b) { return plus(a, scale(-1, b)); };
+exports.angle = function (v1, v2) {
+    return Math.atan2(v1.y - v2.y, v1.x - v2.x);
+};
+exports.getConsecutiveCoordPairs = function (v, i, p) { return [
+    v,
+    p[(i + 1) % p.length]
+]; };
+// Do the line segments from v1-v2 and v3-v4 intersect?
+exports.intersect = function (v1, v2, v3, v4, halfOpen) {
+    if (halfOpen === void 0) { halfOpen = false; }
+    var r = minus(v2, v1);
+    var s = minus(v4, v3);
+    var diff = minus(v3, v1);
+    var det = exports.xProd(r, s);
+    if (det !== 0) {
+        var t = exports.xProd(diff, r) / det;
+        var u = exports.xProd(diff, s) / det;
+        var interior = function (x) { return 0 < x && x < 1; };
+        var boundary = function (x) { return x === 0 || x === 1; };
+        if (interior(t) && interior(u)) {
+            // the segments intersect
+            return true;
+        }
+        else if (boundary(t) || boundary(u)) {
+            // three points are collinear
+            return (interior(t) || interior(u)) && (!halfOpen || t === 0 || u === 0);
+        }
+        else {
+            return false;
+        }
+    }
+    else {
+        if (exports.xProd(diff, r) !== 0) {
+            // parallel, non-collinear
+            return false;
+        }
+        else {
+            // all 4 points collinear
+            var t0 = dot(diff, r) / dot(r, r);
+            var t1 = t0 + dot(s, r) / dot(r, r);
+            return Math.max(t0, t1) > 0 && Math.min(t0, t1) < 1;
+        }
+    }
+};
+// Is v in the interior of polygon?
+exports.inInterior = function (polygon, v) {
+    if (polygon.length < 3 || polygon.some(function (u) { return exports.eq(u, v); }))
+        return false;
+    var maxX = Math.max.apply(Math, polygon.map(function (v) { return v.x; }));
+    var maxY = Math.max.apply(Math, polygon.map(function (v) { return v.y; }));
+    var outerCoord = { x: maxX + 1, y: maxY + 1 };
+    while (polygon.some(function (u) { return exports.collinear3([u, v, outerCoord]); })) {
+        outerCoord.x = outerCoord.x + 1;
+    }
+    var crossingNum = 0;
+    polygon.map(exports.getConsecutiveCoordPairs).forEach(function (pair) {
+        if (exports.intersect(v, outerCoord, pair[0], pair[1], true))
+            crossingNum += 1;
+    });
+    return crossingNum % 2 === 1;
+};
+exports.signedArea = function (polygon) {
+    var signedAreaSum = 0;
+    polygon.map(exports.getConsecutiveCoordPairs).forEach(function (pair) {
+        signedAreaSum += (pair[1].x - pair[0].x) * (pair[1].y + pair[0].y);
+    });
+    return signedAreaSum;
+};
+exports.isClockwise = function (polygon) { return exports.signedArea(polygon) > 0; };
+exports.collinear3 = function (polygon) { return exports.signedArea(polygon) === 0; };
+// Helper method for convex hull
+var lexSortYX = function (a, b) {
+    if (a.y - b.y !== 0) {
+        return a.y - b.y;
+    }
+    else {
+        return a.x - b.x;
+    }
+};
+// Graham scan
+exports.convexHull = function (vertices) {
+    var stack = [];
+    // Don't mutate the input
+    var verticesCopy = vertices.slice(0);
+    // 1. Find lowest y-value
+    var firstCoord = verticesCopy.sort(lexSortYX)[0];
+    stack.unshift(firstCoord);
+    var otherVertices = verticesCopy.slice(1);
+    // 2. Sort vertices by angle
+    otherVertices.sort(function (v1, v2) { return (exports.isClockwise([firstCoord, v1, v2]) ? -1 : 1); });
+    // 3. Do the scan
+    otherVertices.forEach(function (nextCoord) {
+        while (stack.length > 1 && !exports.isClockwise([stack[1], stack[0], nextCoord])) {
+            stack.shift();
+        }
+        stack.unshift(nextCoord);
+    });
+    return stack;
+};
+var dist2 = function (v1, v2) {
+    var diff = minus(v2, v1);
+    return dot(diff, diff);
+};
+exports.distance = function (v1, v2) {
+    return Math.sqrt(dist2(v1, v2));
+};
+exports.unitVector = function (v1, v2) {
+    var d = exports.distance(v1, v2);
+    return { x: (v1.x - v2.x) / d, y: (v1.y - v2.y) / d };
+};
+exports.pointSegmentDistance = function (p, endPoint1, endPoint2) {
+    if (exports.eq(endPoint1, endPoint2)) {
+        return exports.distance(p, endPoint1);
+    }
+    else {
+        var l2 = dist2(endPoint2, endPoint1);
+        var t = dot(minus(p, endPoint1), minus(endPoint2, endPoint1)) / l2;
+        t = Math.max(0, Math.min(1, t));
+        return exports.distance(p, plus(endPoint1, scale(t, minus(endPoint2, endPoint1))));
+    }
+};
+
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var geom_1 = __webpack_require__(1);
+var util_1 = __webpack_require__(0);
+var Color;
+(function (Color) {
+    Color[Color["Blue"] = 0] = "Blue";
+    Color[Color["Green"] = 1] = "Green";
+    Color[Color["Orange"] = 2] = "Orange";
+    Color[Color["Gray"] = 3] = "Gray";
+    Color[Color["Pink"] = 4] = "Pink";
+})(Color = exports.Color || (exports.Color = {}));
+exports.ALL_COLORS = [
+    Color.Pink,
+    Color.Blue,
+    Color.Gray,
+    Color.Green,
+    Color.Orange
+];
+// Effectful stuff
+var slugCounter = 0;
+var getFaceSlug = function () {
+    slugCounter = slugCounter + 1;
+    return slugCounter + "";
+};
+var getVertexSlug = function (c) { return c.x + "," + c.y; };
+var getEdgeSlug = function (c1, c2) {
+    return getVertexSlug(c1) + ";" + getVertexSlug(c2);
+};
+// Exports
+exports.createEmptyPlanarGraph = function () {
+    var infFace = { infinite: true };
+    return {
+        infiniteFace: "infinite",
+        vertices: {},
+        edges: {},
+        faces: { infinite: infFace }
+    };
+};
+exports.addEdge = function (graph, c1, c2) {
+    var vKey1 = exports.getVertexKey(graph, c1);
+    var vKey2 = exports.getVertexKey(graph, c2);
+    if (!vKey1 && !vKey2) {
+        if (util_1.values(graph.vertices).length > 0)
+            throw "KeepGraphConnected";
+        return begin(c1, c2);
+    }
+    else if (!vKey1 && vKey2) {
+        return connectNewVertex(graph, vKey2, c1);
+    }
+    else if (!vKey2 && vKey1) {
+        return connectNewVertex(graph, vKey1, c2);
+    }
+    else {
+        return connect(graph, vKey1, vKey2);
+    }
+};
+exports.getEndpoints = function (graph, edgeKey) {
+    return [
+        graph.edges[edgeKey].origin,
+        graph.edges[graph.edges[edgeKey].twin].origin
+    ];
+};
+exports.removeEdge = function (graph, edgeKey) {
+    var newGraph = util_1.cloneDeep(graph);
+    var twinEdgeKey = newGraph.edges[edgeKey].twin;
+    var keepFaceKey = newGraph.edges[edgeKey].incidentFace;
+    var delFaceKey = newGraph.edges[twinEdgeKey].incidentFace;
+    if (keepFaceKey !== delFaceKey) {
+        if (newGraph.faces[keepFaceKey].infinite ||
+            newGraph.faces[delFaceKey].infinite) {
+            newGraph.faces[keepFaceKey].infinite = true;
+            newGraph.infiniteFace = keepFaceKey;
+        }
+        newGraph = removeEdgeFixOrigin(newGraph, edgeKey);
+        newGraph = removeEdgeFixOrigin(newGraph, twinEdgeKey);
+        var newFaceEdges = Object.keys(newGraph.edges).filter(function (edgeKey) { return newGraph.edges[edgeKey].incidentFace === delFaceKey; });
+        delete newGraph.faces[delFaceKey];
+        newFaceEdges.forEach(function (eKey) { return (newGraph.edges[eKey].incidentFace = keepFaceKey); });
+        delete newGraph.edges[edgeKey];
+        delete newGraph.edges[twinEdgeKey];
+        return newGraph;
+    }
+    else {
+        throw new Error("Please keep the graph connected");
+    }
+};
+exports.removeEdgeByVertices = function (graph, c1, c2) {
+    var vKey1 = exports.getVertexKey(graph, c1);
+    var vKey2 = exports.getVertexKey(graph, c2);
+    var ourEdge = util_1.find(exports.getOutgoingEdgeKeys(graph, vKey1), function (key) { return graph.edges[graph.edges[key].twin].origin === vKey2; });
+    if (ourEdge) {
+        return exports.removeEdge(graph, ourEdge);
+    }
+    else {
+        throw new Error("Can't connect already connected vertices");
+    }
+};
+exports.removeVertex = function (graph, vertexKey) {
+    var newGraph = util_1.cloneDeep(graph);
+    exports.getOutgoingEdgeKeys(newGraph, vertexKey).forEach(function (eKey) {
+        try {
+            newGraph = exports.removeEdge(newGraph, eKey);
+        }
+        catch (e) {
+            newGraph = removeLeafVertex(newGraph, vertexKey);
+        }
+    });
+    return newGraph;
+};
+exports.removeVertexByCoord = function (graph, c) {
+    return exports.removeVertex(graph, exports.getVertexKey(graph, c));
+};
+exports.findVp = function (g) {
+    if (g.mark1 && g.mark2) {
+        var boundaryVertices = exports.getBoundaryVertexKeys(g, g.infiniteFace);
+        var n = boundaryVertices.length;
+        var idx = boundaryVertices.indexOf(g.mark1);
+        if (idx > -1) {
+            if (boundaryVertices[(idx + n - 1) % n] !== g.mark2) {
+                return boundaryVertices[(idx + n - 1) % n];
+            }
+            else {
+                return boundaryVertices[(idx + 1) % n];
+            }
+        }
+        else {
+            throw new Error("Marked vertices not on boundary");
+        }
+    }
+    else {
+        throw new Error("Graph is unmarked");
+    }
+};
+exports.getEdgeKeyByCoords = function (graph, c1, c2) {
+    var v1 = exports.getVertexKey(graph, c1);
+    var v2 = exports.getVertexKey(graph, c2);
+    var outgoingEdgeKeys = exports.getOutgoingEdgeKeys(graph, v1);
+    var adjacentVertices = exports.getAdjacentVertices(graph, v1);
+    var v2Idx = adjacentVertices.indexOf(v2);
+    if (v2Idx >= 0) {
+        return outgoingEdgeKeys[v2Idx];
+    }
+    else {
+        return null;
+    }
+};
+exports.getAdjacentVertices = function (graph, vertexKey) {
+    return exports.getOutgoingEdgeKeys(graph, vertexKey).map(function (eKey) { return graph.edges[graph.edges[eKey].next].origin; });
+};
+exports.getBoundaryEdgeKeys = function (graph, fKey) {
+    var face = graph.faces[fKey];
+    var boundaryEdgeKeys = [];
+    if (face.incidentEdge) {
+        var currentEdge = face.incidentEdge;
+        while (!boundaryEdgeKeys.includes(currentEdge)) {
+            boundaryEdgeKeys.push(currentEdge);
+            currentEdge = graph.edges[currentEdge].next;
+        }
+    }
+    return boundaryEdgeKeys;
+};
+exports.getBoundaryVertexKeys = function (graph, fKey) {
+    return exports.getBoundaryEdgeKeys(graph, fKey).map(function (eKey) { return graph.edges[eKey].origin; });
+};
+exports.getBoundaryVertices = function (graph, fKey) {
+    return exports.getBoundaryVertexKeys(graph, fKey).map(function (vKey) { return graph.vertices[vKey]; });
+};
+exports.getSplitFaceKey = function (graph, c1, c2) {
+    var midpoint = { x: (c1.x + c2.x) / 2, y: (c1.y + c2.y) / 2 };
+    var possFaceKey = getBoundingFaceKey(graph, midpoint);
+    var commonFaces = util_1.intersection(getIncidentFaceKeys(graph, c1), getIncidentFaceKeys(graph, c2));
+    if (commonFaces.includes(possFaceKey)) {
+        var nonIntersect = function (edgeKey) {
+            var firstVertex = graph.vertices[graph.edges[edgeKey].origin];
+            var secondVertex = graph.vertices[graph.edges[graph.edges[edgeKey].next].origin];
+            return !geom_1.intersect(c1, c2, firstVertex, secondVertex);
+        };
+        return exports.getBoundaryEdgeKeys(graph, possFaceKey).every(nonIntersect)
+            ? possFaceKey
+            : null;
+    }
+    else {
+        return null;
+    }
+};
+exports.getOutgoingEdgeKeys = function (graph, vKey) {
+    var incidentEdgeKeys = [];
+    if (graph.vertices[vKey].incidentEdge) {
+        var currentEdgeKey = graph.vertices[vKey].incidentEdge;
+        while (!incidentEdgeKeys.includes(currentEdgeKey)) {
+            incidentEdgeKeys.push(currentEdgeKey);
+            currentEdgeKey = graph.edges[graph.edges[currentEdgeKey].twin].next;
+        }
+    }
+    return incidentEdgeKeys;
+};
+exports.getColors = function (g, vKey) {
+    return g.vertices[vKey].colors;
+};
+exports.safeAddEdge = function (graph, c1, c2) {
+    try {
+        exports.addEdge(graph, c1, c2);
+        return true;
+    }
+    catch (e) {
+        return false;
+    }
+};
+exports.setColors = function (g, vKey, newColors) {
+    var newGraph = util_1.cloneDeep(g);
+    newGraph.vertices[vKey].colors = newColors;
+    return newGraph;
+};
+var begin = function (c1, c2) {
+    var v1Slug = getVertexSlug(c1);
+    var v2Slug = getVertexSlug(c2);
+    var e12Slug = getEdgeSlug(c1, c2);
+    var e21Slug = getEdgeSlug(c2, c1);
+    var v1 = {
+        x: c1.x,
+        y: c1.y,
+        incidentEdge: e12Slug,
+        colors: exports.ALL_COLORS
+    };
+    var v2 = {
+        x: c2.x,
+        y: c2.y,
+        incidentEdge: e21Slug,
+        colors: exports.ALL_COLORS
+    };
+    var e12 = {
+        twin: e21Slug,
+        next: e21Slug,
+        prev: e21Slug,
+        origin: v1Slug,
+        incidentFace: "infinite"
+    };
+    var e21 = {
+        twin: e12Slug,
+        next: e12Slug,
+        prev: e12Slug,
+        origin: v2Slug,
+        incidentFace: "infinite"
+    };
+    return {
+        infiniteFace: "infinite",
+        vertices: (_a = {}, _a[v1Slug] = v1, _a[v2Slug] = v2, _a),
+        edges: (_b = {}, _b[e12Slug] = e12, _b[e21Slug] = e21, _b),
+        faces: { infinite: { infinite: true, incidentEdge: e12Slug } }
+    };
+    var _a, _b;
+};
+var connect = function (graph, vKey1, vKey2) {
+    var newGraph = util_1.cloneDeep(graph);
+    if (exports.getAdjacentVertices(newGraph, vKey1).includes(vKey2)) {
+        throw new Error("Can't connect already connected vertices");
+    }
+    var v1 = newGraph.vertices[vKey1];
+    var v2 = newGraph.vertices[vKey2];
+    var boundingFace = exports.getSplitFaceKey(newGraph, v1, v2);
+    if (boundingFace) {
+        // First we fix all the edge pointers
+        var e1Key = getNextClockwiseEdgeKey(newGraph, vKey1, geom_1.angle(v1, v2));
+        var e1 = newGraph.edges[e1Key];
+        var e2Key = getNextClockwiseEdgeKey(newGraph, vKey2, geom_1.angle(v2, v1));
+        var e2 = newGraph.edges[e2Key];
+        var v1v2Slug = getEdgeSlug(v1, v2);
+        var v2v1Slug = getEdgeSlug(v2, v1);
+        // The incidentFace pointers will be fixed later on...
+        var v1v2 = {
+            origin: vKey1,
+            next: e2Key,
+            prev: e1.prev,
+            twin: v2v1Slug,
+            incidentFace: boundingFace
+        };
+        var v2v1 = {
+            origin: vKey2,
+            next: e1Key,
+            prev: e2.prev,
+            twin: v1v2Slug,
+            incidentFace: boundingFace
+        };
+        newGraph.edges[e1.prev].next = v1v2Slug;
+        e1.prev = v2v1Slug;
+        newGraph.edges[e2.prev].next = v2v1Slug;
+        e2.prev = v1v2Slug;
+        newGraph.edges[v1v2Slug] = v1v2;
+        newGraph.edges[v2v1Slug] = v2v1;
+        // Now we create a new face
+        var newFaceEdge = newGraph.faces[boundingFace].infinite
+            ? pickInfiniteEdge(newGraph, v1v2Slug)
+            : v1v2Slug;
+        newGraph.faces[boundingFace].incidentEdge =
+            newGraph.edges[newFaceEdge].twin;
+        var newFaceSlug = getFaceSlug();
+        var newFace = { infinite: false, incidentEdge: newFaceEdge };
+        newGraph.edges[newGraph.edges[newFaceEdge].twin].incidentFace = boundingFace;
+        newGraph.edges[newFaceEdge].incidentFace = newFaceSlug;
+        var currentEdge = newGraph.edges[newFaceEdge].next;
+        while (currentEdge !== newFaceEdge) {
+            newGraph.edges[currentEdge].incidentFace = newFaceSlug;
+            currentEdge = newGraph.edges[currentEdge].next;
+        }
+        newGraph.faces[newFaceSlug] = newFace;
+        return newGraph;
+    }
+    else {
+        throw new Error("Can't connect those vertices");
+    }
+};
+var connectNewVertex = function (graph, vKey, newVertex) {
+    var boundingFaceKey = exports.getSplitFaceKey(graph, graph.vertices[vKey], newVertex);
+    if (boundingFaceKey) {
+        var newGraph = util_1.cloneDeep(graph);
+        var newVertexSlug = getVertexSlug(newVertex);
+        var oldVertex = newGraph.vertices[vKey];
+        var oldOutEdgeKey = getNextClockwiseEdgeKey(newGraph, vKey, geom_1.angle(oldVertex, newVertex));
+        var oldOutEdge = newGraph.edges[oldOutEdgeKey];
+        var oldInEdgeKey = oldOutEdge.prev;
+        var oldInEdge = newGraph.edges[oldInEdgeKey];
+        var oldNewSlug = getEdgeSlug(oldVertex, newVertex);
+        var newOldSlug = getEdgeSlug(newVertex, oldVertex);
+        var oldNew = {
+            origin: vKey,
+            prev: oldInEdgeKey,
+            twin: newOldSlug,
+            next: newOldSlug,
+            incidentFace: boundingFaceKey
+        };
+        var newOld = {
+            origin: newVertexSlug,
+            prev: oldNewSlug,
+            next: oldOutEdgeKey,
+            twin: oldNewSlug,
+            incidentFace: boundingFaceKey
+        };
+        oldInEdge.next = oldNewSlug;
+        oldOutEdge.prev = newOldSlug;
+        newGraph.vertices[newVertexSlug] = {
+            x: newVertex.x,
+            y: newVertex.y,
+            colors: exports.ALL_COLORS,
+            incidentEdge: newOldSlug
+        };
+        newGraph.edges[oldNewSlug] = oldNew;
+        newGraph.edges[newOldSlug] = newOld;
+        return newGraph;
+    }
+    else {
+        throw new Error("Can't connect those vertices");
+    }
+};
+var getBoundingFaceKey = function (graph, c) {
+    var boundingFaceKey = graph.infiniteFace;
+    Object.keys(graph.faces).forEach(function (fKey) {
+        if (graph.infiniteFace !== fKey &&
+            geom_1.inInterior(exports.getBoundaryVertices(graph, fKey), c)) {
+            boundingFaceKey = fKey;
+        }
+    });
+    return boundingFaceKey;
+};
+var getIncidentFaceKeys = function (graph, c) {
+    var vKey = exports.getVertexKey(graph, c);
+    if (vKey) {
+        var edgeKeys = exports.getOutgoingEdgeKeys(graph, vKey);
+        return edgeKeys.map(function (eKey) { return graph.edges[eKey].incidentFace; });
+    }
+    else {
+        return [getBoundingFaceKey(graph, c)];
+    }
+};
+var getNextClockwiseEdgeKey = function (graph, vKey, newAngle) {
+    var keysWithAngles = exports.getOutgoingEdgeKeys(graph, vKey).map(function (eKey) {
+        var v1 = graph.vertices[graph.edges[eKey].origin];
+        var v2 = graph.vertices[graph.edges[graph.edges[eKey].next].origin];
+        return [eKey, geom_1.angle(v1, v2)];
+    });
+    var smallAngleEdges = keysWithAngles.filter(function (ea) { return ea[1] < newAngle; });
+    var sortByAngleDecreasing = function (e1, e2) { return e2[1] - e1[1]; };
+    var getHighestAngleEdge = function (pairList) {
+        return pairList.sort(sortByAngleDecreasing)[0][0];
+    };
+    return smallAngleEdges.length > 0
+        ? getHighestAngleEdge(smallAngleEdges)
+        : getHighestAngleEdge(keysWithAngles);
+};
+exports.getVertexKey = function (graph, c) {
+    var matchedVertexKey = null;
+    for (var vKey in graph.vertices) {
+        if (geom_1.eq(graph.vertices[vKey], c))
+            matchedVertexKey = vKey;
+    }
+    return matchedVertexKey;
+};
+var pickInfiniteEdge = function (graph, eKey) {
+    var e = graph.edges[eKey];
+    var eTwin = graph.edges[e.twin];
+    var vertices = [graph.vertices[eTwin.origin]];
+    var currentEdge = graph.edges[eTwin.next];
+    while (currentEdge !== eTwin) {
+        vertices.push(graph.vertices[currentEdge.origin]);
+        currentEdge = graph.edges[currentEdge.next];
+    }
+    return geom_1.isClockwise(vertices) ? eKey : e.twin;
+};
+var removeEdgeFixOrigin = function (graph, edgeKey) {
+    var newGraph = util_1.cloneDeep(graph);
+    var incomingEdgeKey = newGraph.edges[edgeKey].prev;
+    var newOutgoingEdgeKey = newGraph.edges[newGraph.edges[edgeKey].twin].next;
+    var faceKey = newGraph.edges[edgeKey].incidentFace;
+    newGraph.edges[incomingEdgeKey].next = newOutgoingEdgeKey;
+    newGraph.edges[newOutgoingEdgeKey].prev = incomingEdgeKey;
+    newGraph.faces[faceKey].incidentEdge = incomingEdgeKey;
+    newGraph.vertices[newGraph.edges[edgeKey].origin].incidentEdge = newOutgoingEdgeKey;
+    return newGraph;
+};
+var removeLeafVertex = function (graph, vertexKey) {
+    var newGraph = util_1.cloneDeep(graph);
+    if (exports.getOutgoingEdgeKeys(newGraph, vertexKey).length === 1) {
+        var outgoingEdgeKey = newGraph.vertices[vertexKey].incidentEdge;
+        var twinEdgeKey = newGraph.edges[outgoingEdgeKey].twin;
+        newGraph = removeEdgeFixOrigin(graph, twinEdgeKey);
+        delete newGraph.vertices[vertexKey];
+        delete newGraph.edges[outgoingEdgeKey];
+        delete newGraph.edges[twinEdgeKey];
+        return newGraph;
+    }
+    else {
+        throw new Error("Not a leaf vertex!");
+    }
+};
+var isBridge = function (g, eKey) {
+    var twinEdgeKey = g.edges[eKey].twin;
+    return g.edges[eKey].incidentFace === g.edges[twinEdgeKey].incidentFace;
+};
+exports.inducedInteriorSubgraph = function (g, polygon) {
+    var vertexOutsidePolygon = function (vKey) {
+        return !(polygon.includes(vKey) ||
+            geom_1.inInterior(polygon.map(function (x) { return g.vertices[x]; }), g.vertices[vKey]));
+    };
+    var edgeOutsidePolygon = function (eKey) {
+        return exports.getEndpoints(g, eKey).some(vertexOutsidePolygon);
+    };
+    var removableVertices = function (graph) {
+        return Object.keys(graph.vertices)
+            .filter(vertexOutsidePolygon)
+            .filter(function (v) { return exports.getOutgoingEdgeKeys(graph, v).length === 1; });
+    };
+    var removableEdges = function (graph) {
+        return Object.keys(graph.edges)
+            .filter(edgeOutsidePolygon)
+            .filter(function (x) { return !isBridge(graph, x); });
+    };
+    var newGraph = util_1.cloneDeep(g);
+    // First we remove non-bridge edges until we have a spanning tree
+    var edgesToRemove = removableEdges(newGraph);
+    while (edgesToRemove.length > 0) {
+        newGraph = exports.removeEdge(newGraph, edgesToRemove[0]);
+        edgesToRemove = removableEdges(newGraph);
+    }
+    // Then we remove leaf vertices until we arrive at the subgraph :)
+    var verticesToRemove = removableVertices(newGraph);
+    while (verticesToRemove.length > 0) {
+        newGraph = exports.removeVertex(newGraph, verticesToRemove[0]);
+        verticesToRemove = removableVertices(newGraph);
+    }
+    return newGraph;
+};
+exports.findChordKey = function (graph) {
+    var chordKey = null;
+    var outerVertices = exports.getBoundaryVertexKeys(graph, graph.infiniteFace);
+    outerVertices.forEach(function (vKey) {
+        var edgeKeys = exports.getOutgoingEdgeKeys(graph, vKey);
+        edgeKeys.forEach(function (eKey) {
+            var e = graph.edges[eKey];
+            if (outerVertices.includes(graph.edges[e.next].origin) &&
+                e.incidentFace !== graph.infiniteFace &&
+                graph.edges[e.twin].incidentFace !== graph.infiniteFace) {
+                chordKey = eKey;
+            }
+        });
+    });
+    return chordKey;
+};
+exports.splitChordedGraph = function (g, chordKey) {
+    var _a = exports.getEndpoints(g, chordKey), vi = _a[0], vj = _a[1];
+    var outerVertices = exports.getBoundaryVertexKeys(g, g.infiniteFace);
+    var _b = [vi, vj].map(function (x) { return outerVertices.indexOf(x); }), viIdx = _b[0], vjIdx = _b[1];
+    var _c = viIdx < vjIdx ? [viIdx, vjIdx] : [vjIdx, viIdx], lsIdx = _c[0], gtIdx = _c[1];
+    var poly1 = outerVertices.slice(lsIdx, gtIdx + 1);
+    var poly2 = outerVertices
+        .slice(0, lsIdx + 1)
+        .concat(outerVertices.slice(gtIdx));
+    var _d = poly1.includes(g.mark1) && poly1.includes(g.mark2)
+        ? [poly1, poly2]
+        : [poly2, poly1], firstPoly = _d[0], secondPoly = _d[1];
+    var _e = [firstPoly, secondPoly].map(function (x) {
+        return exports.inducedInteriorSubgraph(g, x);
+    }), firstSubgraph = _e[0], secondSubgraph = _e[1];
+    secondSubgraph.mark1 = vi;
+    secondSubgraph.mark2 = vj;
+    return [firstSubgraph, secondSubgraph];
+};
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var util_1 = __webpack_require__(0);
+var mousetrap_1 = __webpack_require__(4);
+// Refactor this to just have a "describe" type and a "describew"
+var AnimationType;
+(function (AnimationType) {
+    AnimationType[AnimationType["AddEdge"] = 0] = "AddEdge";
+    AnimationType[AnimationType["Begin"] = 1] = "Begin";
+    AnimationType[AnimationType["End"] = 2] = "End";
+    AnimationType[AnimationType["UpdateColors"] = 3] = "UpdateColors";
+    AnimationType[AnimationType["RestrictGraph"] = 4] = "RestrictGraph";
+    AnimationType[AnimationType["HighlightEdge"] = 5] = "HighlightEdge";
+    AnimationType[AnimationType["UnhighlightEdge"] = 6] = "UnhighlightEdge";
+    AnimationType[AnimationType["Pause"] = 7] = "Pause";
+    AnimationType[AnimationType["Describe"] = 8] = "Describe";
+    AnimationType[AnimationType["DescribeAddEdges"] = 9] = "DescribeAddEdges";
+    AnimationType[AnimationType["DescribeChordlessOne"] = 10] = "DescribeChordlessOne";
+    AnimationType[AnimationType["DescribeChordlessTwo"] = 11] = "DescribeChordlessTwo";
+    AnimationType[AnimationType["DescribeChordlessThree"] = 12] = "DescribeChordlessThree";
+    AnimationType[AnimationType["DescribeChordlessFour"] = 13] = "DescribeChordlessFour";
+    AnimationType[AnimationType["DescribeChorded"] = 14] = "DescribeChorded";
+    AnimationType[AnimationType["DescribePreColor"] = 15] = "DescribePreColor";
+    AnimationType[AnimationType["DescribeTriangle"] = 16] = "DescribeTriangle";
+})(AnimationType = exports.AnimationType || (exports.AnimationType = {}));
+var updateDescription = function (text) {
+    document.getElementById("description").textContent = text;
+};
+var addContinueButton = function (callback) {
+    var continueButton = document.createElement("strong");
+    continueButton.id = "continueButton";
+    continueButton.innerText = "Press spacebar to continue";
+    mousetrap_1.bind("space", function () {
+        mousetrap_1.unbind("space");
+        callback();
+    });
+    document.getElementById("sidebar").appendChild(continueButton);
+};
+var removeElementById = function (id) {
+    document.getElementById(id).remove();
+};
+var animationSteps = [];
+// A controlled effectful function to use in the thomassen algorithms.
+exports.addStep = function (type, pause, data) {
+    animationSteps.push({ type: type, pause: pause, data: data, addButton: false });
+};
+exports.resetAnimation = function () {
+    animationSteps = [];
+};
+exports.postProcessAnimation = function () {
+    [
+        AnimationType.DescribeAddEdges,
+        AnimationType.DescribeChorded,
+        AnimationType.DescribeTriangle,
+        AnimationType.DescribeChordlessOne,
+        AnimationType.DescribeChordlessTwo,
+        AnimationType.DescribeChordlessThree,
+        AnimationType.DescribeChordlessFour,
+        AnimationType.DescribePreColor
+    ].forEach(function (type) {
+        var firstIndexOfType = util_1.findIndex(animationSteps, function (a) { return a.type === type; });
+        if (firstIndexOfType >= 0) {
+            animationSteps[firstIndexOfType].addButton = true;
+        }
+    });
+};
+exports.drawStep = function (a, canvas) {
+    switch (a.type) {
+        case AnimationType.AddEdge:
+            canvas.drawEdge(a.data[0], a.data[1], "blue");
+            break;
+        case AnimationType.Begin:
+            canvas.freeze();
+            break;
+        case AnimationType.End:
+            canvas.unfreeze();
+            break;
+        case AnimationType.UpdateColors:
+            canvas.updateColors(a.data.vertex, a.data.colors);
+            break;
+        case AnimationType.RestrictGraph:
+            canvas.highlightGraph(a.data.graph);
+            canvas.redraw();
+            break;
+        case AnimationType.HighlightEdge:
+            canvas.highlightEdge(a.data[0], a.data[1]);
+            canvas.redraw();
+            break;
+        case AnimationType.UnhighlightEdge:
+            canvas.unhighlightEdge();
+            canvas.redraw();
+        case AnimationType.Describe:
+        case AnimationType.DescribeAddEdges:
+        case AnimationType.DescribeChorded:
+        case AnimationType.DescribeTriangle:
+        case AnimationType.DescribeChordlessOne:
+        case AnimationType.DescribeChordlessTwo:
+        case AnimationType.DescribeChordlessThree:
+        case AnimationType.DescribeChordlessFour:
+        case AnimationType.DescribePreColor:
+            updateDescription(a.data);
+            break;
+        case AnimationType.Pause:
+            break;
+    }
+};
+exports.animate = function (canvas) {
+    if (animationSteps.length > 0) {
+        var step = animationSteps.shift();
+        exports.drawStep(step, canvas);
+        if (step.addButton) {
+            canvas.darken();
+            addContinueButton(function () {
+                canvas.lighten();
+                exports.animate(canvas);
+                removeElementById("continueButton");
+            });
+        }
+        else {
+            setTimeout(function () { return exports.animate(canvas); }, step.pause);
+        }
+    }
+};
+
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/*global define:false */
+/**
+ * Copyright 2012-2017 Craig Campbell
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Mousetrap is a simple keyboard shortcut library for Javascript with
+ * no external dependencies
+ *
+ * @version 1.6.1
+ * @url craig.is/killing/mice
+ */
+(function(window, document, undefined) {
+
+    // Check if mousetrap is used inside browser, if not, return
+    if (!window) {
+        return;
+    }
+
+    /**
+     * mapping of special keycodes to their corresponding keys
+     *
+     * everything in this dictionary cannot use keypress events
+     * so it has to be here to map to the correct keycodes for
+     * keyup/keydown events
+     *
+     * @type {Object}
+     */
+    var _MAP = {
+        8: 'backspace',
+        9: 'tab',
+        13: 'enter',
+        16: 'shift',
+        17: 'ctrl',
+        18: 'alt',
+        20: 'capslock',
+        27: 'esc',
+        32: 'space',
+        33: 'pageup',
+        34: 'pagedown',
+        35: 'end',
+        36: 'home',
+        37: 'left',
+        38: 'up',
+        39: 'right',
+        40: 'down',
+        45: 'ins',
+        46: 'del',
+        91: 'meta',
+        93: 'meta',
+        224: 'meta'
+    };
+
+    /**
+     * mapping for special characters so they can support
+     *
+     * this dictionary is only used incase you want to bind a
+     * keyup or keydown event to one of these keys
+     *
+     * @type {Object}
+     */
+    var _KEYCODE_MAP = {
+        106: '*',
+        107: '+',
+        109: '-',
+        110: '.',
+        111 : '/',
+        186: ';',
+        187: '=',
+        188: ',',
+        189: '-',
+        190: '.',
+        191: '/',
+        192: '`',
+        219: '[',
+        220: '\\',
+        221: ']',
+        222: '\''
+    };
+
+    /**
+     * this is a mapping of keys that require shift on a US keypad
+     * back to the non shift equivelents
+     *
+     * this is so you can use keyup events with these keys
+     *
+     * note that this will only work reliably on US keyboards
+     *
+     * @type {Object}
+     */
+    var _SHIFT_MAP = {
+        '~': '`',
+        '!': '1',
+        '@': '2',
+        '#': '3',
+        '$': '4',
+        '%': '5',
+        '^': '6',
+        '&': '7',
+        '*': '8',
+        '(': '9',
+        ')': '0',
+        '_': '-',
+        '+': '=',
+        ':': ';',
+        '\"': '\'',
+        '<': ',',
+        '>': '.',
+        '?': '/',
+        '|': '\\'
+    };
+
+    /**
+     * this is a list of special strings you can use to map
+     * to modifier keys when you specify your keyboard shortcuts
+     *
+     * @type {Object}
+     */
+    var _SPECIAL_ALIASES = {
+        'option': 'alt',
+        'command': 'meta',
+        'return': 'enter',
+        'escape': 'esc',
+        'plus': '+',
+        'mod': /Mac|iPod|iPhone|iPad/.test(navigator.platform) ? 'meta' : 'ctrl'
+    };
+
+    /**
+     * variable to store the flipped version of _MAP from above
+     * needed to check if we should use keypress or not when no action
+     * is specified
+     *
+     * @type {Object|undefined}
+     */
+    var _REVERSE_MAP;
+
+    /**
+     * loop through the f keys, f1 to f19 and add them to the map
+     * programatically
+     */
+    for (var i = 1; i < 20; ++i) {
+        _MAP[111 + i] = 'f' + i;
+    }
+
+    /**
+     * loop through to map numbers on the numeric keypad
+     */
+    for (i = 0; i <= 9; ++i) {
+
+        // This needs to use a string cause otherwise since 0 is falsey
+        // mousetrap will never fire for numpad 0 pressed as part of a keydown
+        // event.
+        //
+        // @see https://github.com/ccampbell/mousetrap/pull/258
+        _MAP[i + 96] = i.toString();
+    }
+
+    /**
+     * cross browser add event method
+     *
+     * @param {Element|HTMLDocument} object
+     * @param {string} type
+     * @param {Function} callback
+     * @returns void
+     */
+    function _addEvent(object, type, callback) {
+        if (object.addEventListener) {
+            object.addEventListener(type, callback, false);
+            return;
+        }
+
+        object.attachEvent('on' + type, callback);
+    }
+
+    /**
+     * takes the event and returns the key character
+     *
+     * @param {Event} e
+     * @return {string}
+     */
+    function _characterFromEvent(e) {
+
+        // for keypress events we should return the character as is
+        if (e.type == 'keypress') {
+            var character = String.fromCharCode(e.which);
+
+            // if the shift key is not pressed then it is safe to assume
+            // that we want the character to be lowercase.  this means if
+            // you accidentally have caps lock on then your key bindings
+            // will continue to work
+            //
+            // the only side effect that might not be desired is if you
+            // bind something like 'A' cause you want to trigger an
+            // event when capital A is pressed caps lock will no longer
+            // trigger the event.  shift+a will though.
+            if (!e.shiftKey) {
+                character = character.toLowerCase();
+            }
+
+            return character;
+        }
+
+        // for non keypress events the special maps are needed
+        if (_MAP[e.which]) {
+            return _MAP[e.which];
+        }
+
+        if (_KEYCODE_MAP[e.which]) {
+            return _KEYCODE_MAP[e.which];
+        }
+
+        // if it is not in the special map
+
+        // with keydown and keyup events the character seems to always
+        // come in as an uppercase character whether you are pressing shift
+        // or not.  we should make sure it is always lowercase for comparisons
+        return String.fromCharCode(e.which).toLowerCase();
+    }
+
+    /**
+     * checks if two arrays are equal
+     *
+     * @param {Array} modifiers1
+     * @param {Array} modifiers2
+     * @returns {boolean}
+     */
+    function _modifiersMatch(modifiers1, modifiers2) {
+        return modifiers1.sort().join(',') === modifiers2.sort().join(',');
+    }
+
+    /**
+     * takes a key event and figures out what the modifiers are
+     *
+     * @param {Event} e
+     * @returns {Array}
+     */
+    function _eventModifiers(e) {
+        var modifiers = [];
+
+        if (e.shiftKey) {
+            modifiers.push('shift');
+        }
+
+        if (e.altKey) {
+            modifiers.push('alt');
+        }
+
+        if (e.ctrlKey) {
+            modifiers.push('ctrl');
+        }
+
+        if (e.metaKey) {
+            modifiers.push('meta');
+        }
+
+        return modifiers;
+    }
+
+    /**
+     * prevents default for this event
+     *
+     * @param {Event} e
+     * @returns void
+     */
+    function _preventDefault(e) {
+        if (e.preventDefault) {
+            e.preventDefault();
+            return;
+        }
+
+        e.returnValue = false;
+    }
+
+    /**
+     * stops propogation for this event
+     *
+     * @param {Event} e
+     * @returns void
+     */
+    function _stopPropagation(e) {
+        if (e.stopPropagation) {
+            e.stopPropagation();
+            return;
+        }
+
+        e.cancelBubble = true;
+    }
+
+    /**
+     * determines if the keycode specified is a modifier key or not
+     *
+     * @param {string} key
+     * @returns {boolean}
+     */
+    function _isModifier(key) {
+        return key == 'shift' || key == 'ctrl' || key == 'alt' || key == 'meta';
+    }
+
+    /**
+     * reverses the map lookup so that we can look for specific keys
+     * to see what can and can't use keypress
+     *
+     * @return {Object}
+     */
+    function _getReverseMap() {
+        if (!_REVERSE_MAP) {
+            _REVERSE_MAP = {};
+            for (var key in _MAP) {
+
+                // pull out the numeric keypad from here cause keypress should
+                // be able to detect the keys from the character
+                if (key > 95 && key < 112) {
+                    continue;
+                }
+
+                if (_MAP.hasOwnProperty(key)) {
+                    _REVERSE_MAP[_MAP[key]] = key;
+                }
+            }
+        }
+        return _REVERSE_MAP;
+    }
+
+    /**
+     * picks the best action based on the key combination
+     *
+     * @param {string} key - character for key
+     * @param {Array} modifiers
+     * @param {string=} action passed in
+     */
+    function _pickBestAction(key, modifiers, action) {
+
+        // if no action was picked in we should try to pick the one
+        // that we think would work best for this key
+        if (!action) {
+            action = _getReverseMap()[key] ? 'keydown' : 'keypress';
+        }
+
+        // modifier keys don't work as expected with keypress,
+        // switch to keydown
+        if (action == 'keypress' && modifiers.length) {
+            action = 'keydown';
+        }
+
+        return action;
+    }
+
+    /**
+     * Converts from a string key combination to an array
+     *
+     * @param  {string} combination like "command+shift+l"
+     * @return {Array}
+     */
+    function _keysFromString(combination) {
+        if (combination === '+') {
+            return ['+'];
+        }
+
+        combination = combination.replace(/\+{2}/g, '+plus');
+        return combination.split('+');
+    }
+
+    /**
+     * Gets info for a specific key combination
+     *
+     * @param  {string} combination key combination ("command+s" or "a" or "*")
+     * @param  {string=} action
+     * @returns {Object}
+     */
+    function _getKeyInfo(combination, action) {
+        var keys;
+        var key;
+        var i;
+        var modifiers = [];
+
+        // take the keys from this pattern and figure out what the actual
+        // pattern is all about
+        keys = _keysFromString(combination);
+
+        for (i = 0; i < keys.length; ++i) {
+            key = keys[i];
+
+            // normalize key names
+            if (_SPECIAL_ALIASES[key]) {
+                key = _SPECIAL_ALIASES[key];
+            }
+
+            // if this is not a keypress event then we should
+            // be smart about using shift keys
+            // this will only work for US keyboards however
+            if (action && action != 'keypress' && _SHIFT_MAP[key]) {
+                key = _SHIFT_MAP[key];
+                modifiers.push('shift');
+            }
+
+            // if this key is a modifier then add it to the list of modifiers
+            if (_isModifier(key)) {
+                modifiers.push(key);
+            }
+        }
+
+        // depending on what the key combination is
+        // we will try to pick the best event for it
+        action = _pickBestAction(key, modifiers, action);
+
+        return {
+            key: key,
+            modifiers: modifiers,
+            action: action
+        };
+    }
+
+    function _belongsTo(element, ancestor) {
+        if (element === null || element === document) {
+            return false;
+        }
+
+        if (element === ancestor) {
+            return true;
+        }
+
+        return _belongsTo(element.parentNode, ancestor);
+    }
+
+    function Mousetrap(targetElement) {
+        var self = this;
+
+        targetElement = targetElement || document;
+
+        if (!(self instanceof Mousetrap)) {
+            return new Mousetrap(targetElement);
+        }
+
+        /**
+         * element to attach key events to
+         *
+         * @type {Element}
+         */
+        self.target = targetElement;
+
+        /**
+         * a list of all the callbacks setup via Mousetrap.bind()
+         *
+         * @type {Object}
+         */
+        self._callbacks = {};
+
+        /**
+         * direct map of string combinations to callbacks used for trigger()
+         *
+         * @type {Object}
+         */
+        self._directMap = {};
+
+        /**
+         * keeps track of what level each sequence is at since multiple
+         * sequences can start out with the same sequence
+         *
+         * @type {Object}
+         */
+        var _sequenceLevels = {};
+
+        /**
+         * variable to store the setTimeout call
+         *
+         * @type {null|number}
+         */
+        var _resetTimer;
+
+        /**
+         * temporary state where we will ignore the next keyup
+         *
+         * @type {boolean|string}
+         */
+        var _ignoreNextKeyup = false;
+
+        /**
+         * temporary state where we will ignore the next keypress
+         *
+         * @type {boolean}
+         */
+        var _ignoreNextKeypress = false;
+
+        /**
+         * are we currently inside of a sequence?
+         * type of action ("keyup" or "keydown" or "keypress") or false
+         *
+         * @type {boolean|string}
+         */
+        var _nextExpectedAction = false;
+
+        /**
+         * resets all sequence counters except for the ones passed in
+         *
+         * @param {Object} doNotReset
+         * @returns void
+         */
+        function _resetSequences(doNotReset) {
+            doNotReset = doNotReset || {};
+
+            var activeSequences = false,
+                key;
+
+            for (key in _sequenceLevels) {
+                if (doNotReset[key]) {
+                    activeSequences = true;
+                    continue;
+                }
+                _sequenceLevels[key] = 0;
+            }
+
+            if (!activeSequences) {
+                _nextExpectedAction = false;
+            }
+        }
+
+        /**
+         * finds all callbacks that match based on the keycode, modifiers,
+         * and action
+         *
+         * @param {string} character
+         * @param {Array} modifiers
+         * @param {Event|Object} e
+         * @param {string=} sequenceName - name of the sequence we are looking for
+         * @param {string=} combination
+         * @param {number=} level
+         * @returns {Array}
+         */
+        function _getMatches(character, modifiers, e, sequenceName, combination, level) {
+            var i;
+            var callback;
+            var matches = [];
+            var action = e.type;
+
+            // if there are no events related to this keycode
+            if (!self._callbacks[character]) {
+                return [];
+            }
+
+            // if a modifier key is coming up on its own we should allow it
+            if (action == 'keyup' && _isModifier(character)) {
+                modifiers = [character];
+            }
+
+            // loop through all callbacks for the key that was pressed
+            // and see if any of them match
+            for (i = 0; i < self._callbacks[character].length; ++i) {
+                callback = self._callbacks[character][i];
+
+                // if a sequence name is not specified, but this is a sequence at
+                // the wrong level then move onto the next match
+                if (!sequenceName && callback.seq && _sequenceLevels[callback.seq] != callback.level) {
+                    continue;
+                }
+
+                // if the action we are looking for doesn't match the action we got
+                // then we should keep going
+                if (action != callback.action) {
+                    continue;
+                }
+
+                // if this is a keypress event and the meta key and control key
+                // are not pressed that means that we need to only look at the
+                // character, otherwise check the modifiers as well
+                //
+                // chrome will not fire a keypress if meta or control is down
+                // safari will fire a keypress if meta or meta+shift is down
+                // firefox will fire a keypress if meta or control is down
+                if ((action == 'keypress' && !e.metaKey && !e.ctrlKey) || _modifiersMatch(modifiers, callback.modifiers)) {
+
+                    // when you bind a combination or sequence a second time it
+                    // should overwrite the first one.  if a sequenceName or
+                    // combination is specified in this call it does just that
+                    //
+                    // @todo make deleting its own method?
+                    var deleteCombo = !sequenceName && callback.combo == combination;
+                    var deleteSequence = sequenceName && callback.seq == sequenceName && callback.level == level;
+                    if (deleteCombo || deleteSequence) {
+                        self._callbacks[character].splice(i, 1);
+                    }
+
+                    matches.push(callback);
+                }
+            }
+
+            return matches;
+        }
+
+        /**
+         * actually calls the callback function
+         *
+         * if your callback function returns false this will use the jquery
+         * convention - prevent default and stop propogation on the event
+         *
+         * @param {Function} callback
+         * @param {Event} e
+         * @returns void
+         */
+        function _fireCallback(callback, e, combo, sequence) {
+
+            // if this event should not happen stop here
+            if (self.stopCallback(e, e.target || e.srcElement, combo, sequence)) {
+                return;
+            }
+
+            if (callback(e, combo) === false) {
+                _preventDefault(e);
+                _stopPropagation(e);
+            }
+        }
+
+        /**
+         * handles a character key event
+         *
+         * @param {string} character
+         * @param {Array} modifiers
+         * @param {Event} e
+         * @returns void
+         */
+        self._handleKey = function(character, modifiers, e) {
+            var callbacks = _getMatches(character, modifiers, e);
+            var i;
+            var doNotReset = {};
+            var maxLevel = 0;
+            var processedSequenceCallback = false;
+
+            // Calculate the maxLevel for sequences so we can only execute the longest callback sequence
+            for (i = 0; i < callbacks.length; ++i) {
+                if (callbacks[i].seq) {
+                    maxLevel = Math.max(maxLevel, callbacks[i].level);
+                }
+            }
+
+            // loop through matching callbacks for this key event
+            for (i = 0; i < callbacks.length; ++i) {
+
+                // fire for all sequence callbacks
+                // this is because if for example you have multiple sequences
+                // bound such as "g i" and "g t" they both need to fire the
+                // callback for matching g cause otherwise you can only ever
+                // match the first one
+                if (callbacks[i].seq) {
+
+                    // only fire callbacks for the maxLevel to prevent
+                    // subsequences from also firing
+                    //
+                    // for example 'a option b' should not cause 'option b' to fire
+                    // even though 'option b' is part of the other sequence
+                    //
+                    // any sequences that do not match here will be discarded
+                    // below by the _resetSequences call
+                    if (callbacks[i].level != maxLevel) {
+                        continue;
+                    }
+
+                    processedSequenceCallback = true;
+
+                    // keep a list of which sequences were matches for later
+                    doNotReset[callbacks[i].seq] = 1;
+                    _fireCallback(callbacks[i].callback, e, callbacks[i].combo, callbacks[i].seq);
+                    continue;
+                }
+
+                // if there were no sequence matches but we are still here
+                // that means this is a regular match so we should fire that
+                if (!processedSequenceCallback) {
+                    _fireCallback(callbacks[i].callback, e, callbacks[i].combo);
+                }
+            }
+
+            // if the key you pressed matches the type of sequence without
+            // being a modifier (ie "keyup" or "keypress") then we should
+            // reset all sequences that were not matched by this event
+            //
+            // this is so, for example, if you have the sequence "h a t" and you
+            // type "h e a r t" it does not match.  in this case the "e" will
+            // cause the sequence to reset
+            //
+            // modifier keys are ignored because you can have a sequence
+            // that contains modifiers such as "enter ctrl+space" and in most
+            // cases the modifier key will be pressed before the next key
+            //
+            // also if you have a sequence such as "ctrl+b a" then pressing the
+            // "b" key will trigger a "keypress" and a "keydown"
+            //
+            // the "keydown" is expected when there is a modifier, but the
+            // "keypress" ends up matching the _nextExpectedAction since it occurs
+            // after and that causes the sequence to reset
+            //
+            // we ignore keypresses in a sequence that directly follow a keydown
+            // for the same character
+            var ignoreThisKeypress = e.type == 'keypress' && _ignoreNextKeypress;
+            if (e.type == _nextExpectedAction && !_isModifier(character) && !ignoreThisKeypress) {
+                _resetSequences(doNotReset);
+            }
+
+            _ignoreNextKeypress = processedSequenceCallback && e.type == 'keydown';
+        };
+
+        /**
+         * handles a keydown event
+         *
+         * @param {Event} e
+         * @returns void
+         */
+        function _handleKeyEvent(e) {
+
+            // normalize e.which for key events
+            // @see http://stackoverflow.com/questions/4285627/javascript-keycode-vs-charcode-utter-confusion
+            if (typeof e.which !== 'number') {
+                e.which = e.keyCode;
+            }
+
+            var character = _characterFromEvent(e);
+
+            // no character found then stop
+            if (!character) {
+                return;
+            }
+
+            // need to use === for the character check because the character can be 0
+            if (e.type == 'keyup' && _ignoreNextKeyup === character) {
+                _ignoreNextKeyup = false;
+                return;
+            }
+
+            self.handleKey(character, _eventModifiers(e), e);
+        }
+
+        /**
+         * called to set a 1 second timeout on the specified sequence
+         *
+         * this is so after each key press in the sequence you have 1 second
+         * to press the next key before you have to start over
+         *
+         * @returns void
+         */
+        function _resetSequenceTimer() {
+            clearTimeout(_resetTimer);
+            _resetTimer = setTimeout(_resetSequences, 1000);
+        }
+
+        /**
+         * binds a key sequence to an event
+         *
+         * @param {string} combo - combo specified in bind call
+         * @param {Array} keys
+         * @param {Function} callback
+         * @param {string=} action
+         * @returns void
+         */
+        function _bindSequence(combo, keys, callback, action) {
+
+            // start off by adding a sequence level record for this combination
+            // and setting the level to 0
+            _sequenceLevels[combo] = 0;
+
+            /**
+             * callback to increase the sequence level for this sequence and reset
+             * all other sequences that were active
+             *
+             * @param {string} nextAction
+             * @returns {Function}
+             */
+            function _increaseSequence(nextAction) {
+                return function() {
+                    _nextExpectedAction = nextAction;
+                    ++_sequenceLevels[combo];
+                    _resetSequenceTimer();
+                };
+            }
+
+            /**
+             * wraps the specified callback inside of another function in order
+             * to reset all sequence counters as soon as this sequence is done
+             *
+             * @param {Event} e
+             * @returns void
+             */
+            function _callbackAndReset(e) {
+                _fireCallback(callback, e, combo);
+
+                // we should ignore the next key up if the action is key down
+                // or keypress.  this is so if you finish a sequence and
+                // release the key the final key will not trigger a keyup
+                if (action !== 'keyup') {
+                    _ignoreNextKeyup = _characterFromEvent(e);
+                }
+
+                // weird race condition if a sequence ends with the key
+                // another sequence begins with
+                setTimeout(_resetSequences, 10);
+            }
+
+            // loop through keys one at a time and bind the appropriate callback
+            // function.  for any key leading up to the final one it should
+            // increase the sequence. after the final, it should reset all sequences
+            //
+            // if an action is specified in the original bind call then that will
+            // be used throughout.  otherwise we will pass the action that the
+            // next key in the sequence should match.  this allows a sequence
+            // to mix and match keypress and keydown events depending on which
+            // ones are better suited to the key provided
+            for (var i = 0; i < keys.length; ++i) {
+                var isFinal = i + 1 === keys.length;
+                var wrappedCallback = isFinal ? _callbackAndReset : _increaseSequence(action || _getKeyInfo(keys[i + 1]).action);
+                _bindSingle(keys[i], wrappedCallback, action, combo, i);
+            }
+        }
+
+        /**
+         * binds a single keyboard combination
+         *
+         * @param {string} combination
+         * @param {Function} callback
+         * @param {string=} action
+         * @param {string=} sequenceName - name of sequence if part of sequence
+         * @param {number=} level - what part of the sequence the command is
+         * @returns void
+         */
+        function _bindSingle(combination, callback, action, sequenceName, level) {
+
+            // store a direct mapped reference for use with Mousetrap.trigger
+            self._directMap[combination + ':' + action] = callback;
+
+            // make sure multiple spaces in a row become a single space
+            combination = combination.replace(/\s+/g, ' ');
+
+            var sequence = combination.split(' ');
+            var info;
+
+            // if this pattern is a sequence of keys then run through this method
+            // to reprocess each pattern one key at a time
+            if (sequence.length > 1) {
+                _bindSequence(combination, sequence, callback, action);
+                return;
+            }
+
+            info = _getKeyInfo(combination, action);
+
+            // make sure to initialize array if this is the first time
+            // a callback is added for this key
+            self._callbacks[info.key] = self._callbacks[info.key] || [];
+
+            // remove an existing match if there is one
+            _getMatches(info.key, info.modifiers, {type: info.action}, sequenceName, combination, level);
+
+            // add this call back to the array
+            // if it is a sequence put it at the beginning
+            // if not put it at the end
+            //
+            // this is important because the way these are processed expects
+            // the sequence ones to come first
+            self._callbacks[info.key][sequenceName ? 'unshift' : 'push']({
+                callback: callback,
+                modifiers: info.modifiers,
+                action: info.action,
+                seq: sequenceName,
+                level: level,
+                combo: combination
+            });
+        }
+
+        /**
+         * binds multiple combinations to the same callback
+         *
+         * @param {Array} combinations
+         * @param {Function} callback
+         * @param {string|undefined} action
+         * @returns void
+         */
+        self._bindMultiple = function(combinations, callback, action) {
+            for (var i = 0; i < combinations.length; ++i) {
+                _bindSingle(combinations[i], callback, action);
+            }
+        };
+
+        // start!
+        _addEvent(targetElement, 'keypress', _handleKeyEvent);
+        _addEvent(targetElement, 'keydown', _handleKeyEvent);
+        _addEvent(targetElement, 'keyup', _handleKeyEvent);
+    }
+
+    /**
+     * binds an event to mousetrap
+     *
+     * can be a single key, a combination of keys separated with +,
+     * an array of keys, or a sequence of keys separated by spaces
+     *
+     * be sure to list the modifier keys first to make sure that the
+     * correct key ends up getting bound (the last key in the pattern)
+     *
+     * @param {string|Array} keys
+     * @param {Function} callback
+     * @param {string=} action - 'keypress', 'keydown', or 'keyup'
+     * @returns void
+     */
+    Mousetrap.prototype.bind = function(keys, callback, action) {
+        var self = this;
+        keys = keys instanceof Array ? keys : [keys];
+        self._bindMultiple.call(self, keys, callback, action);
+        return self;
+    };
+
+    /**
+     * unbinds an event to mousetrap
+     *
+     * the unbinding sets the callback function of the specified key combo
+     * to an empty function and deletes the corresponding key in the
+     * _directMap dict.
+     *
+     * TODO: actually remove this from the _callbacks dictionary instead
+     * of binding an empty function
+     *
+     * the keycombo+action has to be exactly the same as
+     * it was defined in the bind method
+     *
+     * @param {string|Array} keys
+     * @param {string} action
+     * @returns void
+     */
+    Mousetrap.prototype.unbind = function(keys, action) {
+        var self = this;
+        return self.bind.call(self, keys, function() {}, action);
+    };
+
+    /**
+     * triggers an event that has already been bound
+     *
+     * @param {string} keys
+     * @param {string=} action
+     * @returns void
+     */
+    Mousetrap.prototype.trigger = function(keys, action) {
+        var self = this;
+        if (self._directMap[keys + ':' + action]) {
+            self._directMap[keys + ':' + action]({}, keys);
+        }
+        return self;
+    };
+
+    /**
+     * resets the library back to its initial state.  this is useful
+     * if you want to clear out the current keyboard shortcuts and bind
+     * new ones - for example if you switch to another page
+     *
+     * @returns void
+     */
+    Mousetrap.prototype.reset = function() {
+        var self = this;
+        self._callbacks = {};
+        self._directMap = {};
+        return self;
+    };
+
+    /**
+     * should we stop this event before firing off callbacks
+     *
+     * @param {Event} e
+     * @param {Element} element
+     * @return {boolean}
+     */
+    Mousetrap.prototype.stopCallback = function(e, element) {
+        var self = this;
+
+        // if the element has the class "mousetrap" then no need to stop
+        if ((' ' + element.className + ' ').indexOf(' mousetrap ') > -1) {
+            return false;
+        }
+
+        if (_belongsTo(element, self.target)) {
+            return false;
+        }
+
+        // stop for input, select, and textarea
+        return element.tagName == 'INPUT' || element.tagName == 'SELECT' || element.tagName == 'TEXTAREA' || element.isContentEditable;
+    };
+
+    /**
+     * exposes _handleKey publicly so it can be overwritten by extensions
+     */
+    Mousetrap.prototype.handleKey = function() {
+        var self = this;
+        return self._handleKey.apply(self, arguments);
+    };
+
+    /**
+     * allow custom key mappings
+     */
+    Mousetrap.addKeycodes = function(object) {
+        for (var key in object) {
+            if (object.hasOwnProperty(key)) {
+                _MAP[key] = object[key];
+            }
+        }
+        _REVERSE_MAP = null;
+    };
+
+    /**
+     * Init the global mousetrap functions
+     *
+     * This method is needed to allow the global mousetrap functions to work
+     * now that mousetrap is a constructor function.
+     */
+    Mousetrap.init = function() {
+        var documentMousetrap = Mousetrap(document);
+        for (var method in documentMousetrap) {
+            if (method.charAt(0) !== '_') {
+                Mousetrap[method] = (function(method) {
+                    return function() {
+                        return documentMousetrap[method].apply(documentMousetrap, arguments);
+                    };
+                } (method));
+            }
+        }
+    };
+
+    Mousetrap.init();
+
+    // expose mousetrap to the global object
+    window.Mousetrap = Mousetrap;
+
+    // expose as a common js module
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = Mousetrap;
+    }
+
+    // expose mousetrap as an AMD module
+    if (true) {
+        !(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+            return Mousetrap;
+        }.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+    }
+}) (typeof window !== 'undefined' ? window : null, typeof  window !== 'undefined' ? document : null);
+
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var canvas_wrapper_1 = __webpack_require__(6);
+var thomassen_1 = __webpack_require__(7);
+var animation_1 = __webpack_require__(3);
+var mousetrap_1 = __webpack_require__(4);
+document.addEventListener("DOMContentLoaded", function () {
+    var wrapper = new canvas_wrapper_1.GraphDrawingWrapper("canvas");
+    var runVisualization = function () {
+        if (!wrapper.frozen) {
+            wrapper.unhighlightVertex();
+            thomassen_1.fiveColor(wrapper.graph);
+            animation_1.animate(wrapper);
+        }
+    };
+    mousetrap_1.bind("enter", runVisualization);
+    document
+        .getElementById("color-graph")
+        .addEventListener("click", runVisualization);
+    document.getElementById("clear-canvas").addEventListener("click", function () {
+        if (!wrapper.frozen) {
+            wrapper.clearGraph();
+            wrapper.clear();
+        }
+    });
+});
+
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var geom_1 = __webpack_require__(1);
+var planar_graph_1 = __webpack_require__(2);
+var util_1 = __webpack_require__(0);
+var colorToString = function (c, faded) {
+    switch (c) {
+        case planar_graph_1.Color.Pink:
+            return faded ? "#ffb1e0" : "#e47ead";
+        case planar_graph_1.Color.Blue:
+            return faded ? "#4becff" : "#00b7ec";
+        case planar_graph_1.Color.Green:
+            return faded ? "#33d3aa" : "#00a077";
+        case planar_graph_1.Color.Orange:
+            return faded ? "#faa200" : "#f3640d";
+        case planar_graph_1.Color.Gray:
+            return faded ? "#dfd7cf" : "#a9a595";
+    }
+};
+var GraphDrawingWrapper = /** @class */ (function () {
+    function GraphDrawingWrapper(canvasId, radius) {
+        if (radius === void 0) { radius = 12; }
+        this.radius = radius;
+        this.frozen = false;
+        this.canvasEl = document.getElementById(canvasId);
+        this.drawCircle = this.drawCircle.bind(this);
+        this.handleClick = this.handleClick.bind(this);
+        this.canvasEl.addEventListener("click", this.handleClick);
+        this.clearGraph();
+    }
+    GraphDrawingWrapper.prototype.clear = function () {
+        var context = this.canvasEl.getContext("2d");
+        context.clearRect(0, 0, this.canvasEl.width, this.canvasEl.height);
+    };
+    GraphDrawingWrapper.prototype.clearGraph = function () {
+        this.graph = planar_graph_1.createEmptyPlanarGraph();
+        this.highlightedGraph = this.graph;
+        this.highlightedVertex = null;
+        this.highlightedEdge = null;
+        this.vertices = [];
+    };
+    GraphDrawingWrapper.prototype.darken = function () {
+        this.canvasEl.className = "greyer-canvas";
+    };
+    GraphDrawingWrapper.prototype.clickVertex = function (v) {
+        if (this.highlightedVertex) {
+            if (v !== this.highlightedVertex) {
+                this.drawEdge(v, this.highlightedVertex);
+            }
+            var highlit = this.highlightedVertex;
+            this.unhighlightVertex();
+            this.drawCircle(highlit);
+        }
+        else {
+            this.highlightVertex(v);
+        }
+        this.drawCircle(v);
+    };
+    GraphDrawingWrapper.prototype.doesAddEdge = function (v1, v2) {
+        try {
+            this.graph = planar_graph_1.addEdge(this.graph, v1, v2);
+            this.highlightedGraph = this.graph;
+            return true;
+        }
+        catch (e) {
+            if (e === "KeepGraphConnected") {
+                alert("Please keep the graph connected");
+            }
+            return false;
+        }
+    };
+    GraphDrawingWrapper.prototype.drawCircle = function (v, faded, fillColors) {
+        if (faded === void 0) { faded = false; }
+        if (fillColors === void 0) { fillColors = planar_graph_1.ALL_COLORS; }
+        this.vertices.push(v);
+        var context = this.canvasEl.getContext("2d");
+        context.strokeStyle = faded ? "lightgrey" : "black";
+        context.lineWidth = 3;
+        if (this.highlightedVertex && geom_1.eq(v, this.highlightedVertex)) {
+            context.strokeStyle = "red";
+        }
+        context.fillStyle = "none";
+        context.beginPath();
+        context.arc(v.x, v.y, this.radius, 0, 2 * Math.PI);
+        context.stroke();
+        if (fillColors.length > 0) {
+            this.fillCircle(v, faded, fillColors);
+        }
+    };
+    GraphDrawingWrapper.prototype.drawEdge = function (v1, v2, strokeColor) {
+        if (strokeColor === void 0) { strokeColor = "black"; }
+        if (this.doesAddEdge(v1, v2))
+            this.unsafeDrawEdge(v1, v2, strokeColor);
+    };
+    GraphDrawingWrapper.prototype.fillCircle = function (v, faded, fillColors) {
+        var _this = this;
+        var n = fillColors.length;
+        fillColors.forEach(function (color, idx) {
+            var context = _this.canvasEl.getContext("2d");
+            context.fillStyle = colorToString(color, faded);
+            context.beginPath();
+            context.arc(v.x, v.y, _this.radius, 2 * idx * Math.PI / n, 2 * (idx + 1) * Math.PI / n);
+            context.lineTo(v.x, v.y);
+            context.closePath();
+            context.fill();
+        });
+    };
+    GraphDrawingWrapper.prototype.freeze = function () {
+        this.frozen = true;
+    };
+    GraphDrawingWrapper.prototype.handleClick = function (e) {
+        var _this = this;
+        e.preventDefault();
+        if (!this.frozen) {
+            try {
+                var newVertex_1 = this.translateEventToCoord(e);
+                var clickedVertex_1;
+                var overlappingVertex_1;
+                this.vertices.forEach(function (v) {
+                    var dist = geom_1.distance(v, newVertex_1);
+                    if (dist <= _this.radius)
+                        clickedVertex_1 = v;
+                    if (dist <= 2 * _this.radius)
+                        overlappingVertex_1 = v;
+                });
+                if (clickedVertex_1) {
+                    this.clickVertex(clickedVertex_1);
+                }
+                else if (!overlappingVertex_1) {
+                    this.drawCircle(newVertex_1);
+                }
+            }
+            catch (err) {
+                alert(err.message);
+            }
+        }
+    };
+    GraphDrawingWrapper.prototype.highlightEdge = function (v1, v2) {
+        this.highlightedEdge = [v1, v2];
+    };
+    GraphDrawingWrapper.prototype.highlightGraph = function (g) {
+        this.highlightedGraph = g;
+    };
+    GraphDrawingWrapper.prototype.highlightVertex = function (v) {
+        if (this.highlightedVertex) {
+            this.unhighlightVertex();
+        }
+        else {
+            this.highlightedVertex = v;
+        }
+    };
+    GraphDrawingWrapper.prototype.isHighlightedEdge = function (v1, v2) {
+        if (this.highlightedEdge === null)
+            return false;
+        var h1 = this.highlightedEdge[0];
+        var h2 = this.highlightedEdge[1];
+        return (geom_1.eq(h1, v1) && geom_1.eq(h2, v2)) || (geom_1.eq(h1, v2) && geom_1.eq(h2, v1));
+    };
+    GraphDrawingWrapper.prototype.lighten = function () {
+        this.canvasEl.className = "";
+    };
+    GraphDrawingWrapper.prototype.redraw = function () {
+        var _this = this;
+        this.clear();
+        var strongVertexKeys = Object.keys(this.highlightedGraph.vertices);
+        var fadedVertexKeys = util_1.difference(Object.keys(this.graph.vertices), strongVertexKeys);
+        var g = this.graph;
+        strongVertexKeys.forEach(function (vKey) {
+            var v = g.vertices[vKey];
+            _this.drawCircle(v, false, v.colors);
+        });
+        fadedVertexKeys.forEach(function (vKey) {
+            var v = g.vertices[vKey];
+            _this.drawCircle(v, true, v.colors);
+        });
+        Object.keys(g.edges).forEach(function (e) {
+            var _a = planar_graph_1.getEndpoints(g, e), v1 = _a[0], v2 = _a[1];
+            var edgeColor;
+            edgeColor =
+                strongVertexKeys.includes(v1) && strongVertexKeys.includes(v2)
+                    ? "black"
+                    : "lightgrey";
+            if (_this.isHighlightedEdge(g.vertices[v1], g.vertices[v2])) {
+                edgeColor = "red";
+            }
+            _this.unsafeDrawEdge(g.vertices[v1], g.vertices[v2], edgeColor);
+        });
+        this.graph = g;
+    };
+    GraphDrawingWrapper.prototype.translateEventToCoord = function (e) {
+        return {
+            x: e.x - this.canvasEl.offsetLeft + window.pageXOffset,
+            y: e.y - this.canvasEl.offsetTop + window.pageYOffset,
+            colors: []
+        };
+    };
+    GraphDrawingWrapper.prototype.unfreeze = function () {
+        this.frozen = false;
+    };
+    GraphDrawingWrapper.prototype.unhighlightEdge = function () {
+        this.highlightedEdge = null;
+    };
+    GraphDrawingWrapper.prototype.unhighlightVertex = function () {
+        this.highlightedVertex = null;
+    };
+    GraphDrawingWrapper.prototype.unsafeDrawEdge = function (v1, v2, strokeColor) {
+        var context = this.canvasEl.getContext("2d");
+        var unit = geom_1.unitVector(v1, v2);
+        context.strokeStyle = strokeColor;
+        context.lineWidth = 1;
+        context.beginPath();
+        context.moveTo(v1.x - this.radius * unit.x, v1.y - this.radius * unit.y);
+        context.lineTo(v2.x + this.radius * unit.x, v2.y + this.radius * unit.y);
+        context.stroke();
+    };
+    GraphDrawingWrapper.prototype.updateColors = function (v, colors) {
+        var vKey = planar_graph_1.getVertexKey(this.graph, v);
+        this.graph = planar_graph_1.setColors(this.graph, vKey, colors);
+        this.redraw();
+    };
+    return GraphDrawingWrapper;
+}());
+exports.GraphDrawingWrapper = GraphDrawingWrapper;
+
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var geom_1 = __webpack_require__(1);
+var planar_graph_1 = __webpack_require__(2);
+var animation_1 = __webpack_require__(3);
+var explanation_1 = __webpack_require__(8);
+var util_1 = __webpack_require__(0);
+var minDist = function (cList, ep1, ep2) {
+    var sansEndpoints = cList.filter(function (v) { return !(geom_1.eq(v, ep1) || geom_1.eq(v, ep2)); });
+    return Math.min.apply(Math, sansEndpoints.map(function (v) { return geom_1.pointSegmentDistance(v, ep1, ep2); }));
+};
+var animAddEdge = function (g, pair) {
+    animation_1.addStep(animation_1.AnimationType.AddEdge, 0, pair);
+    return planar_graph_1.addEdge(g, pair[0], pair[1]);
+};
+var hullify = function (g) {
+    var hullVertices = geom_1.convexHull(util_1.values(g.vertices));
+    hullVertices.map(geom_1.getConsecutiveCoordPairs).forEach(function (pair) {
+        if (planar_graph_1.safeAddEdge(g, pair[0], pair[1])) {
+            g = animAddEdge(g, pair);
+        }
+    });
+    return g;
+};
+var getBestSplittingEdge = function (g, edgeKeys, faceKey) {
+    var mostDist = -1;
+    var bestPair = [];
+    var potentialEdges = edgeKeys.map(function (eKey) { return [
+        g.edges[eKey].origin,
+        g.edges[g.edges[g.edges[eKey].next].next].origin
+    ]; });
+    var faceVertices = edgeKeys.map(function (eKey) { return g.vertices[g.edges[eKey].origin]; });
+    for (var i = 0; i < potentialEdges.length; i++) {
+        var v1 = g.vertices[potentialEdges[i][0]];
+        var v2 = g.vertices[potentialEdges[i][1]];
+        if (planar_graph_1.getSplitFaceKey(g, v1, v2) === faceKey) {
+            var dist = minDist(faceVertices, v1, v2);
+            if (dist > mostDist) {
+                mostDist = dist;
+                bestPair = [v1, v2];
+            }
+        }
+    }
+    return bestPair;
+};
+var splitFace = function (g, faceKey) {
+    var edges = planar_graph_1.getBoundaryEdgeKeys(g, faceKey);
+    if (edges.length > 3 && g.infiniteFace !== faceKey) {
+        var e = getBestSplittingEdge(g, edges, faceKey);
+        g = animAddEdge(g, e);
+    }
+    return g;
+};
+var isTriangulated = function (g) {
+    return Object.keys(g.faces).every(function (fKey) { return g.infiniteFace === fKey || planar_graph_1.getBoundaryEdgeKeys(g, fKey).length === 3; });
+};
+var triangulate = function (g) {
+    while (!isTriangulated(g)) {
+        for (var fKey in g.faces) {
+            if (planar_graph_1.getBoundaryEdgeKeys(g, fKey).length > 3) {
+                g = splitFace(g, fKey);
+            }
+        }
+    }
+    animation_1.addStep(animation_1.AnimationType.DescribeAddEdges, 0, explanation_1.EXPLANATIONS.addEdges);
+    return g;
+};
+var preColor = function (g) {
+    var boundingVertices = planar_graph_1.getBoundaryVertexKeys(g, g.infiniteFace);
+    g.mark1 = boundingVertices[0];
+    g.mark2 = boundingVertices[1];
+    animation_1.addStep(animation_1.AnimationType.Describe, 2000, explanation_1.EXPLANATIONS.fiveChoices);
+    Object.keys(g.vertices).forEach(function (vKey) {
+        g = updateColors(g, vKey, planar_graph_1.ALL_COLORS, 0);
+    });
+    animation_1.addStep(animation_1.AnimationType.Describe, 2000, explanation_1.EXPLANATIONS.restrictOuter);
+    boundingVertices.forEach(function (vKey) { return (g = updateColors(g, vKey, planar_graph_1.ALL_COLORS.slice(0, 3), 0)); });
+    animation_1.addStep(animation_1.AnimationType.Pause, 1000, {});
+    g = updateColors(g, g.mark1, [planar_graph_1.Color.Pink], 0);
+    g = updateColors(g, g.mark2, [planar_graph_1.Color.Blue], 0);
+    animation_1.addStep(animation_1.AnimationType.DescribePreColor, 2000, explanation_1.EXPLANATIONS.endPreColor);
+    return g;
+};
+var updateColors = function (g, vKey, colors, time) {
+    animation_1.addStep(animation_1.AnimationType.UpdateColors, time, {
+        vertex: g.vertices[vKey],
+        colors: colors
+    });
+    return planar_graph_1.setColors(g, vKey, colors);
+};
+var colorTriangle = function (g) {
+    var badColors = [planar_graph_1.getColors(g, g.mark1)[0], planar_graph_1.getColors(g, g.mark2)[0]];
+    var thirdVertexKey = util_1.difference(Object.keys(g.vertices), [
+        g.mark1,
+        g.mark2
+    ])[0];
+    var okayColor = util_1.difference(planar_graph_1.getColors(g, thirdVertexKey), badColors)[0];
+    animation_1.addStep(animation_1.AnimationType.DescribeTriangle, 800, explanation_1.EXPLANATIONS.baseCase);
+    var newGraph = updateColors(g, thirdVertexKey, [okayColor], 100);
+    animation_1.addStep(animation_1.AnimationType.Pause, 300, {});
+    return newGraph;
+};
+var transferColors = function (graph, subGraph) {
+    var newGraph = util_1.cloneDeep(graph);
+    Object.keys(subGraph.vertices).forEach(function (vKey) {
+        newGraph = planar_graph_1.setColors(newGraph, vKey, planar_graph_1.getColors(subGraph, vKey));
+    });
+    return newGraph;
+};
+var colorChordlessGraph = function (g) {
+    var boundaryVertices = planar_graph_1.getBoundaryVertexKeys(g, g.infiniteFace);
+    var vp = planar_graph_1.findVp(g);
+    var twoColors = util_1.difference(planar_graph_1.getColors(g, vp), planar_graph_1.getColors(g, g.mark1)).slice(0, 2);
+    animation_1.addStep(animation_1.AnimationType.DescribeChordlessOne, 800, explanation_1.EXPLANATIONS.chordlessPartOne);
+    var updatedGraph = updateColors(g, vp, twoColors, 800);
+    var subGraph = planar_graph_1.removeVertex(updatedGraph, vp);
+    var vp1;
+    animation_1.addStep(animation_1.AnimationType.DescribeChordlessTwo, 800, explanation_1.EXPLANATIONS.chordlessPartTwo);
+    planar_graph_1.getAdjacentVertices(g, vp).forEach(function (vKey) {
+        if (!boundaryVertices.includes(vKey)) {
+            subGraph = updateColors(subGraph, vKey, util_1.difference(planar_graph_1.getColors(subGraph, vKey), twoColors).slice(0, 3), 300);
+        }
+        else if (vKey !== g.mark1) {
+            vp1 = vKey;
+        }
+    });
+    animation_1.addStep(animation_1.AnimationType.DescribeChordlessThree, 800, explanation_1.EXPLANATIONS.chordlessPartThree);
+    subGraph = color(subGraph);
+    var newGraph = transferColors(updatedGraph, subGraph);
+    animation_1.addStep(animation_1.AnimationType.RestrictGraph, 0, { graph: newGraph });
+    animation_1.addStep(animation_1.AnimationType.DescribeChordlessFour, 800, explanation_1.EXPLANATIONS.chordlessPartFour);
+    newGraph = updateColors(newGraph, vp, util_1.difference(twoColors, planar_graph_1.getColors(newGraph, vp1)).slice(0, 1), 800);
+    animation_1.addStep(animation_1.AnimationType.Pause, 300, {});
+    return newGraph;
+};
+var colorChordedGraph = function (g, chordKey) {
+    animation_1.addStep(animation_1.AnimationType.HighlightEdge, 800, planar_graph_1.getEndpoints(g, chordKey).map(function (vKey) { return g.vertices[vKey]; }));
+    animation_1.addStep(animation_1.AnimationType.DescribeChorded, 800, explanation_1.EXPLANATIONS.chorded);
+    animation_1.addStep(animation_1.AnimationType.UnhighlightEdge, 0, null);
+    var _a = planar_graph_1.splitChordedGraph(g, chordKey), firstSubgraph = _a[0], secondSubgraph = _a[1];
+    firstSubgraph = color(firstSubgraph);
+    secondSubgraph = updateColors(secondSubgraph, secondSubgraph.mark1, planar_graph_1.getColors(firstSubgraph, secondSubgraph.mark1), 800);
+    secondSubgraph = updateColors(secondSubgraph, secondSubgraph.mark2, planar_graph_1.getColors(firstSubgraph, secondSubgraph.mark2), 800);
+    animation_1.addStep(animation_1.AnimationType.HighlightEdge, 800, planar_graph_1.getEndpoints(g, chordKey).map(function (vKey) { return g.vertices[vKey]; }));
+    animation_1.addStep(animation_1.AnimationType.UnhighlightEdge, 0, null);
+    secondSubgraph = color(secondSubgraph);
+    var newGraph = transferColors(g, firstSubgraph);
+    newGraph = transferColors(newGraph, secondSubgraph);
+    animation_1.addStep(animation_1.AnimationType.Pause, 300, {});
+    return newGraph;
+};
+var color = function (g) {
+    animation_1.addStep(animation_1.AnimationType.RestrictGraph, 0, { graph: g });
+    animation_1.addStep(animation_1.AnimationType.Pause, 300, {});
+    if (util_1.values(g.vertices).length == 3) {
+        return colorTriangle(g);
+    }
+    else {
+        var chord = planar_graph_1.findChordKey(g);
+        if (chord) {
+            return colorChordedGraph(g, chord);
+        }
+        else {
+            return colorChordlessGraph(g);
+        }
+    }
+};
+exports.fiveColor = function (graph) {
+    animation_1.resetAnimation();
+    animation_1.addStep(animation_1.AnimationType.Begin, 0, {});
+    var coloredGraph = color(preColor(triangulate(hullify(graph))));
+    animation_1.addStep(animation_1.AnimationType.RestrictGraph, 0, { graph: coloredGraph });
+    animation_1.addStep(animation_1.AnimationType.Describe, 0, explanation_1.EXPLANATIONS.finished);
+    animation_1.addStep(animation_1.AnimationType.End, 0, {});
+    animation_1.postProcessAnimation();
+    return coloredGraph;
+};
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var util_1 = __webpack_require__(0);
+var readable = {
+    addEdges: "Add edges so that the graph is triangulated and 2-connected (i.e.\n  can't be disconnected by removing one edge or vertex). Adding edges only makes\n  our problem harder; a coloring of the new graph will work as a coloring of the\n  original graph.",
+    fiveChoices: "Begin with vertices having five possible colors",
+    restrictOuter: "Restrict outer vertices to three possible colors",
+    endPreColor: "Color two adjacent outer vertices red and blue. Note that the\n  interior vertices have five possible colors, two outer vertices are colored,\n  and the rest of the outer vertices have three possible colors.\n  This will be an invariant throughout the recursive algorithm.",
+    baseCase: "The triangle is the base case of our algorithm. As promised by our\n  invariant, it has two colored vertices and one vertex with three choices.\n  So we can always color the third vertex.",
+    chordlessPartOne: "There is no chord... Find a vertex on the outside of the\n  graph that is a neighbor of a colored vertex and restrict it to two colors,\n  not including the color of the colored vertex.",
+    chordlessPartTwo: "Ensure that the neighbors of the vertex in the interior of\n  the graph can't be colored with those two colors. Only one of this vertex's\n  neighbors can be colored with even one of the two colors, so we will be able\n  to come back and properly color this vertex.",
+    chordlessPartThree: "Recursively color the graph with the vertex removed",
+    chordlessPartFour: "Color the vertex we removed",
+    chorded: "There is a chord; split the graph and recursively color the subgraphs",
+    finished: "We're done!"
+};
+exports.EXPLANATIONS = util_1.mapValues(readable, function (str) { return str.replace("\n", ""); });
+
+
+/***/ })
+/******/ ]);

@@ -20,7 +20,7 @@ const colorToString = (c: Color, faded: boolean) => {
     case Color.Green:
       return faded ? "#33d3aa" : "#00a077";
     case Color.Orange:
-      return faded ? "#faa200" : "#c76f00";
+      return faded ? "#faa200" : "#f3640d";
     case Color.Gray:
       return faded ? "#dfd7cf" : "#a9a595";
   }
