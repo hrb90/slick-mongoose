@@ -9,8 +9,7 @@ import {
   getEndpoints,
   getVertexKey
 } from "./planar_graph";
-import { DEFAULT_GRAPH } from "./default_graph";
-import { difference, values } from "./util";
+import { difference } from "./util";
 
 const colorToString = (c: Color, faded: boolean) => {
   switch (c) {
@@ -219,13 +218,6 @@ export class GraphDrawingWrapper {
       this.unsafeDrawEdge(g.vertices[v1], g.vertices[v2], edgeColor);
     });
     this.graph = g;
-  }
-
-  setDefaultGraph() {
-    this.clearGraph();
-    this.graph = DEFAULT_GRAPH;
-    this.highlightedGraph = this.graph;
-    this.vertices = values(this.graph.vertices);
   }
 
   translateEventToCoord(e: MouseEvent): Coord {
