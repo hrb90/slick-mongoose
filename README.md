@@ -24,6 +24,4 @@ Thomassen's algorithm is implemented in `thomassen.ts`, which exports a single `
 
 ## Acknowledgements
 
-Thanks to [Tom Hull](http://mars.wne.edu/~thull/) for introducing me to this lovely proof; [Yaanik Desai](http://profiles.ucsf.edu/yaanik.desai) for the repository name; and [@nicojs](https://github.com/nicojs) for help configuring the mutation testing framework.
-
-This site contains design elements from [Read Only by HTML5Up](https://html5up.net/read-only).
+Thanks to [Tom Hull](http://mars.wne.edu/~thull/) for introducing me to this lovely proof; [Yaanik Desai](http://profiles.ucsf.edu/yaanik.desai) for the repository name; [Nico Jansen](https://github.com/nicojs) for help configuring the mutation testing framework; and [Abhi Bassi](https://github.com/abhibassi) for design help. This site contains additional design elements from [Read Only by HTML5Up](https://html5up.net/read-only).
