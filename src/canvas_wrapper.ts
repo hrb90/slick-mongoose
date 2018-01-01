@@ -22,7 +22,7 @@ const colorToString = (c: Color, faded: boolean) => {
     case Color.Orange:
       return faded ? "#faa200" : "#f3640d";
     case Color.Gray:
-      return faded ? "#dfd7cf" : "#a9a595";
+      return faded ? "#dfd7cf" : "#c9c5b5";
   }
 };
 
