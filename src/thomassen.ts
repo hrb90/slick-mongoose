@@ -110,18 +110,19 @@ const preColor = (g: PlanarGraph): PlanarGraph => {
   const boundingVertices = getBoundaryVertexKeys(g, g.infiniteFace);
   g.mark1 = boundingVertices[0];
   g.mark2 = boundingVertices[1];
-  addStep(AnimationType.Describe, 2000, EXPLANATIONS.fiveChoices);
+  addStep(AnimationType.DescribePreColor1, 2000, EXPLANATIONS.fiveChoices);
   Object.keys(g.vertices).forEach(vKey => {
     g = updateColors(g, vKey, ALL_COLORS, 0);
   });
-  addStep(AnimationType.Describe, 2000, EXPLANATIONS.restrictOuter);
+  addStep(AnimationType.DescribePreColor2, 2000, EXPLANATIONS.restrictOuter);
   boundingVertices.forEach(
     vKey => (g = updateColors(g, vKey, ALL_COLORS.slice(0, 3), 0))
   );
   addStep(AnimationType.Pause, 1000, {});
   g = updateColors(g, g.mark1, [Color.Pink], 0);
   g = updateColors(g, g.mark2, [Color.Blue], 0);
-  addStep(AnimationType.DescribePreColor, 2000, EXPLANATIONS.endPreColor);
+  addStep(AnimationType.DescribePreColor3, 2000, EXPLANATIONS.endPreColor1);
+  addStep(AnimationType.DescribeChord, 2000, EXPLANATIONS.endPreColor2);
   return g;
 };
 

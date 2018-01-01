@@ -20,7 +20,10 @@ export enum AnimationType {
   DescribeChordlessThree,
   DescribeChordlessFour,
   DescribeChorded,
-  DescribePreColor,
+  DescribePreColor1,
+  DescribePreColor2,
+  DescribePreColor3,
+  DescribeChord,
   DescribeTriangle
 }
 
@@ -70,7 +73,10 @@ export const postProcessAnimation = (): void => {
     AnimationType.DescribeChordlessTwo,
     AnimationType.DescribeChordlessThree,
     AnimationType.DescribeChordlessFour,
-    AnimationType.DescribePreColor
+    AnimationType.DescribePreColor1,
+    AnimationType.DescribePreColor2,
+    AnimationType.DescribePreColor3,
+    AnimationType.DescribeChord
   ].forEach(type => {
     let firstIndexOfType = findIndex(animationSteps, a => a.type === type);
     if (firstIndexOfType >= 0) {
@@ -112,7 +118,10 @@ export const drawStep = (a: Animation, canvas: GraphDrawingWrapper): void => {
     case AnimationType.DescribeChordlessTwo:
     case AnimationType.DescribeChordlessThree:
     case AnimationType.DescribeChordlessFour:
-    case AnimationType.DescribePreColor:
+    case AnimationType.DescribePreColor1:
+    case AnimationType.DescribePreColor2:
+    case AnimationType.DescribePreColor3:
+    case AnimationType.DescribeChord:
       updateDescription(a.data);
       break;
     case AnimationType.Pause:
